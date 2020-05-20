@@ -143,48 +143,48 @@ parser = argparse.ArgumentParser(description='Solve a few MILPs')
 parser.add_argument('method')
 args = parser.parse_args()
 
-# list_files_indset = Path('/Users/work/Desktop/learn2branch/data/instances/indset/transfer_500_4/').glob("*.lp")
-# for problem_path in list_files_indset: 
-#     m = Model()
-#     m.readProblem(str(problem_path))
-#     if args.method == 'oracle': 
-#         m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
-#     if args.method == 'oracle_nodesel': 
-#         m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-#     if args.method == 'default': 
-#         m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
-#     m.optimize()
-#     m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
-#     m.freeProb()
+list_files_indset = Path('/Users/work/Desktop/learn2branch/data/instances/indset/transfer_500_4/').glob("*.lp")
+for problem_path in list_files_indset: 
+    m = Model()
+    m.readProblem(str(problem_path))
+    if args.method == 'oracle': 
+        m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
+    if args.method == 'oracle_nodesel': 
+        m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
+    m.optimize()
+    m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
+    m.freeProb()
 
-# list_files_setcover = Path('/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/').glob("*.lp")
-# for problem_path in list_files_setcover: 
-#     m = Model()
-#     m.readProblem(str(problem_path))
-#     if args.method == 'oracle': 
-#         m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
-#     if args.method == 'oracle_nodesel': 
-#         m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-#     if args.method == 'default': 
-#         m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
-#     m.optimize()
-#     m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
-#     m.freeProb()
+list_files_setcover = Path('/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/').glob("*.lp")
+for problem_path in list_files_setcover: 
+    m = Model()
+    m.readProblem(str(problem_path))
+    if args.method == 'oracle': 
+        m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
+    if args.method == 'oracle_nodesel': 
+        m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
+    m.optimize()
+    m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
+    m.freeProb()
     
 
-# list_files_bounded = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')    # 90 bounded files
-# for path in list_files_bounded:
-#     m = Model()
-#     m.readProblem(str(path))
-#     if args.method == 'oracle': 
-#         m.includeNodesel(Oracle(str(path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
-#     if args.method == 'oracle_nodesel': 
-#         m.includeNodesel(OracleNodeSel(str(path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-#     if args.method == 'default': 
-#         m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
-#     m.optimize()
-#     m.writeStatistics((str(path) + str(args.method)).strip(".") + "stats.txt")
-#     m.freeProb()
+list_files_bounded = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')    # 90 bounded files
+for path in list_files_bounded:
+    m = Model()
+    m.readProblem(str(path))
+    if args.method == 'oracle': 
+        m.includeNodesel(Oracle(str(path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
+    if args.method == 'oracle_nodesel': 
+        m.includeNodesel(OracleNodeSel(str(path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
+    m.optimize()
+    m.writeStatistics((str(path) + str(args.method)).strip(".") + "stats.txt")
+    m.freeProb()
     
     
 
