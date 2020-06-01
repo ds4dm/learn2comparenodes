@@ -3,42 +3,9 @@ from pyscipopt import Model, Nodesel, Eventhdlr
 import pyscipopt
 import argparse
 
-class Default_Estimate(Nodesel):
+class Default(Nodesel):
     def nodeselect(self):
         node = self.model.executeNodeSel('estimate')
-        return {"selnode": node}
-    def nodecomp(self, node1, node2): 
-        node = self.model.executeNodeComp('estimate', node1, node2)
-
-
-class Default_BFS(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('bfs')
-        return {"selnode": node}
-
-class Default_Breadth(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('breadthfirst')
-        return {"selnode": node}
-
-class Default_DFS(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('dfs')
-        return {"selnode": node}
-
-class Default_Hybrid(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('hybridestim')
-        return {"selnode": node}
-
-class Default_UCT(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('uct')
-        return {"selnode": node}
-
-class Default_Restart(Nodesel):
-    def nodeselect(self):
-        node = self.model.executeNodeSel('restartdfs')
         return {"selnode": node}
 
 
@@ -184,52 +151,37 @@ for problem_path in list_files_indset:
         m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
     if args.method == 'oracle_nodesel': 
         m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-    if args.method == 'estimate': 
-        m.includeNodesel(Default_Estimate(), "scip_estimate", "", 1073741823, 536870911)
-    if args.method == 'bfs': 
-        m.includeNodesel(Default_BFS(), "scip_bfs", "", 1073741823, 536870911)
-    if args.method == 'restartdfs': 
-        m.includeNodesel(Default_Restart(), "scip_restart_dfs", "", 1073741823, 536870911)
-    if args.method == 'uct': 
-        m.includeNodesel(Default_UCT(), "scip_uct", "", 1073741823, 536870911)
-    if args.method == 'breadth': 
-        m.includeNodesel(Default_Breadth(), "scip_breadth", "", 1073741823, 536870911)
-    if args.method == 'hybrid': 
-        m.includeNodesel(Default_Hybrid(), "scip_hybrid_estimate", "", 1073741823, 536870911)
-    if args.method == 'dfs': 
-        m.includeNodesel(Default_DFS(), "scip_dfs", "", 1073741823, 536870911)    
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
     m.optimize()
-    m.writeStatistics((str(problem_path) + "_" + str(args.method)).strip(".") + "_" + "stats.txt")
+    m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
     m.freeProb()
 
-# list_files_setcover = Path('/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/').glob("*.lp")
-# for problem_path in list_files_setcover: 
-#     m = Model()
-#     m.readProblem(str(problem_path))
-#     if args.method == 'oracle': 
-#         m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
-#     if args.method == 'oracle_nodesel': 
-#         m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-#     if args.method == 'default': 
-#         m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
-#     m.optimize()
-#     m.writeStatistics((str(problem_path) + "_" + str(args.method)).strip(".") + "_" + "stats.txt")
-#     m.freeProb()
+list_files_setcover = Path('/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/').glob("*.lp")
+for problem_path in list_files_setcover: 
+    m = Model()
+    m.readProblem(str(problem_path))
+    if args.method == 'oracle': 
+        m.includeNodesel(Oracle(str(problem_path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
+    if args.method == 'oracle_nodesel': 
+        m.includeNodesel(OracleNodeSel(str(problem_path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
+    m.optimize()
+    m.writeStatistics((str(problem_path) + str(args.method)).strip(".") + "stats.txt")
+    m.freeProb()
     
 
-# list_files_bounded = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')    # 90 bounded files
-# for path in list_files_bounded:
-#     m = Model()
-#     m.readProblem(str(path))
-#     if args.method == 'oracle': 
-#         m.includeNodesel(Oracle(str(path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
-#     if args.method == 'oracle_nodesel': 
-#         m.includeNodesel(OracleNodeSel(str(path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
-#     if args.method == 'estimate': 
-#         m.includeNodesel(Default_Estimate(), "default", "", 1073741823, 536870911)
-#     if args.method == 'default': 
-#         m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
-   
-#     m.optimize()
-#     m.writeStatistics((str(problem_path) + "_" + str(args.method)).strip(".") + "_" + "stats.txt")
-#     m.freeProb()
+list_files_bounded = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')    # 90 bounded files
+for path in list_files_bounded:
+    m = Model()
+    m.readProblem(str(path))
+    if args.method == 'oracle': 
+        m.includeNodesel(Oracle(str(path) + '_solution.txt'), "oracle_nodesel", "", 1073741823, 536870911)
+    if args.method == 'oracle_nodesel': 
+        m.includeNodesel(OracleNodeSel(str(path) + '_solution.txt'), "oracle_nodesel_only", "", 1073741823, 536870911)
+    if args.method == 'default': 
+        m.includeNodesel(Default(), "default", "", 1073741823, 536870911)
+    m.optimize()
+    m.writeStatistics((str(path) + str(args.method)).strip(".") + "stats.txt")
+    m.freeProb()
