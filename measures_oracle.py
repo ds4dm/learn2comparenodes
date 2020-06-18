@@ -1,8 +1,9 @@
 from pyscipopt import Nodesel, Model, Eventhdlr
 import pyscipopt
 import csv
-from pathlib import Path
+# from pathlib import Path
 import time
+
 
 class OracleNodeSelector(Nodesel):
     def __init__(self, optsol, nodesel_name):
@@ -27,7 +28,8 @@ class OracleNodeSelector(Nodesel):
             # if it has children, one of those is the new optimal node
             if children:
                 for child in children:
-                    # check whether the child node contains the optimal solution
+                    # check whether the child node
+                    # contains the optimal solution
                     childisopt = True
                     vars, bounds, btypes = child.getParentBranchings()
                     for var, bound, btype in zip(vars, bounds, btypes):
@@ -71,6 +73,7 @@ class OracleNodeSelector(Nodesel):
     def nodecomp(self, node1, node2): 
         return self.model.executeNodeComp(self.nodesel_name, node1, node2)
 
+
 class Measures(Eventhdlr): 
     def __init__(self):
         self.primal_bound = []
@@ -80,10 +83,13 @@ class Measures(Eventhdlr):
         self.pdi = []
         self.nlpiterations = []
         self.start = time.process_time()
+
     def eventinit(self):
         self.model.catchEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
+    
     def eventexit(self):
         self.model.catchEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
+    
     def eventexec(self, event):
         self.nnodes.append(self.model.getNNodes())
         self.solving_time.append(time.process_time() - self.start)
@@ -92,151 +98,78 @@ class Measures(Eventhdlr):
         self.nlpiterations.append(self.model.getNLPIterations())
         self.pdi.append(self.model.getStatPrimalDualIntegral())
 
-nodeselectors = [
-    'estimate',
-    'bfs',
-    'hybridestim',
-    'restartdfs',
-    'dfs',
-    'breadthfirst',
-]
 
-names = ['instance','mode', 'nodeselector', 'solving_time', 'primal_bound', 'dual_bound', 'number_nodes', 'lp_iterations', 'pdi_time']
-instances_indset = [f"/Users/work/Desktop/learn2branch/data/instances/indset/transfer_500_4/instance_{i+1}.lp" for i in range(10)]
-instances_indset = [str(instance) for instance in instances_indset]
-instances_setcover = [f"/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/instance_{i+1}.lp" for i in range(10)]
-instances_setcover = [str(instance) for instance in instances_setcover]
+nodeselector = 'estimate'
+# 'bfs',
+# 'hybridestim',
+# 'restartdfs',
+# 'dfs',
+# 'breadthfirst',
+names = ['instance', 'mode', 'nodeselector', 'solving_time', 'primal_bound', 
+         'dual_bound', 'number_nodes', 'lp_iterations', 'pdi_time']
+instance = '/Users/work/Desktop/LP/instances/er_n=132_m=6865_p=0.80_SET2_setparam=100.00_alpha=0.50_0.lp'
+# for instance in instances_setcover:
+print(f"instance {instance}")
+sol_file = instance.strip(".") + "_solution.txt"
+m = Model()
+# m.hideOutput()
+m.readProblem(instance)
+m.optimize()
+m.writeBestSol(sol_file)
+m.freeProb()
+print(f"optimal solution written to {sol_file}")
 
-
-for instance in instances_setcover:
-    print(f"instance {instance}")
-    sol_file = instance.strip(".") + "_solution.txt"
+with open(instance + "_measures.csv", "w") as csvfile: 
+    writer = csv.DictWriter(csvfile, fieldnames=names)
+    writer.writeheader()    
+    # for nodeselector in nodeselectors:
+    #     # Oracle
+    mode = 'oracle'
     m = Model()
     m.hideOutput()
     m.readProblem(instance)
+    solution = m.readSolFile(sol_file)
+    m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
+    measure_oracle = Measures()
+    m.includeEventhdlr(measure_oracle, "abcd", "efgh")
     m.optimize()
-    m.writeBestSol(sol_file)
+    writer.writerow({
+        'instance': instance, 
+        'mode': mode, 
+        'nodeselector': nodeselector,
+        'solving_time': measure_oracle.solving_time, 
+        'number_nodes': measure_oracle.nnodes, 
+        'lp_iterations': measure_oracle.nlpiterations, 
+        'pdi_time': measure_oracle.pdi, 
+        'primal_bound': measure_oracle.primal_bound, 
+        'dual_bound': measure_oracle.dual_bound
+    })
+    csvfile.flush()
     m.freeProb()
-    print(f"optimal solution written to {sol_file}")
+    del solution
 
-    with open(instance + "_measures.csv", "w") as csvfile: 
-        writer = csv.DictWriter(csvfile, fieldnames=names)
-        writer.writeheader()    
-        for nodeselector in nodeselectors:
-            # Oracle
-            mode = 'oracle'
-            m = Model()
-            m.hideOutput()
-            m.readProblem(instance)
-            solution = m.readSolFile(sol_file)
-            m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
-            measure_oracle = Measures()
-            m.includeEventhdlr(measure_oracle, "abcd", "efgh")
-            m.optimize()
-            writer.writerow({
-                'instance': instance, 
-                'mode': mode, 
-                'nodeselector': nodeselector,
-                'solving_time': measure_oracle.solving_time, 
-                'number_nodes': measure_oracle.nnodes, 
-                'lp_iterations': measure_oracle.nlpiterations, 
-                'pdi_time': measure_oracle.pdi, 
-                'primal_bound': measure_oracle.primal_bound, 
-                'dual_bound': measure_oracle.dual_bound
-            })
-            csvfile.flush()
-            m.freeProb()
-            del solution
-
-            # vanilla SCIP rules
-            mode = 'vanilla_scip'
-            m = Model()
-            m.hideOutput()
-            m.readProblem(instance)
-            measure_scip = Measures()
-            m.includeEventhdlr(measure_scip, "abcde", "fghij")
-            m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
-            m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
-            m.optimize()
-            
-            print('writing to csv file!!!')
-            writer.writerow({
-                'instance': instance, 
-                'mode': mode, 
-                'nodeselector': nodeselector,
-                'solving_time': measure_oracle.solving_time, 
-                'number_nodes': measure_oracle.nnodes, 
-                'lp_iterations': measure_oracle.nlpiterations, 
-                'pdi_time': measure_oracle.pdi, 
-                'primal_bound': measure_oracle.primal_bound, 
-                'dual_bound': measure_oracle.dual_bound
-            })
-            csvfile.flush()
-            m.freeProb()
-
-for instance in Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz'):
-    instance = str(instance)
-    print(f"instance {instance}")
-    sol_file = instance.strip(".") + "_solution.txt"
+    # vanilla SCIP rules
+    mode = 'vanilla_scip'
     m = Model()
     m.hideOutput()
     m.readProblem(instance)
+    measure_scip = Measures()
+    m.includeEventhdlr(measure_scip, "abcde", "fghij")
+    m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
+    m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
     m.optimize()
-    m.writeBestSol(sol_file)
+    
+    print('writing to csv file!!!')
+    writer.writerow({
+        'instance': instance,
+        'mode': mode, 
+        'nodeselector': nodeselector,
+        'solving_time': measure_scip.solving_time, 
+        'number_nodes': measure_scip.nnodes, 
+        'lp_iterations': measure_scip.nlpiterations, 
+        'pdi_time': measure_scip.pdi, 
+        'primal_bound': measure_scip.primal_bound, 
+        'dual_bound': measure_scip.dual_bound
+    })
+    csvfile.flush()
     m.freeProb()
-    print(f"optimal solution written to {sol_file}")
-
-    with open(instance + "_measures.csv", "w") as csvfile: 
-        writer = csv.DictWriter(csvfile, fieldnames=names)
-        writer.writeheader()    
-        for nodeselector in nodeselectors:
-            # Oracle
-            mode = 'oracle'
-            m = Model()
-            m.hideOutput()
-            m.readProblem(instance)
-            solution = m.readSolFile(sol_file)
-            m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
-            measure_oracle = Measures()
-            m.includeEventhdlr(measure_oracle, "abcd", "efgh")
-            m.optimize()
-            writer.writerow({
-                'instance': instance, 
-                'mode': mode, 
-                'nodeselector': nodeselector,
-                'solving_time': measure_oracle.solving_time, 
-                'number_nodes': measure_oracle.nnodes, 
-                'lp_iterations': measure_oracle.nlpiterations, 
-                'pdi_time': measure_oracle.pdi, 
-                'primal_bound': measure_oracle.primal_bound, 
-                'dual_bound': measure_oracle.dual_bound
-            })
-            csvfile.flush()
-            m.freeProb()
-            del solution
-
-            # vanilla SCIP rules
-            mode = 'vanilla_scip'
-            m = Model()
-            m.hideOutput()
-            m.readProblem(instance)
-            measure_scip = Measures()
-            m.includeEventhdlr(measure_scip, "abcde", "fghij")
-            m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
-            m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
-            m.optimize()
-            
-            print('writing to csv file!!!')
-            writer.writerow({
-                'instance': instance, 
-                'mode': mode, 
-                'nodeselector': nodeselector,
-                'solving_time': measure_oracle.solving_time, 
-                'number_nodes': measure_oracle.nnodes, 
-                'lp_iterations': measure_oracle.nlpiterations, 
-                'pdi_time': measure_oracle.pdi, 
-                'primal_bound': measure_oracle.primal_bound, 
-                'dual_bound': measure_oracle.dual_bound
-            })
-            csvfile.flush()
-            m.freeProb()
