@@ -3,9 +3,8 @@ import pyscipopt
 from pyscipopt import Nodesel, Eventhdlr 
 import numpy as np
 
-
-class NodeFocusHandler(pyscipopt.Eventhdlr):
-    def __init__(self):
+class NodeFeatureRecorder():
+    def __init__(self, model):
         self.node_lb = 0
         self.depth = 0 
         '''
@@ -35,15 +34,9 @@ class NodeFocusHandler(pyscipopt.Eventhdlr):
         self.branchPriorityDown = 0
         self.branchPriorityUp = 0
         self.branchVarInf = 0
+        self.model = model
 
-        
-    def eventinit(self):
-        self.model.catchEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
-
-    def eventexit(self):
-        self.model.dropEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
-
-    def eventexec(self, event):
+    def record(self, node):
         # Node features
         if self.model:     
             self.maxdepth = self.model.getNBinVars() + self.model.getNintVars()
@@ -141,11 +134,42 @@ class NodeFocusHandler(pyscipopt.Eventhdlr):
                 self.branchVarInf
             ])
 
-m = Model()
-m.readProblem("/Users/work/Desktop/Learn2SelectNodes/er_n=74_m=1338_p=0.50_SET2_setparam=100.00_alpha=0.75_0.lp")
-node_recorder = NodeFocusHandler()
-m.includeEventhdlr(node_recorder, "NodeFocusHandler", "")
-m.hideOutput()
-m.optimize()
-print(node_recorder.nodeFeatures[:5], node_recorder.branchFeatures[:5])
-m.freeProb()
+            return [self.nodeFeatures, self.branchFeatures]
+
+class NodeIncluder(pyscipopt.Eventhdlr): 
+    def __init__(self): 
+        self.dataset = []
+
+    def eventinit(self):
+        self.model.catchEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
+
+    def eventexit(self):
+        self.model.dropEvent(pyscipopt.SCIP_EVENTTYPE.NODEFOCUSED, self)
+
+    def eventexec(self, event): 
+        if self.model: 
+            leaves, children, siblings = self.model.getOpenNodes()
+            for child in children: 
+                recorder = NodeFeatureRecorder(self.model)
+                data = recorder.record(child)
+                self.dataset.append(data)
+
+            for leaf in leaves: 
+                recorder = NodeFeatureRecorder(self.model)
+                data = recorder.record(leaf)
+                self.dataset.append(data)
+                    
+            for sibling in siblings: 
+                recorder = NodeFeatureRecorder(self.model)
+                data = recorder.record(sibling)
+                self.dataset.append(data)
+
+# m = Model()
+# m.readProblem("/Users/work/Desktop/LP/instances/er_n=124_m=4524_p=0.60_SET2_setparam=100.00_alpha=0.50_0.lp")
+# includer = NodeIncluder()
+# m.includeEventhdlr(includer, "Includer", "")
+# m.includeNodesel()
+# m.hideOutput()
+# m.optimize()
+# print(len(includer.dataset))
+# m.freeProb()
