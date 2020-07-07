@@ -23,6 +23,8 @@ class OracleNodeSelector(Nodesel):
         self.optsol = optsol
         self.optnode = None
         self.feature_file = feature_file
+        self.features = {}
+        self.labels = {}
 
     def nodeinitsol(self): 
         # TODO: how does nodeinitsol handle restarts ?
@@ -78,18 +80,20 @@ class OracleNodeSelector(Nodesel):
             print(f"    selected node {selnode.getNumber()}")
         else:
             print(f"    no node selected")
-    
         # Record features here? 
         return {"selnode": selnode}
 
     def nodecomp(self, node1, node2): 
-        decision = self.model.executeNodeComp(self.nodesel_name, node1, node2)
-        if self.model: 
-            recorder = NodeFeatureRecorder(self.model)
-            if node1 and node2: 
-                data1 = recorder.record(node1)
-                data2 = recorder.record(node2)
-                print(data1, data2, decision, ~decision)
+        if self.optnode == node1: 
+            decision = 1 
+        elif self.optnode == node2: 
+            decision = -1 
+        else: 
+            decision = self.model.executeNodeComp(self.nodesel_name, node1, node2)
+        if self.optnode == node1 or self.optnode == node2: 
+            data1 = NodeFeatureRecorder().record(self.model, node1)
+            data2 = NodeFeatureRecorder().record(self.model, node2)
+            print(data1, data2)
         return decision 
 
 

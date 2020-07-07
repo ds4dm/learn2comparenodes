@@ -4,7 +4,7 @@ from pyscipopt import Nodesel, Eventhdlr
 import numpy as np
 
 class NodeFeatureRecorder():
-    def __init__(self, model):
+    def __init__(self):
         self.node_lb = 0
         self.depth = 0 
         '''
@@ -34,10 +34,11 @@ class NodeFeatureRecorder():
         self.branchPriorityDown = 0
         self.branchPriorityUp = 0
         self.branchVarInf = 0
-        self.model = model
+        # self.model = model
 
-    def record(self, node):
+    def record(self, model, node):
         # Node features
+        self.model = model
         if self.model:     
             self.maxdepth = self.model.getNBinVars() + self.model.getNintVars()
         else: 
@@ -136,7 +137,7 @@ class NodeFeatureRecorder():
 
             return [self.nodeFeatures, self.branchFeatures]
 
-class NodeIncluder(pyscipopt.Eventhdlr): 
+class FeatureRecordEventHandler(pyscipopt.Eventhdlr): 
     def __init__(self): 
         self.dataset = []
 
@@ -163,13 +164,3 @@ class NodeIncluder(pyscipopt.Eventhdlr):
                 recorder = NodeFeatureRecorder(self.model)
                 data = recorder.record(sibling)
                 self.dataset.append(data)
-
-# m = Model()
-# m.readProblem("/Users/work/Desktop/LP/instances/er_n=124_m=4524_p=0.60_SET2_setparam=100.00_alpha=0.50_0.lp")
-# includer = NodeIncluder()
-# m.includeEventhdlr(includer, "Includer", "")
-# m.includeNodesel()
-# m.hideOutput()
-# m.optimize()
-# print(len(includer.dataset))
-# m.freeProb()
