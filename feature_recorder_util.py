@@ -10,7 +10,7 @@ class NodeFeatureRecorder():
         '''
         These features below are the node features. 
         '''
-        self.nodeFeatures = []
+        # self.nodeFeatures = []
         self.nodeselGap = 0 
         self.nodeselGapInf = 0 
         self.relativeDepth = 0
@@ -27,13 +27,14 @@ class NodeFeatureRecorder():
         These features below are the features obtained according to the branching 
         status at the time of a particular node being focussed. 
         '''
-        self.branchFeatures = []
+        # self.branchFeatures = []
         self.boundLPDiff = 0 
         self.rootLPDiff = 0
         self.pseudocost = 0 
         self.branchPriorityDown = 0
         self.branchPriorityUp = 0
         self.branchVarInf = 0
+        self.features = []
         # self.model = model
 
     def record(self, model, node):
@@ -46,10 +47,15 @@ class NodeFeatureRecorder():
         self.depth = self.model.getDepth()
         if self.depth > self.maxdepth: 
             self.maxdepth = self.depth
+        
         lb_root = abs(self.model.getRootLowerBound())
-        lb_node = self.model.getCurrentNode().getLowerbound()
+        # print('lower bound root:', lb_root)
+        lb_node = node.getLowerbound()
+        # print('lower bound node: ', lb_node)
         ub = self.model.getUpperbound()
+        # print('global upper bound: ', ub)
         lb = self.model.getLowerbound()
+        # print('global lower bound: ', lb)
 
         if lb_root == 0: 
             lb_root = 0.0001
@@ -69,14 +75,14 @@ class NodeFeatureRecorder():
         
         self.relativeDepth = self.depth / (self.maxdepth * 10)
         self.lowerBound = lb / lb_root 
-        estimate = self.model.getCurrentNode().getEstimate()
+        estimate = node.getEstimate()
         self.estimate = estimate / lb_root
         if lb != ub: 
             self.relativeBound = (lb_node - lb) / (ub - lb)
         
         self.plungeDepth = self.model.getPlungeDepth()
         
-        node_type = self.model.getCurrentNode().getType()
+        node_type = node.getType()
         if node_type == 2: 
             self.nodeIsSibling = 1 
         elif node_type == 3: 
@@ -84,22 +90,21 @@ class NodeFeatureRecorder():
         elif node_type == 4: 
             self.nodeIsLeaf = 1
 
-        self.nodeFeatures.append([self.nodeselGap, 
-                        self.nodeselGapInf, 
-                        self.relativeDepth, 
-                        self.lowerBound, 
-                        self.estimate,
-                        self.globalUpperBound, 
-                        self.globalUpperBoundInf,
-                        self.relativeBound, 
-                        self.plungeDepth, 
-                        self.nodeIsSibling, 
-                        self.nodeIsChild, 
-                        self.nodeIsLeaf 
-                        ])
+        self.features.append(self.nodeselGap) 
+        self.features.append(self.nodeselGapInf) 
+        self.features.append(self.relativeDepth) 
+        self.features.append(self.lowerBound) 
+        self.features.append(self.estimate)
+        self.features.append(self.globalUpperBound) 
+        self.features.append(self.globalUpperBoundInf)
+        self.features.append(self.relativeBound) 
+        self.features.append(self.plungeDepth) 
+        self.features.append(self.nodeIsSibling)    
+        self.features.append(self.nodeIsChild)                
+        self.features.append(self.nodeIsLeaf)
 
         # Branching features 
-        domainChange = self.model.getCurrentNode().getDomchg()
+        domainChange = node.getDomchg()
         if domainChange:
             branchbound = domainChange.getBoundchgs()[0].getNewBound()
             branchvar =  domainChange.getBoundchgs()[0].getVar()
@@ -115,7 +120,7 @@ class NodeFeatureRecorder():
 
             self.boundLPDiff = branchbound - varsol
             self.rootLPDiff = varrootsol - varsol
-            self.pseudocost = self.model.getPseudoCost(branchvar, branchbound - varsol)
+            # self.pseudocost = self.model.getPseudoCost(branchvar, branchbound - varsol)
             if branchdir == 1:
                 self.branchPriorityDown = 1 
             elif branchdir == 0: 
@@ -125,17 +130,13 @@ class NodeFeatureRecorder():
                 self.branchVarInf = self.model.getAvgInferences(branchvar, 1) / self.maxdepth
             else: 
                 self.branchVarInf = self.model.getAvgInferences(branchvar, 0) / self.maxdepth
-        
-            self.branchFeatures.append([
-                self.boundLPDiff, 
-                self.rootLPDiff, 
-                self.pseudocost, 
-                self.branchPriorityDown, 
-                self.branchPriorityUp, 
-                self.branchVarInf
-            ])
-
-            return [self.nodeFeatures, self.branchFeatures]
+            self.features.append(self.boundLPDiff)
+            self.features.append(self.rootLPDiff) 
+            self.features.append(self.pseudocost) 
+            self.features.append(self.branchPriorityDown) 
+            self.features.append(self.branchPriorityUp) 
+            self.features.append(self.branchVarInf)
+        return self.features
 
 class FeatureRecordEventHandler(pyscipopt.Eventhdlr): 
     def __init__(self): 

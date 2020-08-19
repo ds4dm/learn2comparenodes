@@ -3,6 +3,7 @@ from pyscipopt import Model, Nodesel, Eventhdlr
 import pyscipopt
 import argparse
 from feature_recorder_util import NodeFeatureRecorder
+import csv
 
 
 class InternalNodeSelector(Nodesel):
@@ -18,13 +19,13 @@ class InternalNodeSelector(Nodesel):
 
 
 class OracleNodeSelector(Nodesel):
-    def __init__(self, optsol, nodesel_name, feature_file = 'features.txt'):
+    def __init__(self, optsol, nodesel_name, instance):
         self.nodesel_name = nodesel_name
         self.optsol = optsol
         self.optnode = None
-        self.feature_file = feature_file
         self.features = {}
         self.labels = {}
+        self.instance = instance 
 
     def nodeinitsol(self): 
         # TODO: how does nodeinitsol handle restarts ?
@@ -32,6 +33,7 @@ class OracleNodeSelector(Nodesel):
         self.optnode_selected = False
 
     def nodeselect(self):
+        # selnode = self.model.executeNodeSel(self.nodesel_name)
         selnode = None
         leaves, children, siblings = self.model.getOpenNodes()
         print(f"    oracle: {len(leaves)} leaves, {len(children)} children, {len(siblings)} siblings")
@@ -72,7 +74,6 @@ class OracleNodeSelector(Nodesel):
         else:
             selnode = self.model.executeNodeSel(self.nodesel_name)
             print(f"    oracle: selecting the '{self.nodesel_name}' node")
-
         # checks whether the selected node is the optimal one
         self.optnode_selected = (self.optnode and self.optnode == selnode)
 
@@ -80,190 +81,44 @@ class OracleNodeSelector(Nodesel):
             print(f"    selected node {selnode.getNumber()}")
         else:
             print(f"    no node selected")
-        # Record features here? 
+        
+        for child in children: 
+            data = NodeFeatureRecorder().record(self.model, child)
+            self.features[child.getNumber()] = data
+        for sibling in siblings: 
+            data = NodeFeatureRecorder().record(self.model, sibling)
+            self.features[sibling.getNumber()] = data  
+        # Record features here?
         return {"selnode": selnode}
 
     def nodecomp(self, node1, node2): 
-        if self.optnode == node1: 
-            decision = 1 
-        elif self.optnode == node2: 
-            decision = -1 
-        else: 
-            decision = self.model.executeNodeComp(self.nodesel_name, node1, node2)
-        if self.optnode == node1 or self.optnode == node2: 
-            data1 = NodeFeatureRecorder().record(self.model, node1)
-            data2 = NodeFeatureRecorder().record(self.model, node2)
-            print(data1, data2)
+        decision = self.model.executeNodeComp(self.nodesel_name, node1, node2)
+        if decision > 0: 
+            self.labels[node1.getNumber()] = 1 
+            self.labels[node2.getNumber()] = 0 
+        elif decision < 0: 
+            self.labels[node1.getNumber()] = 0
+            self.labels[node2.getNumber()] = 1     
         return decision 
 
-
-# instances_indset = [f"/Users/work/Desktop/learn2branch/data/instances/indset/transfer_500_4/instance_{i+1}.lp" for i in range(10)]
-# instances_setcover = [f"/Users/work/Desktop/learn2branch/data/instances/setcover/transfer_500r_1000c_0.05d/instance_{i+1}.lp" for i in range(10)]
-# # instances = Path('data/instances/indset/transfer_500_4/').glob("*.lp")
-# # instances = Path('data/instances/setcover/transfer_500r_1000c_0.05d/').glob("*.lp")
-# nodeselectors = [
-#     'estimate',
-#     'bfs',
-#     'hybridestim',
-#     'restartdfs',
-#     'uct',
-#     'dfs',
-#     'breadthfirst',
-# ]
-
-
-# instances_indset = [str(instance) for instance in instances_indset]
-# instances_setcover = [str(instance) for instance in instances_setcover]
-# names = ['mode','method', 'instance', 'time', 'nnodes', 'pdi']
-
-# instances = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')
-# import csv
-# with open("results_mik.csv", 'w', newline='') as csvfile:
-#     writer = csv.DictWriter(csvfile, fieldnames=names)
-#     writer.writeheader()
-#     for instance in instances: 
-#         instance = str(instance)
-#         print(f"instance {instance}")
-#         sol_file = instance.strip(".") + "_solution.txt"
-#         m = Model()
-#         m.hideOutput()
-#         m.readProblem(instance)
-#         m.optimize()
-#         m.writeBestSol(sol_file)
-#         m.freeProb()
-#         print(f"optimal solution written to {sol_file}")
-
-#         for nodeselector in nodeselectors:
-#             # Oracle
-#             mode = 'oracle'
-#             m = Model()
-#             m.hideOutput()
-#             m.readProblem(instance)
-#             solution = m.readSolFile(sol_file)
-#             m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
-#             m.optimize()
-#             nnodes = m.getNNodes()
-#             nlpiterations = m.getNLPIterations()
-#             stime = m.getSolvingTime()
-#             pdi = m.getStatPrimalDualIntegral()
-#             writer.writerow({
-#                 'mode': mode, 
-#                 'method': nodeselector, 
-#                 'instance': instance, 
-#                 'time': stime, 
-#                 'nnodes': nnodes, 
-#                 'pdi': pdi,
-#             })
-#             csvfile.flush()
-#             m.freeProb()
-#             del solution
-
-#             # vanilla SCIP rules
-#             mode = 'vanilla_scip'
-#             m = Model()
-#             m.hideOutput()
-#             m.readProblem(instance)
-#             m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
-#             m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
-#             m.optimize()
-#             nnodes = m.getNNodes()
-#             nlpiterations = m.getNLPIterations()
-#             stime = m.getSolvingTime()
-#             pdi = m.getStatPrimalDualIntegral()
-#             writer.writerow({
-#                 'mode': mode, 
-#                 'method': nodeselector, 
-#                 'instance': instance, 
-#                 'time': stime, 
-#                 'nnodes': nnodes, 
-#                 'pdi': pdi,
-#             })
-#             csvfile.flush()
-#             m.freeProb()
-
-
-# for instance in instances_setcover: 
-#     print(f"instance {instance}")
-#     sol_file = instance.strip(".") + "_solution.txt"
-#     m = Model()
-#     m.hideOutput()
-#     m.readProblem(instance)
-#     m.optimize()
-#     m.writeBestSol(sol_file)
-#     m.freeProb()
-#     print(f"optimal solution written to {sol_file}")
-
-#     for nodeselector in nodeselectors:
-
-#         # Oracle
-#         m = Model()
-#         m.hideOutput()
-#         m.readProblem(instance)
-#         solution = m.readSolFile(sol_file)
-#         m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
-#         m.optimize()
-#         nnodes = m.getNNodes()
-#         nlpiterations = m.getNLPIterations()
-#         stime = m.getSolvingTime()
-#         pdi = m.getStatPrimalDualIntegral()
-#         print(f"  oracle_{nodeselector}: {nnodes} nodes, {stime} solving time, {pdi} PDI")
-#         m.freeProb()
-#         del solution
-
-#         # vanilla SCIP rules
-#         m = Model()
-#         m.hideOutput()
-#         m.readProblem(instance)
-#         m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
-#         m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
-#         m.optimize()
-#         nnodes = m.getNNodes()
-#         nlpiterations = m.getNLPIterations()
-#         stime = m.getSolvingTime()
-#         pdi = m.getStatPrimalDualIntegral()
-#         print(f"  {nodeselector}: {nnodes} nodes, {stime} solving time, {pdi} PDI")
-#         m.freeProb()
-
-# instances = Path('/Users/work/Desktop/Learn2SelectNodes/mik.data/bounded/').rglob('*.mps.gz')    # 90 bounded files
-# for instance in instances: 
-#     instance = str(instance)
-#     print(f"instance {instance}")
-#     sol_file = instance.strip(".") + "_solution.txt"
-#     m = Model()
-#     m.hideOutput()
-#     m.readProblem(instance)
-#     m.optimize()
-#     m.writeBestSol(sol_file)
-#     m.freeProb()
-#     print(f"optimal solution written to {sol_file}")
-
-#     for nodeselector in nodeselectors:
-
-#         # Oracle
-#         m = Model()
-#         m.hideOutput()
-#         m.readProblem(instance)
-#         solution = m.readSolFile(sol_file)
-#         m.includeNodesel(OracleNodeSelector(solution, nodeselector), f"py_{nodeselector}", "", 666666, 666666)
-#         m.optimize()
-#         nnodes = m.getNNodes()
-#         nlpiterations = m.getNLPIterations()
-#         stime = m.getSolvingTime()
-#         pdi = m.getStatPrimalDualIntegral()
-#         print(f"  oracle_{nodeselector}: {nnodes} nodes, {stime} solving time, {pdi} PDI")
-#         m.freeProb()
-#         del solution
-
-#         # vanilla SCIP rules
-#         m = Model()
-#         m.hideOutput()
-#         m.readProblem(instance)
-#         m.setParam(f"nodeselection/{nodeselector}/stdpriority", 666666)
-#         m.setParam(f"nodeselection/{nodeselector}/memsavepriority", 666666)
-#         m.optimize()
-#         nnodes = m.getNNodes()
-#         nlpiterations = m.getNLPIterations()
-#         stime = m.getSolvingTime()
-#         pdi = m.getStatPrimalDualIntegral()
-#         print(f"  {nodeselector}: {nnodes} nodes, {stime} solving time, {pdi} PDI")
-#         m.freeProb()
+    def nodeexitsol(self):
+        dataset = {}
+        features_dict = self.features
+        labels_dict = self.labels
+        for key, value in features_dict.items():
+            if key in labels_dict.keys():
+                y = labels_dict[key]
+                value.append(y)
+                print(value) 
+                dataset[key] = value
+        keyword = 'features'
+        header = []
+        for i in range(18): 
+            header.append(keyword + '_' + str(i))
+        header.append('label')
+        csv_file = str(self.instance).strip('.') + '.csv'
+        with open(csv_file, 'w', newline='') as csvfile: 
+            writer = csv.writer(csvfile)
+            writer.writerow(header)
+            for key, value in dataset.items():
+                writer.writerow(value)

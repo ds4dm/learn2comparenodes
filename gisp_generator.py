@@ -70,13 +70,13 @@ if __name__ == "__main__":
     exp_dir = None
     min_n = None
     max_n = None
-    er_prob = 0.1
+    er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
     alphaE2 = 0.5
     timelimit = 7200.0
     solveInstance = False
-    seed = 0
+    # seed = 0
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-instance':
             instance = sys.argv[i + 1]
@@ -112,30 +112,30 @@ if __name__ == "__main__":
         if not os.path.exists(lp_dir):
             raise
     # Seed generator
-    random.seed(seed)
+    for seed in range(100):
+        random.seed(seed)
+        print(whichSet)
+        print(setParam)
+        print(alphaE2)
+        if instance is None:
+            # Generate random graph
+            numnodes = random.randint(min_n, max_n)
+            g = nx.erdos_renyi_graph(n=numnodes, p=er_prob, seed=seed)
+            lpname = ("er_n=%d_m=%d_p=%.2f_%s_setparam=%.2f_alpha=%.2f_%d"
+                    % (numnodes, nx.number_of_edges(g), er_prob, whichSet,
+                        setParam, alphaE2, seed))
+        else:
+            g = dimacsToNx(instance)
+            # instanceName = os.path.splitext(instance)[1]
+            instanceName = instance.split('/')[-1]
+            lpname = ("%s_%s_%g_%g_%d" % (instanceName, whichSet, alphaE2,
+                    setParam, seed))
 
-    print(whichSet)
-    print(setParam)
-    print(alphaE2)
-    if instance is None:
-        # Generate random graph
-        numnodes = random.randint(min_n, max_n)
-        g = nx.erdos_renyi_graph(n=numnodes, p=er_prob, seed=seed)
-        lpname = ("er_n=%d_m=%d_p=%.2f_%s_setparam=%.2f_alpha=%.2f_%d"
-                  % (numnodes, nx.number_of_edges(g), er_prob, whichSet,
-                     setParam, alphaE2, seed))
-    else:
-        g = dimacsToNx(instance)
-        # instanceName = os.path.splitext(instance)[1]
-        instanceName = instance.split('/')[-1]
-        lpname = ("%s_%s_%g_%g_%d" % (instanceName, whichSet, alphaE2,
-                  setParam, seed))
-
-    # Generate node revenues and edge costs
-    generateRevsCosts(g, whichSet, setParam)
-    # Generate the set of removable edges
-    E2 = generateE2(g, alphaE2)
-    # Create IP, write it to file, and solve it with CPLEX
-    print(lpname)
-    # ip = createIP(g, E2, lp_dir + "/" + lpname)
-    createIP(g, E2, lp_dir + "/" + lpname + ".lp")
+        # Generate node revenues and edge costs
+        generateRevsCosts(g, whichSet, setParam)
+        # Generate the set of removable edges
+        E2 = generateE2(g, alphaE2)
+        # Create IP, write it to file, and solve it with CPLEX
+        print(lpname)
+        # ip = createIP(g, E2, lp_dir + "/" + lpname)
+        createIP(g, E2, lp_dir + "/" + lpname + ".lp")
