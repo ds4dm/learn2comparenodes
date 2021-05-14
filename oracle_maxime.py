@@ -88,7 +88,7 @@ class OracleNodeSelector(Nodesel):
         for sibling in siblings: 
             data = NodeFeatureRecorder().record(self.model, sibling)
             self.features[sibling.getNumber()] = data  
-        # Record features here?
+        # Record features here? 
         return {"selnode": selnode}
 
     def nodecomp(self, node1, node2): 

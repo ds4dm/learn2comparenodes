@@ -67,7 +67,7 @@ def createIP(g, E2, ipfilename):
 
 if __name__ == "__main__":
     instance = None
-    exp_dir = "./"
+    exp_dir = "./instances"
     min_n = 5
     max_n = 20
     er_prob = 0.6
