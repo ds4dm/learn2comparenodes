@@ -105,7 +105,7 @@ if __name__ == "__main__":
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir = "LP/" + exp_dir
+    lp_dir = "data_generation/LP/" + exp_dir
     try:
         os.makedirs(lp_dir)
     except OSError:
