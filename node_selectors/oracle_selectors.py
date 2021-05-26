@@ -11,6 +11,18 @@ from pyscipopt import Nodesel
 
 
 #Maxime
+class InternalNodeSelector(Nodesel):
+    def __init__(self, nodesel_name):
+        self.nodesel_name = nodesel_name
+
+    def nodeselect(self):
+        selnode = self.model.executeNodeSel(self.nodesel_name)
+        return {"selnode": selnode}
+
+    def nodecomp(self, node1, node2): 
+        return self.model.executeNodeComp(self.nodesel_name, node1, node2)
+
+
 class OracleNodeSelector(Nodesel):
     def __init__(self, optsol, nodesel_name, instance):
         self.nodesel_name = nodesel_name
