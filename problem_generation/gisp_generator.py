@@ -2,6 +2,7 @@ import os
 import sys
 import networkx as nx
 import random
+import pyscipopt as sp
 
 
 def dimacsToNx(filename):
@@ -17,13 +18,13 @@ def dimacsToNx(filename):
 def generateRevsCosts(g, whichSet, setParam):
     if whichSet == 'SET1':
         for node in g.nodes():
-            g.node[node]['revenue'] = random.randint(1, 100)
+            g.nodes[node]['revenue'] = random.randint(1, 100)
         for u, v, edge in g.edges(data=True):
             edge['cost'] = (g.node[u]['revenue'] /
                             + g.node[v]['revenue'])/float(setParam)
     elif whichSet == 'SET2':
         for node in g.nodes():
-            g.node[node]['revenue'] = float(setParam)
+            g.nodes[node]['revenue'] = float(setParam)
         for u, v, edge in g.edges(data=True):
             edge['cost'] = 1.0
 
@@ -67,9 +68,9 @@ def createIP(g, E2, ipfilename):
 
 if __name__ == "__main__":
     instance = None
-    exp_dir = None
-    min_n = None
-    max_n = None
+    exp_dir = ""
+    min_n = 100
+    max_n = 140
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
@@ -105,7 +106,7 @@ if __name__ == "__main__":
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir = "LP/" + exp_dir
+    lp_dir = "GISP/" + exp_dir
     try:
         os.makedirs(lp_dir)
     except OSError:
@@ -139,3 +140,9 @@ if __name__ == "__main__":
         print(lpname)
         # ip = createIP(g, E2, lp_dir + "/" + lpname)
         createIP(g, E2, lp_dir + "/" + lpname + ".lp")
+        model = sp.Model()
+        model.readProblem(lp_dir +"/" + lpname + ".lp")
+        model.optimize()
+        model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
+        
+        
