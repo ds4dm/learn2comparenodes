@@ -9,48 +9,24 @@ Created on Tue Oct 19 19:24:33 2021
 
 #Test different nodesels under different problems
 
-from oracle_nodesel import OracleNodeSelectorAbdel
-from recorder import Node2Grapher, CompFeatureSaver
+
 from pathlib import Path 
+from learning import oracle_ns_estimator
 import pyscipopt.scip as sp
 import numpy as np
 
-class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
-    
-    def __init__(self, comp_feature_saver =None):
-        super().__init__()
-        self.comp_feature_saver = comp_feature_saver
-    
-    def set_LP_feature_recorder(self, LP_feature_recorder):
-        self.comp_feature_saver.set_LP_feature_recorder(LP_feature_recorder)
-        
-        
-    def nodecomp(self, node1, node2):
-        
-        comp_res = super().nodecomp(node1, node2)
-        self.comp_feature_saver.append_data(self.model, node1, node2, comp_res)
-        
-        return comp_res
-    
-    
-def get_stats(nodesels, instances):
-    
+
+def get_stats(nodesels, instances, problem):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
-    
+    model = sp.model()
+    model.includeNodesel(oracle_ns_estimator(problem), nodesels[0], 'testing',100, 100)
     for instance in instances:
         
         instance = str(instance)
         model.readProblem(instance)
-        optsol = model.readSolFile(instance.replace(".lp", ".sol"))
         
-        #record solution : WORKS
-        oracle_ns.setOptsol(optsol)
-        feature_recorder = Node2Grapher(model.getVars(), model.getConss())
-        oracle_ns.set_LP_feature_recorder(feature_recorder)
-        
-        
-        #test nodesels
+       #test nodesels
         for nodesel in nodesels:
             
             model.freeTransform()
@@ -64,7 +40,7 @@ def get_stats(nodesels, instances):
             model.setNodeselPriority(nodesel, 536870911)
             
             
-            print( nodesel + " on GISP " + instance.split("/")[-1].split(".lp")[0] + '\n') 
+            print( nodesel + f" on {problem} " + instance.split("/")[-1].split(".lp")[0] + '\n') 
             model.optimize()
             print("    # of processed nodes : " + str(model.getNNodes()) +"\n")
             print("    Time                 : " + str(model.getSolvingTime()) +"\n")
@@ -74,35 +50,21 @@ def get_stats(nodesels, instances):
 
 
 
-def display_stats(nodesels_record):
+def display_stats(nodesels_record, problem):
     
     for k in nodesels_record:
         nnode_mean, time_mean = np.mean(nodesels_record[k], axis=0)
         nnode_med, time_med = np.median(nodesels_record[k], axis=0)
+        print(f"Problem {problem})
         print( k + f"\n \t Means : NNode {int(nnode_mean)}, time {int(time_mean)}" + 
               f"\n \t Medians : NNodes {int(nnode_med)}, time {int(time_med)}" )
         
-#Defining some variables
-gisp_instances = Path("./problem_generation/GISP/").glob("*.lp")
-oracle_name = 'oracle'
-nodesels = [oracle_name]
 
-
-
-#Initializing the model 
-model = sp.Model()
-model.hideOutput()
-comp_feature_saver = CompFeatureSaver()
-oracle_ns = OracleNodeSelRecorder(comp_feature_saver)
-model.includeNodesel(oracle_ns, oracle_name, 'testing',100, 100)
-
-
-
-display_stats(get_stats(nodesels, gisp_instances))
-
-print(len(comp_feature_saver.get_dataset()))
-
-
+problems = ["GISP"]
+nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
+for problem in problems:
+    instances = Path("./problem_generation/{problem}/test").glob("*.lp")
+    display_stats(get_stats(nodesels, gisp_instances, problem))
 
 
 
