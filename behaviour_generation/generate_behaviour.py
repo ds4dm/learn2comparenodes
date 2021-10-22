@@ -17,8 +17,10 @@ from node_selectors.oracle_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompBehaviourSaver
 from pathlib import Path 
 import pyscipopt.scip as sp
-from multiprocessing import Pool
+import numpy as np
+import multiprocessing as md
 from functools import partial
+
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
@@ -71,7 +73,11 @@ def run_episode(instance, problem):
     
     return 1#sucess
 
-    
+def run_episodes(instances, problem):
+    for instance in instances:
+        run_episode(instance, problem)
+    print("finished running episodes for process " + str(md.current_process()))
+
 if __name__ == "__main__":
     
     #Defining some variables
@@ -83,11 +89,21 @@ if __name__ == "__main__":
     
     for problem in problems:
         
-        instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))[0:1]
+        instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
+        cpu_count = md.cpu_count()
+        chuck_size = int(np.ceil(len(instances)/cpu_count))
+        
+        processes = [  md.Process(name=f"worker {p}", target=partial(run_episodes, instances=instances[ p*chuck_size : (p+1)*chuck_size], problem=problem[:]))
+                       for p in range(cpu_count)]
+        
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        b = list(map(lambda p: p.join(), processes)) #join processes
         
         
-        pool = Pool()
-        run_episode_closure = partial(run_episode, problem=problem)
+            
         
-        comp_savers = pool.map(run_episode_closure, instances)
+                             
+            
+        
+
         

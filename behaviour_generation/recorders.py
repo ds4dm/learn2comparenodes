@@ -73,7 +73,7 @@ class CompBehaviourSaver():
             pickle.dump(self.LP_feature_recorder.all_conss_features ,handle, protocol=pickle.HIGHEST_PROTOCOL)
             pickle.dump(self.dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        handle.close()
+            handle.close()
         
         return self
     
@@ -86,8 +86,8 @@ class CompBehaviourSaver():
             all_conss_features = pickle.load(handle)
             dataset = pickle.load(handle)
             
-        res = []
-        
+            handle.close()
+                    
         for data in dataset:
             g1_idx, g2_idx = data[0],data[1]
             node0_attributes1, cons_idxs1 = graphidx2graphdata[g1_idx]
@@ -95,9 +95,9 @@ class CompBehaviourSaver():
             
             g1 = CompBehaviourSaver._get_graph_data(node0_attributes1, cons_idxs1, all_conss, all_conss_features)
             g2 = CompBehaviourSaver._get_graph_data(node0_attributes1, cons_idxs1, all_conss, all_conss_features)
-            res.append( (g1,g2, data[2] ))
+            
+            yield g1,g2, data[2] 
         
-        return res
             
 
     
