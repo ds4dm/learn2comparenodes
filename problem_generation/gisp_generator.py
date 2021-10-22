@@ -69,8 +69,8 @@ def createIP(g, E2, ipfilename):
 if __name__ == "__main__":
     instance = None
     exp_dir = ""
-    min_n = 100
-    max_n = 140
+    min_n = 30
+    max_n = 40
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir = "GISP/" + exp_dir
+    lp_dir = "data/GISP/train" + exp_dir
     try:
         os.makedirs(lp_dir)
     except OSError:

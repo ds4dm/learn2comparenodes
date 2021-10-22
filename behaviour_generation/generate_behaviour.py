@@ -37,7 +37,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
         comp_res = super().nodecomp(node1, node2)
         self.comp_behaviour_saver.append_data(self.model, node1, node2, comp_res)
-        print("saved comp # " + str(self.counter))
+        #print("saved comp # " + str(self.counter))
         self.counter += 1
         return comp_res
 
@@ -53,7 +53,7 @@ def run_episode(instance, problem):
     oracle_ns = OracleNodeSelRecorder(comp_behaviour_saver)
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing", 536870911,  536870911)
 
-    print(f"Getting behaviour for instance {problem} "+ str(instance).split("/")[-1] )
+    #print(f"Getting behaviour for instance {problem} "+ str(instance).split("/")[-1] )
     
     instance = str(instance)
     model.readProblem(instance)
