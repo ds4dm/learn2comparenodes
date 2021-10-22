@@ -37,7 +37,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
         comp_res = super().nodecomp(node1, node2)
         self.comp_behaviour_saver.append_data(self.model, node1, node2, comp_res)
-        #print("saved comp # " + str(self.counter))
+        print("saved comp # " + str(self.counter))
         self.counter += 1
         return comp_res
 
@@ -45,28 +45,26 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 def run_episode(instance, problem):
     
-    comp_behaviour_saver = CompBehaviourSaver(f"./data/{problem}", instance_name=str(instance).split("/")[-1])
-    
     model = sp.Model()
     model.hideOutput()
     
+    #Setting up oracle selector
+    instance = str(instance)
+    model.readProblem(instance)
+    
+    optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+    comp_behaviour_saver = CompBehaviourSaver(f"./data/{problem}", instance_name=str(instance).split("/")[-1])
     oracle_ns = OracleNodeSelRecorder(comp_behaviour_saver)
+    oracle_ns.setOptsol(optsol)
+    oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss()))
+    
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing", 536870911,  536870911)
 
     #print(f"Getting behaviour for instance {problem} "+ str(instance).split("/")[-1] )
-    
-    instance = str(instance)
-    model.readProblem(instance)
-    optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-    #record solution : WORKS
-    oracle_ns.setOptsol(optsol)
-    feature_recorder = LPFeatureRecorder(model.getVars(), model.getConss())
-    oracle_ns.set_LP_feature_recorder(feature_recorder)
-    
 
+    # Run the optimizer and save behaviour
     model.freeTransform()
     model.readProblem(instance)
-    
     model.optimize()
     
     comp_behaviour_saver.save_dataset()
