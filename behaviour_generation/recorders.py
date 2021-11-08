@@ -57,11 +57,11 @@ class CompBehaviourSaver():
         adjacency_matrixes = np.array(all_conss)[cons_idxs]
         node1_attributess = np.array(all_conss_features)[cons_idxs]
         
-        #adjacency_matrix = sparse.hstack(tuple(adjacency_matrixes), format="csr") 
+        adjacency_matrix = sparse.hstack(tuple(adjacency_matrixes), format="coo") 
         
-        #node1_attributes = np.vstack(tuple(node1_attributess))
+        node1_attributes = np.vstack(tuple(node1_attributess))
         
-        return node0_attributes, node1_attributess, adjacency_matrixes
+        return node0_attributes, node1_attributes, np.vstack( (adjacency_matrix.row, adjacency_matrix.col)), adjacency_matrix.data[:, np.newaxis]
         
     
     def save_dataset(self):
@@ -77,7 +77,7 @@ class CompBehaviourSaver():
         
         return self
     
-    def load_dataset(pickle_file_path):
+    def load_behaviour_from_pickle(pickle_file_path):
         
         with open(pickle_file_path, 'rb') as handle:
             
