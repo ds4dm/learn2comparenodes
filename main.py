@@ -55,7 +55,7 @@ def display_stats(nodesels_record, problem):
     for k in nodesels_record:
         nnode_mean, time_mean = np.mean(nodesels_record[k], axis=0)
         nnode_med, time_med = np.median(nodesels_record[k], axis=0)
-        print(f"Problem {problem})
+        print(f"Problem {problem}")
         print( k + f"\n \t Means : NNode {int(nnode_mean)}, time {int(time_mean)}" + 
               f"\n \t Medians : NNodes {int(nnode_med)}, time {int(time_med)}" )
         
@@ -64,7 +64,7 @@ problems = ["GISP"]
 nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
 for problem in problems:
     instances = Path("./problem_generation/{problem}/test").glob("*.lp")
-    display_stats(get_stats(nodesels, gisp_instances, problem))
+    display_stats(get_stats(nodesels,instances, problem))
 
 
 
