@@ -3,6 +3,9 @@ import sys
 import networkx as nx
 import random
 import pyscipopt as sp
+import numpy as np
+import multiprocessing as md
+from functools import partial
 
 
 def dimacsToNx(filename):
@@ -64,6 +67,43 @@ def createIP(g, E2, ipfilename):
         lp_file.write("\nbinary\n")
         for node in g.nodes():
             lp_file.write(f"x{node}\n")
+            
+def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, max_n, er_prob, instance, lp_dir) :
+    
+    for seed in range(seed_start, seed_end):
+         
+        random.seed(seed)
+        print(whichSet)
+        print(setParam)
+        print(alphaE2)
+        if instance is None:
+            # Generate random graph
+            numnodes = random.randint(min_n, max_n)
+            g = nx.erdos_renyi_graph(n=numnodes, p=er_prob, seed=seed)
+            lpname = ("er_n=%d_m=%d_p=%.2f_%s_setparam=%.2f_alpha=%.2f_%d"
+                    % (numnodes, nx.number_of_edges(g), er_prob, whichSet,
+                        setParam, alphaE2, seed))
+        else:
+            g = dimacsToNx(instance)
+            # instanceName = os.path.splitext(instance)[1]
+            instanceName = instance.split('/')[-1]
+            lpname = ("%s_%s_%g_%g_%d" % (instanceName, whichSet, alphaE2,
+                    setParam, seed))
+        
+        # Generate node revenues and edge costs
+        generateRevsCosts(g, whichSet, setParam)
+        # Generate the set of removable edges
+        E2 = generateE2(g, alphaE2)
+        # Create IP, write it to file, and solve it with CPLEX
+        print(lpname)
+        # ip = createIP(g, E2, lp_dir + "/" + lpname)
+        createIP(g, E2, lp_dir + "/" + lpname + ".lp")
+        model = sp.Model()
+        model.readProblem(lp_dir +"/" + lpname + ".lp")
+        model.optimize()
+        model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
+
+        
 
 
 if __name__ == "__main__":
@@ -77,6 +117,8 @@ if __name__ == "__main__":
     alphaE2 = 0.5
     timelimit = 7200.0
     solveInstance = False
+    train_n = 10000  
+    test_n  = 2000
     # seed = 0
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-instance':
@@ -106,43 +148,54 @@ if __name__ == "__main__":
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir = "data/GISP/train" + exp_dir
+    lp_dir_train = "data/GISP/train" + exp_dir
+    lp_dir_test = "data/GISP/test" + exp_dir
     try:
-        os.makedirs(lp_dir)
+        os.makedirs(lp_dir_train)
+        os.makedirs(lp_dir_test)
     except OSError:
-        if not os.path.exists(lp_dir):
+        if not os.path.exists(lp_dir_train) or os.path.exists(lp_dir_test):
             raise
-    # Seed generator
-    for seed in range(100):
-        random.seed(seed)
-        print(whichSet)
-        print(setParam)
-        print(alphaE2)
-        if instance is None:
-            # Generate random graph
-            numnodes = random.randint(min_n, max_n)
-            g = nx.erdos_renyi_graph(n=numnodes, p=er_prob, seed=seed)
-            lpname = ("er_n=%d_m=%d_p=%.2f_%s_setparam=%.2f_alpha=%.2f_%d"
-                    % (numnodes, nx.number_of_edges(g), er_prob, whichSet,
-                        setParam, alphaE2, seed))
-        else:
-            g = dimacsToNx(instance)
-            # instanceName = os.path.splitext(instance)[1]
-            instanceName = instance.split('/')[-1]
-            lpname = ("%s_%s_%g_%g_%d" % (instanceName, whichSet, alphaE2,
-                    setParam, seed))
+            
+            
+    cpu_count = md.cpu_count()
+    chunk_size_train = int(np.ceil(train_n/cpu_count))
+    chunk_size_test = int(np.ceil(test_n/cpu_count))
+    
+    processes_train = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
+                                                                  p*chunk_size_train, 
+                                                                  (p+1)*chunk_size_train, 
+                                                                  whichSet, 
+                                                                  setParam, 
+                                                                  alphaE2, 
+                                                                  min_n, 
+                                                                  max_n, 
+                                                                  er_prob, 
+                                                                  instance, 
+                                                                  lp_dir_train))  
+                 for p in range(cpu_count) ]
+    
+    processes_test = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
+                                                                  p*chunk_size_test, 
+                                                                  (p+1)*chunk_size_test, 
+                                                                  whichSet, 
+                                                                  setParam, 
+                                                                  alphaE2, 
+                                                                  min_n, 
+                                                                  max_n, 
+                                                                  er_prob, 
+                                                                  instance, 
+                                                                  lp_dir_test))  
+                 for p in range(cpu_count) ]
+    
+    
+    
+    a = list(map(lambda p: p.start(), processes_train)) #run processes
+    b = list(map(lambda p: p.join(), processes_train)) #join processes
+    c = list(map(lambda p: p.start(), processes_test)) #run processes
+    d = list(map(lambda p: p.join(), processes_test)) #join processes
+    
+    
+            
+        
 
-        # Generate node revenues and edge costs
-        generateRevsCosts(g, whichSet, setParam)
-        # Generate the set of removable edges
-        E2 = generateE2(g, alphaE2)
-        # Create IP, write it to file, and solve it with CPLEX
-        print(lpname)
-        # ip = createIP(g, E2, lp_dir + "/" + lpname)
-        createIP(g, E2, lp_dir + "/" + lpname + ".lp")
-        model = sp.Model()
-        model.readProblem(lp_dir +"/" + lpname + ".lp")
-        model.optimize()
-        model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
-        
-        
