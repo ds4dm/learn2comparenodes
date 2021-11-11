@@ -2971,55 +2971,7 @@ cdef class Model:
         for i in range(SCIPgetNVarsLinear(self._scip, cons.scip_cons)):
             valsdict[bytes(SCIPvarGetName(_vars[i])).decode('utf-8')] = _vals[i]
         return valsdict
-    
-    def getConsVals(self, Constraint cons):
-        #To implemenet
-        
-        cdef SCIP_Real* _vals
-        cdef SCIP_VAR** _vars
-        cdef SCIP_Set* sett
-        cdef int size
-        cdef SCIP_Bool successVar 
-        cdef SCIP_Bool successVal
-        
-        SCIPconsGetNvars(cons.scip_cons, sett, &size, &successVar)
-        
-        
-        SCIPconsGetVars( cons.scip_cons, sett, _vars, size, &successVar)
 
-        SCIPgetConsVals(self._scip, cons.scip_cons, _vals, size, &successVal)
-        
-
-        valsdict = {}
-        for i in range(size):
-            valsdict[bytes(SCIPvarGetName(_vars[i])).decode('utf-8')] = _vals[i]
-        return valsdict
-        
-    
-    def getConsLhs(self, Constraint cons):
-        cdef SCIP_Real lhs
-        cdef SCIP_Bool* success
-        
-        lhs = SCIPconsGetLhs(self._scip, cons.scip_cons, success)
-        
-        return lhs
-    
-    def getConsRhs(self, Constraint cons):
-        cdef SCIP_Real rhs
-        cdef SCIP_Bool* success
-        
-        rhs = SCIPconsGetRhs(self._scip, cons.scip_cons, success)
-        
-        return rhs
-        
-    
-    
-    def getRow(self, Constraint cons):
-        cdef SCIP_ROW* row
-        row = SCIPconsGetRow(self._scip, cons.scip_cons)
-        return Row.create(row)
-    
-    
     def getDualsolLinear(self, Constraint cons):
         """Retrieve the dual solution to a linear constraint.
 

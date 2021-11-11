@@ -1582,20 +1582,7 @@ cdef extern from "scip/cons_cardinality.h":
                                           SCIP_CONS* cons,
                                           SCIP_VAR* var,
                                           SCIP_VAR* indvar)
-cdef extern from "scip/cons.h":
-    SCIP_RETCODE SCIPconsGetVars (	SCIP_CONS * 	cons,
-                        SCIP_SET * 	set,
-                        SCIP_VAR ** 	vars,
-                        int 	varssize,
-                        SCIP_Bool * 	success
-                        )	
-    
-    SCIP_RETCODE SCIPconsGetNVars(	SCIP_CONS * 	cons,
-                        SCIP_SET * 	set,
-                        int * 	nvars,
-                        SCIP_Bool * 	success 
-                        )	
-    
+
 cdef extern from "scip/cons_indicator.h":
     SCIP_RETCODE SCIPcreateConsIndicator(SCIP* scip,
                                          SCIP_CONS** cons,
@@ -1624,13 +1611,6 @@ cdef extern from "scip/cons_countsols.h":
     SCIP_RETCODE SCIPcount(SCIP* scip)
     SCIP_RETCODE SCIPsetParamsCountsols(SCIP* scip)
     SCIP_Longint SCIPgetNCountedSols(SCIP* scip, SCIP_Bool* valid)
-
-cdef extern from "scip/pub_misc_linear.h":
-    SCIP_RETCODE SCIPgetConsVals(SCIP* scip, SCIP_CONS* cons, SCIP_Real* vals,
-                                 int varrsize, SCIP_Bool* success)
-    SCIP_Real SCIPconsGetLhs(SCIP* scip, SCIP_CONS* cons, SCIP_Bool* success)
-    SCIP_Real SCIPconsGetRhs(SCIP* scip, SCIP_CONS* cons, SCIP_Bool* success)
-    SCIP_ROW* SCIPconsGetRow( SCIP*   scip,  SCIP_CONS* cons)
 
 cdef extern from "scip/paramset.h":
 
