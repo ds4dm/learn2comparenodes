@@ -13,6 +13,7 @@ Created on Tue Oct 12 12:54:57 2021
 
 @author: abdel
 """
+import os
 from node_selectors.oracle_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompBehaviourSaver
 from pathlib import Path 
@@ -86,6 +87,13 @@ if __name__ == "__main__":
     
     
     for problem in problems:
+        try:
+            os.makedirs(f"./data/{problem}/train")
+            
+        except OSError:
+            if not os.path.exists(f"./data/{problem}/train"):
+                raise
+                
         
         instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
         cpu_count = md.cpu_count()
