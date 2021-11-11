@@ -82,7 +82,7 @@ class OracleNodeSelectorAbdel(Nodesel):
                     elif (ntype1 != CHILD and ntype2 == CHILD) or (ntype1 != SIBLING and ntype2 == SIBLING):
                         return 1
                     else:
-                        return -self.model.dfs_compare()
+                        return -self.dfs_compare()
      
         
         elif self.model.isLT(estimate1, estimate2):
