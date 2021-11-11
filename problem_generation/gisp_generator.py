@@ -154,7 +154,7 @@ if __name__ == "__main__":
         os.makedirs(lp_dir_train)
         os.makedirs(lp_dir_test)
     except OSError:
-        if not os.path.exists(lp_dir_train) or os.path.exists(lp_dir_test):
+        if not (os.path.exists(lp_dir_train) and os.path.exists(lp_dir_test)):
             raise
             
             
