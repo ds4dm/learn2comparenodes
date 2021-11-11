@@ -7,5 +7,6 @@ conda env create -f env.yml
 
 conda install pyg -c pyg -c conda-forge -n l2sn
 
+source activate l2sn
 pip install ./pyscipopt
 
