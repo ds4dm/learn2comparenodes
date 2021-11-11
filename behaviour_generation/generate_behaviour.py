@@ -89,9 +89,9 @@ if __name__ == "__main__":
         
         instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
         cpu_count = md.cpu_count()
-        chuck_size = int(np.ceil(len(instances)/cpu_count))
+        chunck_size = int(np.ceil(len(instances)/cpu_count))
         
-        processes = [  md.Process(name=f"worker {p}", target=partial(run_episodes, instances=instances[ p*chuck_size : (p+1)*chuck_size], problem=problem[:]))
+        processes = [  md.Process(name=f"worker {p}", target=partial(run_episodes, instances=instances[ p*chunck_size : (p+1)*chunck_size], problem=problem[:]))
                        for p in range(cpu_count)]
         
         a = list(map(lambda p: p.start(), processes)) #run processes
