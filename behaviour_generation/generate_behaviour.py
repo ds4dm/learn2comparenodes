@@ -88,10 +88,10 @@ if __name__ == "__main__":
     
     for problem in problems:
         try:
-            os.makedirs(f"./data/{problem}/train")
+            os.makedirs(f"./data/{problem}")
             
         except OSError:
-            if not os.path.exists(f"./data/{problem}/train"):
+            if not os.path.exists(f"./data/{problem}"):
                 raise
                 
         
