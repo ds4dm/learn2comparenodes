@@ -109,8 +109,8 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 if __name__ == "__main__":
     instance = None
     exp_dir = ""
-    min_n = 30
-    max_n = 40
+    min_n = 120
+    max_n = 150
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
@@ -153,9 +153,8 @@ if __name__ == "__main__":
     try:
         os.makedirs(lp_dir_train)
         os.makedirs(lp_dir_test)
-    except OSError:
-        if not (os.path.exists(lp_dir_train) and os.path.exists(lp_dir_test)):
-            raise
+    except FileExistsError:
+        ""
             
             
     cpu_count = md.cpu_count()
