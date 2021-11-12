@@ -90,9 +90,9 @@ if __name__ == "__main__":
         try:
             os.makedirs(f"./data/{problem}")
             
-        except OSError:
-            if not os.path.exists(f"./data/{problem}"):
-                raise
+        except FileExistsError:
+            ""
+
                 
         
         instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
