@@ -72,8 +72,8 @@ class CompBehaviourSaver():
         with open(self.file_path+f"/{self.instance_name}.pickle", 'wb') as handle:
             
             pickle.dump(self.LP_feature_recorder.recorded_light, handle, protocol=pickle.HIGHEST_PROTOCOL) #dict nodenumbers to node0attributes, conssidxs
-            pickle.dump(self.LP_feature_recorder.all_conss, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            pickle.dump(self.LP_feature_recorder.all_conss_features ,handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.LP_feature_recorder.all_conss_blocks, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.LP_feature_recorder.all_conss_blocks_features ,handle, protocol=pickle.HIGHEST_PROTOCOL)
             pickle.dump(self.dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
             handle.close()
@@ -85,24 +85,24 @@ class CompBehaviourSaver():
         with open(pickle_file_path, 'rb') as handle:
             
             graphidx2graphdata = pickle.load(handle)
-            all_conss = pickle.load(handle)
-            all_conss_features = pickle.load(handle)
+            all_conss_blocks = pickle.load(handle)
+            all_conss_blocks_features = pickle.load(handle)
             dataset = pickle.load(handle)
             
             handle.close()
+            
                     
         for data in dataset:
-            g1_idx, g2_idx = data[0],data[1]
-            node0_attributes1, cons_idxs1 = graphidx2graphdata[g1_idx]
-            node0_attributes2, cons_idxs2 = graphidx2graphdata[g2_idx]
+            g1_idx, g2_idx, comp_res = data[0], data[1], data[2]
+            var_attributes0, cons_block_idxs0 = graphidx2graphdata[g1_idx]
+            var_attributes1, cons_block_idxs1 = graphidx2graphdata[g2_idx]
             
-            g1 = CompBehaviourSaver._get_graph_data(node0_attributes1, cons_idxs1, all_conss, all_conss_features)
-            g2 = CompBehaviourSaver._get_graph_data(node0_attributes1, cons_idxs1, all_conss, all_conss_features)
-            
-            yield g1,g2, data[2] 
+            g = CompBehaviourSaver._get_graph_pair_data(var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res)
         
-            
-
+            yield g #binary classification supervised learning
+    
+    
+ 
     
         
 
@@ -134,8 +134,8 @@ class LPFeatureRecorder():
         
         self.recorded = dict()
         self.recorded_light = dict()
-        self.all_conss = []
-        self.all_conss_features = []
+        self.all_conss_blocks = []
+        self.all_conss_blocks_features = []
         
     
     def get_graph(self, model, sub_milp):
@@ -166,7 +166,7 @@ class LPFeatureRecorder():
                 self._change_branched_bounds(graph, sub_milp)
                 
             self.recorded[sub_milp.getNumber()] = graph
-            self.recorded_light[sub_milp.getNumber()] = (graph.node0_attributes, graph.cons_idxs)
+            self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, graph.cons_block_idxs)
     
     
     def get_root_graph(self, model):
@@ -184,37 +184,37 @@ class LPFeatureRecorder():
         #add vars
         
         for idx, var in enumerate(self.varrs):
-            graph.node0_attributes[idx] = self._get_feature_var(model, var)
+            graph.var_attributes[idx] = self._get_feature_var(model, var)
 
     
     def _add_conss_to_graph(self, graph, model, conss):
 
-        node1_attributes = np.zeros((len(conss), graph.d1))        
+        cons_attributes = np.zeros((len(conss), graph.d1))        
         
         var_idxs = []
-        cons_idxs = []
+        cons_block_idxs = []
         weigths = []
         for cons_idx, cons in enumerate(conss):
             #vstack the cons n graph
-            node1_attributes[cons_idx] =  self._get_feature_cons(model, cons)
+            cons_attributes[cons_idx] =  self._get_feature_cons(model, cons)
             #h stack the coeff
 
             for var, coeff in model.getValsLinear(cons).items():
                 
                 var_idxs.append(self.var2idx[str(var)] )
-                cons_idxs.append(cons_idx)
+                cons_block_idxs.append(cons_idx)
                 weigths.append(coeff)
 
             
         
-        adjacency_matrix =  csr_matrix( (weigths, (var_idxs, cons_idxs) ), shape=(self.n0, len(conss))) 
+        adjacency_matrix =  csr_matrix( (weigths, (var_idxs, cons_block_idxs) ), shape=(self.n0, len(conss))) 
         
         #add idx to graph
-        graph.cons_idxs.append(len(self.all_conss_features))
+        graph.cons_block_idxs.append(len(self.all_conss_blocks_features)) #carreful with parralelization
         
         #add appropriate structure to self
-        self.all_conss_features.append(node1_attributes)
-        self.all_conss.append(adjacency_matrix)
+        self.all_conss_blocks_features.append(cons_attributes)
+        self.all_conss_blocks.append(adjacency_matrix)
 
     
         
@@ -225,7 +225,7 @@ class LPFeatureRecorder():
         
         for bvar, bbound, btype in zip(bvars, bbounds, btypes): 
             var_idx = self.var2idx[str(bvar)]
-            graph.node0_attributes[var_idx, int(btype) ] = bbound
+            graph.var_attributes[var_idx, int(btype) ] = bbound
             
         
     
@@ -267,16 +267,16 @@ class BipartiteGraphStatic0():
         
         self.n0, self.d0, self.d1 = n0, d0, d1
         
-        self.node0_attributes = np.zeros((n0,d0))
-        self.cons_idxs = []
+        self.var_attributes = np.zeros((n0,d0))
+        self.cons_block_idxs = []
     
     
     def copy(self):
         
         copy = BipartiteGraphStatic0(self.n0)
         
-        copy.node0_attributes = self.node0_attributes[:,:]
-        copy.cons_idxs = self.cons_idxs[:]
+        copy.var_attributes = self.var_attributes[:,:]
+        copy.cons_block_idxs = self.cons_block_idxs[:]
         
         return copy
    
