@@ -52,16 +52,19 @@ class CompBehaviourSaver():
         
    
     
-    def _get_graph_data( node0_attributes, cons_idxs, all_conss, all_conss_features ):
+    def _get_graph_pair_data( var_attributes0, var_attributes1, cons_block_idxs1, cons_block_idxs2, all_conss_blocks, all_conss_blocks_features, comp_res ):
              
-        adjacency_matrixes = np.array(all_conss)[cons_idxs]
-        node1_attributess = np.array(all_conss_features)[cons_idxs]
+        var_attributes = np.hstack((var_attributes0, var_attributes1)) #n_var x (2*dim_var)
         
-        adjacency_matrix = sparse.hstack(tuple(adjacency_matrixes), format="coo") 
+        adjacency_matrixes = np.array(all_conss_blocks)[list(set(cons_block_idxs1 + cons_block_idxs2))]
+        cons_attributes_blocks = np.array(all_conss_blocks_features)[list(set(cons_block_idxs1 + cons_block_idxs2))]
         
-        node1_attributes = np.vstack(tuple(node1_attributess))
+        adjacency_matrix = sparse.hstack(tuple(adjacency_matrixes), format="coo") #n_var x card(conss1 U conss1)
         
-        return node0_attributes, node1_attributes, np.vstack( (adjacency_matrix.row, adjacency_matrix.col)), adjacency_matrix.data[:, np.newaxis]
+        cons_attributes = np.vstack(tuple(cons_attributes_blocks)) #card(conss1 U conss2) X cons_dim
+        
+        
+        return var_attributes, cons_attributes, np.vstack( (adjacency_matrix.row, adjacency_matrix.col)), adjacency_matrix.data[:, np.newaxis], comp_res
         
     
     def save_dataset(self):
