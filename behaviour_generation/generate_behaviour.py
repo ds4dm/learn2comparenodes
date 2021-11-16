@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
                 
         
-        instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
+        instances = list(Path(f"../problem_generation/data/{problem}/train").glob("*n=4*.lp"))[0:10]
         cpu_count = md.cpu_count()
         chunck_size = int(np.ceil(len(instances)/cpu_count))
         
