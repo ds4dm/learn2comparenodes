@@ -61,8 +61,8 @@ class GNNPolicy(torch.nn.Module):
         variable_features = self.var_embedding(variable_features)
 
         # Two half convolutions
-        constraint_features = self.conv_v_to_c(variable_features, reversed_edge_indices, edge_features, constraint_features)
-        variable_features = self.conv_c_to_v(constraint_features, edge_indices, edge_features, variable_features)
+        constraint_features = self.conv_v_to_c(variable_features, edge_indices, edge_features, constraint_features)
+        variable_features = self.conv_c_to_v(constraint_features, reversed_edge_indices, edge_features, variable_features)
 
         # A final MLP on the variable features
         output = self.output_module(variable_features).squeeze(-1)
@@ -76,7 +76,7 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
     """
     def __init__(self):
         super().__init__('add')
-        emb_size = 64
+        emb_size = 16
         
         self.feature_module_left = torch.nn.Sequential(
             torch.nn.Linear(emb_size, emb_size)
@@ -108,10 +108,11 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
         """
         This method sends the messages, computed in the message method.
         """
-        print(left_features.shape, right_features.shape)
+        
         
         output = self.propagate(edge_indices, size=(left_features.shape[0], right_features.shape[0]), 
                                 node_features=(left_features, right_features), edge_features=edge_features)
+
         return self.output_module(torch.cat([self.post_conv_module(output), right_features], dim=-1))
 
     def message(self, node_features_i, node_features_j, edge_features):

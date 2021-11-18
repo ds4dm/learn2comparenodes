@@ -105,7 +105,7 @@ from model import GNNPolicy
 
 observation = train_data[0]
 policy = GNNPolicy()
-policy(observation.constraint_features, observation.edge_index, observation.edge_attr, observation.variable_features)
+a = policy(observation.constraint_features, observation.edge_index, observation.edge_attr, observation.variable_features)
 
 
 
