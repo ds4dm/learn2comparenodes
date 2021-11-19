@@ -15,7 +15,8 @@ import torch_geometric
 class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        emb_size = 16
+        self.emb_size = emb_size = 16
+        self.kmaxpool_k = kmaxpool_k = 32
         cons_nfeats = 1
         edge_nfeats = 1
         var_nfeats = 12
@@ -45,27 +46,39 @@ class GNNPolicy(torch.nn.Module):
 
         self.conv_v_to_c = BipartiteGraphConvolution()
         self.conv_c_to_v = BipartiteGraphConvolution()
-
+        
+        
         self.output_module = torch.nn.Sequential(
-            torch.nn.Linear(emb_size, emb_size),
-            torch.nn.ReLU(),
-            torch.nn.Linear(emb_size, 1, bias=False),
+            torch.nn.Linear(2*kmaxpool_k*emb_size,1)    
         )
+            
+
 
     def forward(self, constraint_features, edge_indices, edge_features, variable_features):
+        
         reversed_edge_indices = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
         # First step: linear embedding layers to a common dimension (64)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
+        print(variable_features)
         variable_features = self.var_embedding(variable_features)
-
+        
         # Two half convolutions
+        print(variable_features)
+        #print(constraint_features)
         constraint_features = self.conv_v_to_c(variable_features, edge_indices, edge_features, constraint_features)
         variable_features = self.conv_c_to_v(constraint_features, reversed_edge_indices, edge_features, variable_features)
-
+   
+        #TODO pad if kmaxpool_k out of range
+        constraint_pooled = constraint_features.sort(dim=0, descending=True)[0][:self.kmaxpool_k]
+        variable_pooled = variable_features.sort(dim=0, descending=True)[0][:self.kmaxpool_k]
+        
+      
         # A final MLP on the variable features
-        output = self.output_module(variable_features).squeeze(-1)
+        output = torch.cat((constraint_pooled, variable_pooled), dim=0).view(2*self.emb_size*self.kmaxpool_k)
+        output = self.output_module(output)
+
         return torch.sigmoid(output)
     
 
@@ -109,10 +122,9 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
         This method sends the messages, computed in the message method.
         """
         
-        
         output = self.propagate(edge_indices, size=(left_features.shape[0], right_features.shape[0]), 
                                 node_features=(left_features, right_features), edge_features=edge_features)
-
+        
         return self.output_module(torch.cat([self.post_conv_module(output), right_features], dim=-1))
 
     def message(self, node_features_i, node_features_j, edge_features):
