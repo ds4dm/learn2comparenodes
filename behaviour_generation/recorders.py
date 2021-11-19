@@ -237,6 +237,11 @@ class LPFeatureRecorder():
         
         lb, ub = var.getLbOriginal(), var.getUbOriginal()
         
+        if lb <= - 0.999e+20:
+            lb = -300
+        if ub >= 0.999e+20:
+            ub = 300
+            
         objective_coeff = model.getObjective()[var]
         
         binary, integer, continuous = self._one_hot_type(var)
