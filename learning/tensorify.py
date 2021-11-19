@@ -35,13 +35,12 @@ class BipartiteNodeData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation 
     """
-    def __init__(self, variable_features, constraint_features, edge_indices, edge_features, comp_res ):
-        super().__init__()
+    def __init__(self, variable_features, constraint_features, edge_indices, edge_features, comp_res=None):
+        super().__init__(y=comp_res)
         self.variable_features = torch.FloatTensor(variable_features)
         self.constraint_features = torch.FloatTensor(constraint_features)
         self.edge_index = torch.LongTensor(edge_indices.astype(np.int64))
         self.edge_attr = torch.FloatTensor(edge_features)
-        self.comp_res = [comp_res]
         
    
     def __inc__(self, key, value):
@@ -90,7 +89,7 @@ try:
     os.makedirs(processed_dir)
 except FileExistsError:
     ""
-#process(raw_files, processed_dir)
+process(raw_files, processed_dir)
 processed_files = np.array(list(Path(processed_dir).glob("*.pt")))
 
 train_files, valid_files = train_test_split(processed_files, train_size=0.8)
