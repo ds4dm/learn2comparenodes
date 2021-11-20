@@ -23,13 +23,6 @@ osp = os.path
 load_behaviour_from_pickle = CompBehaviourSaver.load_behaviour_from_pickle
 
 
-LEARNING_RATE = 0.001
-NB_EPOCHS = 50
-PATIENCE = 10
-EARLY_STOPPING = 20
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
 #Maxime
 class BipartiteNodeData(torch_geometric.data.Data):
     """
