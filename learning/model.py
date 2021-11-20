@@ -54,19 +54,17 @@ class GNNPolicy(torch.nn.Module):
             
 
 
-    def forward(self, constraint_features, edge_indices, edge_features, variable_features):
+    def forward(self, batch):
+        constraint_features, edge_indices, edge_features, variable_features = batch.constraint_features, batch.edge_index, batch.edge_attr, batch.variable_features
         
         reversed_edge_indices = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
         # First step: linear embedding layers to a common dimension (64)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
-        print(variable_features)
         variable_features = self.var_embedding(variable_features)
         
         # Two half convolutions
-        print(variable_features)
-        #print(constraint_features)
         constraint_features = self.conv_v_to_c(variable_features, edge_indices, edge_features, constraint_features)
         variable_features = self.conv_c_to_v(constraint_features, reversed_edge_indices, edge_features, variable_features)
    
