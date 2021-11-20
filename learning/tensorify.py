@@ -71,7 +71,7 @@ class GraphDataset(torch_geometric.data.Dataset):
     
 
 
-def process(raw_files, processed_dir):
+def process_raw_data(raw_files, processed_dir):
     i = 0
     for raw_file in raw_files:
         for g_data in load_behaviour_from_pickle(raw_file):
@@ -79,7 +79,6 @@ def process(raw_files, processed_dir):
             data.num_nodes =  g_data[0].shape[0] + g_data[1].shape[0]
             torch.save(data, osp.join(processed_dir, 'data_{}.pt'.format(i)))
             i += 1
-    return i
 
     
 
@@ -89,29 +88,8 @@ try:
     os.makedirs(processed_dir)
 except FileExistsError:
     ""
-process(raw_files, processed_dir)
-processed_files = np.array(list(Path(processed_dir).glob("*.pt")))
-
-train_files, valid_files = train_test_split(processed_files, train_size=0.8)
-
-train_data = GraphDataset(train_files)
-valid_data = GraphDataset(valid_files)
-
-train_loader = torch_geometric.data.DataLoader(GraphDataset(train_files),batch_size=32, shuffle=True)
-valid_loader = torch_geometric.data.DataLoader(GraphDataset(valid_files), batch_size=128, shuffle=False)
-
-from model import GNNPolicy
-
-observation = train_data[0]
-policy = GNNPolicy()
-a = policy(observation.constraint_features, observation.edge_index, observation.edge_attr, observation.variable_features)
-
-
-
-
-
-
-
+#process_raw_data(raw_files, processed_dir)
+processed_data_files = np.array(list(Path(processed_dir).glob("*.pt")))
 
 
 

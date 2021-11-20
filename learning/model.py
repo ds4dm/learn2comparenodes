@@ -132,4 +132,4 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
                                            + self.feature_module_edge(edge_features) 
                                            + self.feature_module_right(node_features_j))
         return output
-    
+
