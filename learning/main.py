@@ -18,7 +18,7 @@ import torch
 import torch.nn.functional as F
 import torch_geometric
 from sklearn.model_selection import train_test_split
-from tensorify import processed_data_files, GraphDataset 
+from tensorify import processed_data_files, GraphDataset, BipartiteNodeData
 from model import GNNPolicy
 osp = os.path
 

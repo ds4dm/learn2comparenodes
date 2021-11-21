@@ -30,16 +30,14 @@ class BipartiteNodeData(torch_geometric.data.Data):
     """
     def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None):
         super().__init__()
-        if variable_features != None:
-            self.variable_features = torch.FloatTensor(variable_features)
-            self.constraint_features = torch.FloatTensor(constraint_features)
-            self.edge_index = torch.LongTensor(edge_indices)
-            self.edge_attr = torch.FloatTensor(edge_features)
-            self.y = y
-            print(y)
-        
+        self.variable_features = torch.FloatTensor(variable_features)
+        self.constraint_features = torch.FloatTensor(constraint_features)
+        self.edge_index = torch.LongTensor(edge_indices)
+        self.edge_attr = torch.FloatTensor(edge_features)
+        self.y = y
+    
    
-    def __inc__(self, key, value, store=None):
+    def __inc__(self, key, value, *args, **kwargs):
         """
         We overload the pytorch geometric method that tells how to increment indices when concatenating graphs 
         for those entries (edge index, candidates) for which this is not obvious.
@@ -47,7 +45,7 @@ class BipartiteNodeData(torch_geometric.data.Data):
         if key == 'edge_index':
             return torch.tensor([[self.variable_features.size(0)], [self.constraint_features.size(0)]])
         else:
-            return super().__inc__(key, value, store)
+            return super().__inc__(key, value, *args, **kwargs)
         
 class GraphDataset(torch_geometric.data.Dataset):
     """
@@ -71,7 +69,6 @@ def process_raw_data(raw_files, processed_dir):
     for raw_file in raw_files:
         for g_data in load_behaviour_from_pickle(raw_file):
             data = BipartiteNodeData(*g_data)
-            data.num_nodes =  g_data[0].shape[0] + g_data[1].shape[0]
             torch.save(data, osp.join(processed_dir, 'data_{}.pt'.format(i)))
             i += 1
 
