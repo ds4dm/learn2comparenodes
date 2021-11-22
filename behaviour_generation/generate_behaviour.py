@@ -35,9 +35,8 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
         
     def nodecomp(self, node1, node2):
-        
         comp_res = super().nodecomp(node1, node2)
-        self.comp_behaviour_saver.append_data(self.model, node1, node2, comp_res)
+        self.comp_behaviour_saver.save_comp(self.model, node1, node2, comp_res, self.counter)
         print("saved comp # " + str(self.counter))
         self.counter += 1
         return comp_res
@@ -63,12 +62,10 @@ def run_episode(instance,  save_dir):
 
     #print(f"Getting behaviour for instance {problem} "+ str(instance).split("/")[-1] )
 
-    # Run the optimizer and save behaviour
+    # Run the optimizer
     model.freeTransform()
     model.readProblem(instance)
     model.optimize()
-    
-    comp_behaviour_saver.save_dataset()
     
     return 1#sucess
 
@@ -76,6 +73,7 @@ def run_episodes(instances, save_dir):
     for instance in instances:
         run_episode(instance, save_dir)
     print("finished running episodes for process " + str(md.current_process()))
+    
 
 if __name__ == "__main__":
     
@@ -89,8 +87,12 @@ if __name__ == "__main__":
             
     
     for problem in problems:
+        
+        save_train_dir = f"./data/{problem}/train"
+        save_valid_dir = f"./data/{problem}/valid"
         try:
-            os.makedirs(f"./data/{problem}")
+            os.makedirs(save_train_dir)
+            os.makedirs(save_valid_dir)
             
         except FileExistsError:
             ""
@@ -99,8 +101,7 @@ if __name__ == "__main__":
         
         instances_train = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
         instances_valid = list(Path(f"../problem_generation/data/{problem}/valid").glob("*.lp"))
-        save_train_dir = f"./data/{problem}/train"
-        save_valid_dir = f"./data/{problem}/valid"
+
         cpu_count = md.cpu_count()
         chunck_size_train = int(np.ceil(len(instances_train)/cpu_count))
         chunck_size_valid = int(np.ceil(len(instances_valid)/cpu_count))

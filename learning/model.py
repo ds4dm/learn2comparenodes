@@ -10,6 +10,23 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 import torch
 import torch_geometric
 
+class GraphDataset(torch_geometric.data.Dataset):
+    """
+    This class encodes a collection of graphs, as well as a method to load such graphs from the disk.
+    It can be used in turn by the data loaders provided by pytorch geometric.
+    """
+    def __init__(self, sample_files):
+        super().__init__(root=None, transform=None, pre_transform=None)
+        self.sample_files = sample_files
+
+    def len(self):
+        return len(self.sample_files)
+
+    def get(self, idx):
+        data = torch.load(self.sample_files[idx])
+        return data
+
+
 class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()

@@ -10,45 +10,68 @@ Contains utilities to save and load comparaison behavioural data
 
 """
 
-
-import pickle
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy import sparse
+import torch
+import torch_geometric
+import os.path as osp
 
 
 class CompBehaviourSaver():
     
-    def __init__(self, file_path, instance_name):
+    def __init__(self, save_dir, instance_name):
         self.instance_name = instance_name
-        self.file_path = file_path
-        self.dataset = []
+        self.save_dir = save_dir
     
-    def set_file_path(self, file_path):
-        self.file_path = file_path
+    def set_save_dir(self, save_dir):
+        self.save_dir = save_dir
         return self
-        
-        
-    def get_dataset(self):
-        return self.dataset
-    
-    def set_dataset(self, dataset):
-        self.dataset = dataset
-        return self
+
     
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.LP_feature_recorder = LP_feature_recorder
         return self
     
     
-    def append_data(self, model, node1, node2, comp_res):
+    def save_comp(self, model, node1, node2, comp_res, comp_id):
         
         self.LP_feature_recorder.record_sub_milp_graph(model, node1)
         self.LP_feature_recorder.record_sub_milp_graph(model, node2)
         
-        self.dataset.append((node1.getNumber(), node2.getNumber(), comp_res))
+        graphidx2graphdata = self.LP_feature_recorder.recorded_light
+        all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
+        all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
+        
+        
+        data = (node1.getNumber(), node2.getNumber(), comp_res)
+        g1_idx, g2_idx, comp_res = data[0], data[1], data[2]
+        
+        
+        var_attributes0, cons_block_idxs0 = graphidx2graphdata[g1_idx]
+        var_attributes1, cons_block_idxs1 = graphidx2graphdata[g2_idx]
+        
+        g_data = CompBehaviourSaver._get_graph_pair_data(var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res)
+        
+        file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
+        self._save_to_tensor(g_data, file_path)        
         
         return self
+    
+    def _save_to_tensor(self, g_data, path):
+     
+        variable_features = torch.FloatTensor(g_data[0])
+        constraint_features = torch.FloatTensor(g_data[1])
+        edge_indices = torch.LongTensor(g_data[2])
+        edge_features = torch.FloatTensor(g_data[3])
+        y = g_data[4]
+        num_nodes = variable_features.size(0) + constraint_features.size(0)
+        
+        data = BipartiteNodeData(variable_features, constraint_features, edge_indices,
+                                 edge_features, y)
+        data.num_nodes = num_nodes
+        
+        torch.save(data, path)
         
    
     
@@ -67,46 +90,6 @@ class CompBehaviourSaver():
         return var_attributes, cons_attributes, np.vstack( (adjacency_matrix.row, adjacency_matrix.col)), adjacency_matrix.data[:, np.newaxis], comp_res
         
     
-    def save_dataset(self):
-        
-        with open(self.file_path+f"/{self.instance_name}.pickle", 'wb') as handle:
-            
-            pickle.dump(self.LP_feature_recorder.recorded_light, handle, protocol=pickle.HIGHEST_PROTOCOL) #dict nodenumbers to node0attributes, conssidxs
-            pickle.dump(self.LP_feature_recorder.all_conss_blocks, handle, protocol=pickle.HIGHEST_PROTOCOL)
-            pickle.dump(self.LP_feature_recorder.all_conss_blocks_features ,handle, protocol=pickle.HIGHEST_PROTOCOL)
-            pickle.dump(self.dataset, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-            handle.close()
-        
-        return self
-    
-    def load_behaviour_from_pickle(pickle_file_path):
-        
-        with open(pickle_file_path, 'rb') as handle:
-            
-            graphidx2graphdata = pickle.load(handle)
-            all_conss_blocks = pickle.load(handle)
-            all_conss_blocks_features = pickle.load(handle)
-            dataset = pickle.load(handle)
-            
-            handle.close()
-            
-                    
-        for data in dataset:
-            g1_idx, g2_idx, comp_res = data[0], data[1], data[2]
-            var_attributes0, cons_block_idxs0 = graphidx2graphdata[g1_idx]
-            var_attributes1, cons_block_idxs1 = graphidx2graphdata[g2_idx]
-            
-            g = CompBehaviourSaver._get_graph_pair_data(var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res)
-        
-            yield g #binary classification supervised learning
-    
-    
- 
-    
-        
-
-  
 
 
 # params_to_set_false = ["constraints/linear/upgrade/indicator",
@@ -285,5 +268,32 @@ class BipartiteGraphStatic0():
         
         return copy
    
+
+#L2B
+class BipartiteNodeData(torch_geometric.data.Data):
+    """
+    This class encode a pair of node bipartite graphs observation 
+    """
+    def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None):
+        super().__init__()
+        self.variable_features = variable_features
+        self.constraint_features = constraint_features
+        self.edge_index = edge_indices
+        self.edge_attr = edge_features
+        self.y = y
+    
+   
+    def __inc__(self, key, value, *args, **kwargs):
+        """
+        We overload the pytorch geometric method that tells how to increment indices when concatenating graphs 
+        for those entries (edge index, candidates) for which this is not obvious.
+        """
+        if key == 'edge_index':
+            return torch.tensor([[self.variable_features.size(0)], [self.constraint_features.size(0)]])
+        else:
+            return super().__inc__(key, value, *args, **kwargs)
+
+
+    
         
         
