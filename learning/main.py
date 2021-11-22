@@ -62,7 +62,7 @@ def process(policy, data_loader, optimizer=None):
 #main
 
 LEARNING_RATE = 0.001
-NB_EPOCHS = 10
+NB_EPOCHS = 1
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -78,7 +78,6 @@ valid_data = GraphDataset(valid_files)
 
 train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=32, shuffle=True)
 valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False)
-
 
 policy = GNNPolicy().to(DEVICE)
 optimizer = torch.optim.Adam(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best

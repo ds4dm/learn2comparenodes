@@ -17,8 +17,8 @@ class GNNPolicy(torch.nn.Module):
         #HYPERPARAMETERS
         self.emb_size = emb_size = 16 #uniform node feature embedding dim
         self.k = 16 #kmax pooling
-        self.n_convs = 8 #number of convolutions to perform parralelly
-        drop_rate = 0.3
+        self.n_convs = 4 #number of convolutions to perform parralelly
+        drop_rate = 0.35
         
         # static data
         cons_nfeats = 1 
@@ -49,7 +49,7 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.ReLU(),
         )
 
-        self.convs = torch.nn.ModuleList( [ BipartiteGraphConvolution() for i in range(self.n_convs) ])
+        self.convs = torch.nn.ModuleList( [ BipartiteGraphConvolution(emb_size) for i in range(self.n_convs) ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
@@ -89,9 +89,10 @@ class GNNPolicy(torch.nn.Module):
 
 class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
     
-    def __init__(self):
+    def __init__(self, emb_size):
         super().__init__('add')
-        emb_size = 16
+        
+        dropout_rate = 0.4
         
         self.feature_module_left = torch.nn.Sequential(
             torch.nn.Linear(emb_size, emb_size)
@@ -116,7 +117,7 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
         self.output_module = torch.nn.Sequential(
             torch.nn.Linear(2*emb_size, emb_size),
             torch.nn.ReLU(),
-            torch.nn.Dropout(0.5),
+            torch.nn.Dropout(dropout_rate),
             torch.nn.Linear(emb_size, emb_size),
         )
 
