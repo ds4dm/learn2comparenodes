@@ -110,8 +110,8 @@ class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
         # output_layers
         self.output_module = torch.nn.Sequential(
             torch.nn.Linear(2*emb_size, emb_size),
-            torch.nn.Dropout(0.5),
             torch.nn.ReLU(),
+            torch.nn.Dropout(0.5),
             torch.nn.Linear(emb_size, emb_size),
         )
 
