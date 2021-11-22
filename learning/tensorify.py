@@ -18,7 +18,6 @@ import torch_geometric
 import numpy as np
 from pathlib import Path
 from recorders import CompBehaviourSaver
-from sklearn.model_selection import train_test_split
 osp = os.path
 load_behaviour_from_pickle = CompBehaviourSaver.load_behaviour_from_pickle
 
@@ -30,10 +29,10 @@ class BipartiteNodeData(torch_geometric.data.Data):
     """
     def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None):
         super().__init__()
-        self.variable_features = torch.FloatTensor(variable_features)
-        self.constraint_features = torch.FloatTensor(constraint_features)
-        self.edge_index = torch.LongTensor(edge_indices)
-        self.edge_attr = torch.FloatTensor(edge_features)
+        self.variable_features = variable_features
+        self.constraint_features = constraint_features
+        self.edge_index = edge_indices
+        self.edge_attr = edge_features
         self.y = y
     
    
@@ -68,7 +67,16 @@ def process_raw_data(raw_files, processed_dir):
     i = 0
     for raw_file in raw_files:
         for g_data in load_behaviour_from_pickle(raw_file):
-            data = BipartiteNodeData(*g_data)
+            
+            variable_features = torch.FloatTensor(g_data[0])
+            constraint_features = torch.FloatTensor(g_data[1])
+            edge_indices = torch.LongTensor(g_data[2])
+            edge_features = torch.FloatTensor(g_data[3])
+            y = g_data[4]
+            
+            data = BipartiteNodeData(variable_features, constraint_features, edge_indices,
+                                     edge_features, y)
+    
             torch.save(data, osp.join(processed_dir, 'data_{}.pt'.format(i)))
             i += 1
 
