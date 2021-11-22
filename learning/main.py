@@ -71,8 +71,6 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 train_files, valid_files = train_test_split(processed_data_files, train_size=0.8)
 
-data = BipartiteNodeData(torch.rand(322,12), torch.rand(643, 1), torch.zeros(2,299), torch.rand(299,1), 1)
-
 train_data = GraphDataset(train_files)
 valid_data = GraphDataset(valid_files)
 
