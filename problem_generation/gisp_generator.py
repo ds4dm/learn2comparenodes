@@ -68,14 +68,11 @@ def createIP(g, E2, ipfilename):
         for node in g.nodes():
             lp_file.write(f"x{node}\n")
             
-def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, max_n, er_prob, instance, lp_dir) :
+def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, max_n, er_prob, instance, lp_dir, solve) :
     
     for seed in range(seed_start, seed_end):
          
         random.seed(seed)
-        print(whichSet)
-        print(setParam)
-        print(alphaE2)
         if instance is None:
             # Generate random graph
             numnodes = random.randint(min_n, max_n)
@@ -98,10 +95,11 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
         print(lpname)
         # ip = createIP(g, E2, lp_dir + "/" + lpname)
         createIP(g, E2, lp_dir + "/" + lpname + ".lp")
-        model = sp.Model()
-        model.readProblem(lp_dir +"/" + lpname + ".lp")
-        model.optimize()
-        model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
+        if solve:
+            model = sp.Model()
+            model.readProblem(lp_dir +"/" + lpname + ".lp")
+            model.optimize()
+            model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
 
         
 
@@ -109,16 +107,18 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 if __name__ == "__main__":
     instance = None
     exp_dir = ""
-    min_n = 120
-    max_n = 150
+    min_n = 60
+    max_n = 50
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
     alphaE2 = 0.5
     timelimit = 7200.0
-    solveInstance = False
-    train_n = 10000  
-    test_n  = 2000
+    solveInstance = True
+    n_instance = 10000
+    seed = 0
+    
+
     # seed = 0
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-instance':
@@ -141,29 +141,30 @@ if __name__ == "__main__":
             timelimit = float(sys.argv[i + 1])
         if sys.argv[i] == '-solve':
             solveInstance = bool(sys.argv[i + 1])
-        if sys.argv[i] == '-seed':
+        if sys.argv[i] == '-seed_start':
             seed = int(sys.argv[i + 1])
+        if sys.argv[i] == '-n_instance':
+            n_instance = int(sys.argv[i + 1])
+        
     assert exp_dir is not None
     if instance is None:
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir_train = "data/GISP/train" + exp_dir
-    lp_dir_test = "data/GISP/test" + exp_dir
+    lp_dir= exp_dir
     try:
-        os.makedirs(lp_dir_train)
-        os.makedirs(lp_dir_test)
+        os.makedirs(lp_dir)
     except FileExistsError:
         ""
             
             
     cpu_count = md.cpu_count()
-    chunk_size_train = int(np.ceil(train_n/cpu_count))
-    chunk_size_test = int(np.ceil(test_n/cpu_count))
+    chunk_size = int(np.ceil(n_instance/cpu_count))
+
     
-    processes_train = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
-                                                                  p*chunk_size_train, 
-                                                                  (p+1)*chunk_size_train, 
+    processes = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
+                                                                  seed + p*chunk_size, 
+                                                                  seed + (p+1)*chunk_size, 
                                                                   whichSet, 
                                                                   setParam, 
                                                                   alphaE2, 
@@ -171,29 +172,14 @@ if __name__ == "__main__":
                                                                   max_n, 
                                                                   er_prob, 
                                                                   instance, 
-                                                                  lp_dir_train))  
+                                                                  lp_dir, 
+                                                                  solveInstance))
                  for p in range(cpu_count) ]
     
-    processes_test = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
-                                                                  p*chunk_size_test, 
-                                                                  (p+1)*chunk_size_test, 
-                                                                  whichSet, 
-                                                                  setParam, 
-                                                                  alphaE2, 
-                                                                  min_n, 
-                                                                  max_n, 
-                                                                  er_prob, 
-                                                                  instance, 
-                                                                  lp_dir_test))  
-                 for p in range(cpu_count) ]
-    
-    
-    
-    a = list(map(lambda p: p.start(), processes_train)) #run processes
-    b = list(map(lambda p: p.join(), processes_train)) #join processes
-    c = list(map(lambda p: p.start(), processes_test)) #run processes
-    d = list(map(lambda p: p.join(), processes_test)) #join processes
-    
+ 
+    a = list(map(lambda p: p.start(), processes)) #run processes
+    b = list(map(lambda p: p.join(), processes)) #join processes
+ 
     
             
         
