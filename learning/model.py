@@ -13,13 +13,18 @@ import torch_geometric
 class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.emb_size = emb_size = 16
-        self.k = 16
-        self.n_convs = 8
-        cons_nfeats = 1
+        
+        #HYPERPARAMETERS
+        self.emb_size = emb_size = 16 #uniform node feature embedding dim
+        self.k = 16 #kmax pooling
+        self.n_convs = 8 #number of convolutions to perform parralelly
+        drop_rate = 0.3
+        
+        # static data
+        cons_nfeats = 1 
         edge_nfeats = 1
         var_nfeats = 12
-        drop_rate = 0.2
+        
 
         # CONSTRAINT EMBEDDING
         self.cons_embedding = torch.nn.Sequential(
