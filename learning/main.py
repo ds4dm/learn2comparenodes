@@ -7,19 +7,12 @@ Created on Sat Nov 20 10:38:45 2021
 """
 
 #Imports 
-def load_src(name, fpath):
-    import os, imp
-    return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
-
-load_src("recorders", "../behaviour_generation/recorders.py" )
 
 import os
 import torch
 import torch.nn.functional as F
 import torch_geometric
-from sklearn.model_selection import train_test_split
-from tensorify import processed_data_files, GraphDataset, BipartiteNodeData
-from model import GNNPolicy
+from model import GNNPolicy, GraphDataset
 osp = os.path
 
 #function definition
@@ -61,6 +54,8 @@ def process(policy, data_loader, optimizer=None):
 
 #main
 
+
+problems = ["GISP"]
 LEARNING_RATE = 0.001
 NB_EPOCHS = 1
 PATIENCE = 10
@@ -68,27 +63,30 @@ EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
+for problem in problems:
 
-train_files, valid_files = train_test_split(processed_data_files, train_size=0.8)
-
-train_data = GraphDataset(train_files)
-valid_data = GraphDataset(valid_files)
-
-train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=32, shuffle=True)
-valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False)
-
-policy = GNNPolicy().to(DEVICE)
-optimizer = torch.optim.Adam(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
-
-for epoch in range(NB_EPOCHS):
-    print(f"Epoch {epoch+1}")
+    train_files = f"../behaviour_generation/data/{problem}/train",
+    valid_files = f"../behaviour_generation/data/{problem}/valid"
     
-    train_loss, train_acc = process(policy, train_loader, optimizer)
-    print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
-
-    valid_loss, valid_acc = process(policy, valid_loader, None)
-    print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
-
-torch.save(policy.state_dict(), 'trained_params.pkl')
-
+    
+    train_data = GraphDataset(train_files)
+    valid_data = GraphDataset(valid_files)
+    
+    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=32, shuffle=True)
+    valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False)
+    
+    policy = GNNPolicy().to(DEVICE)
+    optimizer = torch.optim.Adam(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
+    
+    for epoch in range(NB_EPOCHS):
+        print(f"Epoch {epoch+1}")
+        
+        train_loss, train_acc = process(policy, train_loader, optimizer)
+        print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
+    
+        valid_loss, valid_acc = process(policy, valid_loader, None)
+        print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
+    
+    torch.save(policy.state_dict(),f'gnn_node_comparator_{problem}.pkl')
+    
 
