@@ -35,7 +35,7 @@ def process(policy, data_loader, optimizer=None):
         for batch in data_loader:
             batch = batch.to(DEVICE)
             
-            y_true = batch.y + torch.abs(batch.y) - 1.0 #0,1 labels
+            y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
             y_pred_proba = policy(batch)
             y_pred = torch.round(y_pred_proba)
             
