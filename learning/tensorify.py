@@ -27,13 +27,14 @@ class BipartiteNodeData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation 
     """
-    def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None):
+    def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None, num_nodes=None):
         super().__init__()
         self.variable_features = variable_features
         self.constraint_features = constraint_features
         self.edge_index = edge_indices
         self.edge_attr = edge_features
         self.y = y
+        self.num_nodes = num_nodes
     
    
     def __inc__(self, key, value, *args, **kwargs):
@@ -73,9 +74,10 @@ def process_raw_data(raw_files, processed_dir):
             edge_indices = torch.LongTensor(g_data[2])
             edge_features = torch.FloatTensor(g_data[3])
             y = g_data[4]
+            num_nodes = variable_features.size(0) + constraint_features.size(0)
             
             data = BipartiteNodeData(variable_features, constraint_features, edge_indices,
-                                     edge_features, y)
+                                     edge_features, y, num_nodes=num_nodes)
     
             torch.save(data, osp.join(processed_dir, 'data_{}.pt'.format(i)))
             i += 1
