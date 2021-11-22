@@ -35,11 +35,12 @@ def process(policy, data_loader, optimizer=None):
         for batch in data_loader:
             batch = batch.to(DEVICE)
             
-            y_true = batch.y > 0
-            y_pred = policy(batch)
+            y_true = batch.y + torch.abs(batch.y) - 1.0 #0,1 labels
+            y_pred_proba = policy(batch)
+            y_pred = torch.round(y_pred_proba)
             
             # Compute the usual cross-entropy classification loss
-            loss = F.binary_cross_entropy(y_pred, y_true )
+            loss = F.binary_cross_entropy(y_pred_proba, y_true )
 
             if optimizer is not None:
                 optimizer.zero_grad()
@@ -47,7 +48,7 @@ def process(policy, data_loader, optimizer=None):
                 optimizer.step()
 
 
-            accuracy = ((y_pred > 0.5) == y_true).float().mean().item()
+            accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss.item() * batch.num_graphs
             mean_acc += accuracy * batch.num_graphs
@@ -69,6 +70,8 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 train_files, valid_files = train_test_split(processed_data_files, train_size=0.8)
+
+data = BipartiteNodeData(torch.rand(322,12), torch.rand(643, 1), torch.zeros(2,299), torch.rand(299,1), 1)
 
 train_data = GraphDataset(train_files)
 valid_data = GraphDataset(valid_files)
