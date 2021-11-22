@@ -12,6 +12,7 @@ import os
 import torch
 import torch.nn.functional as F
 import torch_geometric
+from pathlib import Path
 from model import GNNPolicy, GraphDataset
 osp = os.path
 
@@ -65,10 +66,9 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 for problem in problems:
 
-    train_files = f"../behaviour_generation/data/{problem}/train",
-    valid_files = f"../behaviour_generation/data/{problem}/valid"
-    
-    
+    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ]
+    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ] 
+
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
     
