@@ -65,13 +65,11 @@ class CompBehaviourSaver():
         edge_indices = torch.LongTensor(g_data[2])
         edge_features = torch.FloatTensor(g_data[3])
         y = g_data[4]
-        num_nodes = variable_features.size(0) + constraint_features.size(0)
         
         data = BipartiteNodeData(variable_features, constraint_features, edge_indices,
                                  edge_features, y)
-        data.num_nodes = num_nodes
         
-        torch.save(data, path)
+        torch.save(data, path, _use_new_zipfile_serialization=False)
         
    
     

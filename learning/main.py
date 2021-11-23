@@ -8,12 +8,19 @@ Created on Sat Nov 20 10:38:45 2021
 
 #Imports 
 
+def load_src(name, fpath):
+     import os, imp
+     return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
+
+load_src("recorders", "../behaviour_generation/recorders.py" )
+
 import os
 import torch
 import torch.nn.functional as F
 import torch_geometric
 from pathlib import Path
 from model import GNNPolicy, GraphDataset
+from sklearn.model_selection import train_test_split
 osp = os.path
 
 #function definition
@@ -26,12 +33,14 @@ def process(policy, data_loader, optimizer=None):
     mean_acc = 0
     n_samples_processed = 0
     with torch.set_grad_enabled(optimizer is not None):
-        for batch in data_loader:
+        for idx,batch in enumerate(data_loader):
+            
             batch = batch.to(DEVICE)
             
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
             y_pred_proba = policy(batch)
             y_pred = torch.round(y_pred_proba)
+            print(idx)
             
             # Compute the usual cross-entropy classification loss
             loss = F.binary_cross_entropy(y_pred_proba, y_true )
@@ -66,12 +75,16 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ]
-    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ] 
-
+    train_files, _ = train_test_split([ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ], 
+                                      train_size=0.1)
+    
+    valid_files, _ = train_test_split([ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ], 
+                                      train_size=0.1)
+    
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
-    
+    print(train_data)
+    print(valid_data)
     train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=32, shuffle=True)
     valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False)
     
