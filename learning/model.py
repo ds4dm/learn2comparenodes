@@ -84,15 +84,19 @@ class GNNPolicy(torch.nn.Module):
         
         outputs = []
         for i in range(2):
-            #to do add batch.batch
+            
             if i == 0:
-                graphs = batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s, batch.batch
+                graphs = (batch.constraint_features_s, batch.edge_index_s, 
+                          batch.edge_attr_s, batch.variable_features_s, 
+                          batch.constraint_features_s_batch)
             else:
-                graphs = batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t, batch.batch
+                graphs = (batch.constraint_features_t, batch.edge_index_t, 
+                          batch.edge_attr_t, batch.variable_features_t,
+                          batch.constraint_features_t_batch)
                 
             outputs.append(self.forward_graphs(*graphs))
         
-        output = -outputs[0]  + outputs[1] #Batchx KxEmbXnconvs, symetric comparator -, concat is not symetric
+        output = - outputs[0]  + outputs[1] #Batchx KxEmbXnconvs, symetric comparator -, concat is not symetric
         
         output = self.final_mlp(output).squeeze(-1)
         
@@ -103,7 +107,7 @@ class GNNPolicy(torch.nn.Module):
         
         
        
-    def forward_1graph(self, constraint_features, edge_indices, edge_features, variable_features, batch):
+    def forward_1graph(self, constraint_features, edge_indices, edge_features, variable_features, constraint_batch):
         # First step: linear embedding layers to a common dimension (64)
         
         constraint_features = self.cons_embedding(constraint_features)
@@ -114,7 +118,7 @@ class GNNPolicy(torch.nn.Module):
         
         constraint_conveds = [ conv(variable_features, edge_indices, edge_features, constraint_features) for conv in self.convs ]
        
-        constraint_pooleds = [ self.pool(constraint_conved, batch, self.k) for constraint_conved in constraint_conveds ]
+        constraint_pooleds = [ self.pool(constraint_conved, constraint_batch, self.k) for constraint_conved in constraint_conveds ]
         
         constraint_pooleds_cat = torch.cat(constraint_pooleds, dim=1) #batchX kxembxNconvs
             
