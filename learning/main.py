@@ -81,8 +81,8 @@ for problem in problems:
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
 
-    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=1, shuffle=True)
-    valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False)
+    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=1, shuffle=True, follow_batch=['constraint_features_s', 'constraint_features_t'])
+    valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t'])
     
     policy = GNNPolicy().to(DEVICE)
     optimizer = torch.optim.Adam(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
