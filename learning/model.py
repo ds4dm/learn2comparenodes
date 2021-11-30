@@ -40,7 +40,7 @@ class GNNPolicy(torch.nn.Module):
         # static data
         cons_nfeats = 1 
         edge_nfeats = 1
-        var_nfeats = 12
+        var_nfeats = 6
         
 
         # CONSTRAINT EMBEDDING
@@ -74,10 +74,9 @@ class GNNPolicy(torch.nn.Module):
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.Linear(self.k*emb_size*self.n_convs, self.k*emb_size),
                                     torch.nn.ReLU(),
-                                    torch.nn.Dropout(drop_rate),
-                                    torch.nn.Linear(self.k*emb_size, 1)
+                                    torch.nn.Dropout(drop_rate)
                                     )
-
+        self.final_layer = torch.nn.Linear(self.k*emb_size, 1)
 
 
     def forward(self, batch):
@@ -96,18 +95,17 @@ class GNNPolicy(torch.nn.Module):
                 
             outputs.append(self.forward_graphs(*graphs))
         
-        output = - outputs[0]  + outputs[1] #Batchx KxEmbXnconvs, symetric comparator -, concat is not symetric
+
+  
+        b = torch.sigmoid(self.final_layer( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]) )).squeeze(0)
         
-        output = self.final_mlp(output).squeeze(-1)
-        
-        return torch.sigmoid(output)
-        
+        return b
         
         
         
         
        
-    def forward_1graph(self, constraint_features, edge_indices, edge_features, variable_features, constraint_batch):
+    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, constraint_batch):
         # First step: linear embedding layers to a common dimension (64)
         
         constraint_features = self.cons_embedding(constraint_features)
