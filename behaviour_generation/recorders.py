@@ -314,18 +314,3 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
 
 
 
-variable_features = torch.rand(512, 16), torch.rand(402,16)
-constraint_features = torch.rand(210, 1), torch.rand(100,1)
-edge_index = torch.rand(2,1000), torch.rand(2,990)
-edge_attr = torch.rand(1000,1), torch.rand(990, 1)
-
-data = BipartiteGraphPairData(variable_features[0], constraint_features[0], edge_index[0], edge_attr[0],
-                              variable_features[1], constraint_features[1], edge_index[1], edge_attr[1], 1)
-from torch_geometric.loader import DataLoader
-data_list = [data, data]
-loader = DataLoader(data_list, batch_size=2)
-batch = next(iter(loader))
-print(batch.edge_index_s)
-print(batch.edge_index_t)
-        
-        
