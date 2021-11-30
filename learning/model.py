@@ -66,6 +66,7 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.ReLU(),
         )
 
+        #double check
         self.convs = torch.nn.ModuleList( [ BipartiteGraphConvolution(emb_size) for i in range(self.n_convs) ])
         
         self.pool = torch_geometric.nn.global_sort_pool
@@ -81,9 +82,30 @@ class GNNPolicy(torch.nn.Module):
 
     def forward(self, batch):
         
-        constraint_features, edge_indices, edge_features, variable_features = batch.constraint_features, batch.edge_index, batch.edge_attr, batch.variable_features
-
+        outputs = []
+        for i in range(2):
+            #to do add batch.batch
+            if i == 0:
+                graphs = batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s, batch.batch
+            else:
+                graphs = batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t, batch.batch
+                
+            outputs.append(self.forward_graphs(*graphs))
+        
+        output = -outputs[0]  + outputs[1] #Batchx KxEmbXnconvs, symetric comparator -, concat is not symetric
+        
+        output = self.final_mlp(output).squeeze(-1)
+        
+        return torch.sigmoid(output)
+        
+        
+        
+        
+        
+       
+    def forward_1graph(self, constraint_features, edge_indices, edge_features, variable_features, batch):
         # First step: linear embedding layers to a common dimension (64)
+        
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
         variable_features = self.var_embedding(variable_features)
@@ -92,16 +114,14 @@ class GNNPolicy(torch.nn.Module):
         
         constraint_conveds = [ conv(variable_features, edge_indices, edge_features, constraint_features) for conv in self.convs ]
        
-        constraint_pooleds = [ self.pool(constraint_conved, batch.batch, self.k) for constraint_conved in constraint_conveds ]
+        constraint_pooleds = [ self.pool(constraint_conved, batch, self.k) for constraint_conved in constraint_conveds ]
         
-        constraint_pooleds_cat = torch.cat(constraint_pooleds, dim=1)
+        constraint_pooleds_cat = torch.cat(constraint_pooleds, dim=1) #batchX kxembxNconvs
+            
         
-        # DO 1d convs 
-        output = constraint_pooleds_cat
+        return constraint_pooleds_cat
+    
         
-        output = self.final_mlp(output).squeeze(-1)
-
-        return torch.sigmoid(output)
     
 
 class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):

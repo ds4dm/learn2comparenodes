@@ -59,34 +59,43 @@ class CompBehaviourSaver():
         return self
     
     def _save_to_tensor(self, g_data, path):
-     
-        variable_features = torch.FloatTensor(g_data[0])
-        constraint_features = torch.FloatTensor(g_data[1])
-        edge_indices = torch.LongTensor(g_data[2])
-        edge_features = torch.FloatTensor(g_data[3])
+
+        variable_features = torch.FloatTensor(g_data[0][0]), torch.FloatTensor(g_data[0][1])
+        constraint_features = torch.FloatTensor(g_data[1][0]),torch.FloatTensor(g_data[1][1])
+        edge_indices = torch.LongTensor(g_data[2][0]), torch.LongTensor(g_data[2][1])
+        edge_features = torch.FloatTensor(g_data[3][0]), torch.FloatTensor(g_data[3][1])
         y = g_data[4]
         
-        data = BipartiteNodeData(variable_features, constraint_features, edge_indices,
-                                 edge_features, y)
+        data = BipartiteGraphPairData(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0],
+                                      variable_features[1], constraint_features[1], edge_indices[1], edge_features[1],
+                                      y)
         
         torch.save(data, path, _use_new_zipfile_serialization=False)
         
    
     
-    def _get_graph_pair_data( var_attributes0, var_attributes1, cons_block_idxs1, cons_block_idxs2, all_conss_blocks, all_conss_blocks_features, comp_res ):
-             
-        var_attributes = np.hstack((var_attributes0, var_attributes1)) #n_var x (2*dim_var)
+    def _get_graph_pair_data( var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res ):
         
-        adjacency_matrixes = np.array(all_conss_blocks)[list(set(cons_block_idxs1 + cons_block_idxs2))]
-        cons_attributes_blocks = np.array(all_conss_blocks_features)[list(set(cons_block_idxs1 + cons_block_idxs2))]
+        adjacency_matrixes0 = np.array(all_conss_blocks)[cons_block_idxs0]
+        adjacency_matrixes1 = np.array(all_conss_blocks)[cons_block_idxs1]
         
-        adjacency_matrix = sparse.hstack(tuple(adjacency_matrixes), format="coo") #n_var x card(conss1 U conss1)
+        cons_attributes_blocks0 = np.array(all_conss_blocks_features)[cons_block_idxs0]
+        cons_attributes_blocks1 = np.array(all_conss_blocks_features)[cons_block_idxs1]
         
-        cons_attributes = np.vstack(tuple(cons_attributes_blocks)) #card(conss1 U conss2) X cons_dim
+        adjacency_matrix0 = sparse.hstack(tuple(adjacency_matrixes0), format="coo") #n_var x card(conss1 )
+        adjacency_matrix1 = sparse.hstack(tuple(adjacency_matrixes1), format="coo") #n_var x card(conss1
+        
+        cons_attributes0 = np.vstack(tuple(cons_attributes_blocks0)) #card(conss1 U conss2) X cons_dim
+        cons_attributes1 = np.vstack(tuple(cons_attributes_blocks1))
         
         
-        return var_attributes, cons_attributes, np.vstack( (adjacency_matrix.row, adjacency_matrix.col)), adjacency_matrix.data[:, np.newaxis], comp_res
-        
+        var_attributes = (var_attributes0, var_attributes1)
+        cons_attributes = (cons_attributes0, cons_attributes1)
+        edge_idxs = (np.vstack( (adjacency_matrix0.row, adjacency_matrix0.col)), np.vstack( (adjacency_matrix1.row, adjacency_matrix1.col)))
+        edge_features =  (adjacency_matrix0.data[:, np.newaxis], adjacency_matrix1.data[:, np.newaxis])
+            
+        return var_attributes, cons_attributes, edge_idxs, edge_features, comp_res
+                
     
 
 
@@ -267,17 +276,27 @@ class BipartiteGraphStatic0():
         return copy
    
 
-#L2B
-class BipartiteNodeData(torch_geometric.data.Data):
+
+    
+class BipartiteGraphPairData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation 
     """
-    def __init__(self, variable_features=None, constraint_features=None, edge_indices=None, edge_features=None, y=None):
+    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, 
+                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, 
+                 y=None):
+        
         super().__init__()
-        self.variable_features = variable_features
-        self.constraint_features = constraint_features
-        self.edge_index = edge_indices
-        self.edge_attr = edge_features
+        self.variable_features_s = variable_features_s
+        self.constraint_features_s = constraint_features_s
+        self.edge_index_s = edge_indices_s
+        self.edge_attr_s = edge_features_s
+        
+        self.variable_features_t = variable_features_t
+        self.constraint_features_t = constraint_features_t
+        self.edge_index_t = edge_indices_t
+        self.edge_attr_t = edge_features_t
+        
         self.y = y
     
    
@@ -286,12 +305,27 @@ class BipartiteNodeData(torch_geometric.data.Data):
         We overload the pytorch geometric method that tells how to increment indices when concatenating graphs 
         for those entries (edge index, candidates) for which this is not obvious.
         """
-        if key == 'edge_index':
-            return torch.tensor([[self.variable_features.size(0)], [self.constraint_features.size(0)]])
+        if key == 'edge_index_s':
+            return torch.tensor([[self.variable_features_s.size(0)], [self.constraint_features_s.size(0)]])
+        elif key == 'edge_index_t':
+            return torch.tensor([[self.variable_features_t.size(0)], [self.constraint_features_t.size(0)]])
         else:
             return super().__inc__(key, value, *args, **kwargs)
 
 
-    
+
+variable_features = torch.rand(512, 16), torch.rand(402,16)
+constraint_features = torch.rand(210, 1), torch.rand(100,1)
+edge_index = torch.rand(2,1000), torch.rand(2,990)
+edge_attr = torch.rand(1000,1), torch.rand(990, 1)
+
+data = BipartiteGraphPairData(variable_features[0], constraint_features[0], edge_index[0], edge_attr[0],
+                              variable_features[1], constraint_features[1], edge_index[1], edge_attr[1], 1)
+from torch_geometric.loader import DataLoader
+data_list = [data, data]
+loader = DataLoader(data_list, batch_size=2)
+batch = next(iter(loader))
+print(batch.edge_index_s)
+print(batch.edge_index_t)
         
         
