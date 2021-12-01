@@ -270,7 +270,7 @@ class BipartiteGraphStatic0():
         
         copy = BipartiteGraphStatic0(self.n0)
         
-        copy.var_attributes = self.var_attributes[:,:]
+        copy.var_attributes = np.copy(self.var_attributes)
         copy.cons_block_idxs = self.cons_block_idxs[:]
         
         return copy
