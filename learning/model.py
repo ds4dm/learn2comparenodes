@@ -87,25 +87,25 @@ class GNNPolicy(torch.nn.Module):
             if i == 0:
                 graphs = (batch.constraint_features_s, batch.edge_index_s, 
                           batch.edge_attr_s, batch.variable_features_s, 
-                          batch.constraint_features_s_batch)
+                          batch.variable_features_s_batch)
             else:
                 graphs = (batch.constraint_features_t, batch.edge_index_t, 
                           batch.edge_attr_t, batch.variable_features_t,
-                          batch.constraint_features_t_batch)
+                          batch.variable_features_t_batch)
                 
             outputs.append(self.forward_graphs(*graphs))
         
 
-  
-        b = torch.sigmoid(self.final_layer( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]) )).squeeze(0)
+        #print(( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]))[0])
+        output = self.final_layer( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]) )
         
-        return b
+        return torch.sigmoid(output).squeeze(1)
         
         
         
         
        
-    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, constraint_batch):
+    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, variable_batch):
         # First step: linear embedding layers to a common dimension (64)
         
         constraint_features = self.cons_embedding(constraint_features)
@@ -113,15 +113,13 @@ class GNNPolicy(torch.nn.Module):
         variable_features = self.var_embedding(variable_features)
         
         # 1 half convolutions (is sufficient)
+        variable_conveds = [ conv(constraint_features, edge_indices, edge_features, variable_features) for conv in self.convs ]
+        variable_pooleds = [ self.pool(variable_conved, variable_batch, self.k) for variable_conved in variable_conveds ]
         
-        constraint_conveds = [ conv(variable_features, edge_indices, edge_features, constraint_features) for conv in self.convs ]
-       
-        constraint_pooleds = [ self.pool(constraint_conved, constraint_batch, self.k) for constraint_conved in constraint_conveds ]
-        
-        constraint_pooleds_cat = torch.cat(constraint_pooleds, dim=1) #batchX kxembxNconvs
+        variable_pooleds_cat = torch.cat(variable_pooleds, dim=1) #batchX kxembxNconvs
             
         
-        return constraint_pooleds_cat
+        return variable_pooleds_cat
     
         
     
@@ -129,7 +127,7 @@ class GNNPolicy(torch.nn.Module):
 class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
     
     def __init__(self, emb_size):
-        super().__init__('add')
+        super().__init__('add', 'target_to_source') #constraints to variables
         
         dropout_rate = 0.4
         
