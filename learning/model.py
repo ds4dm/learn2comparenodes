@@ -74,38 +74,48 @@ class GNNPolicy(torch.nn.Module):
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.Linear(self.k*emb_size*self.n_convs, self.k*emb_size),
                                     torch.nn.ReLU(),
-                                    torch.nn.Dropout(drop_rate)
+                                    torch.nn.Linear(self.k*emb_size, self.k*emb_size),
+                                    torch.nn.ReLU(),
+                                    torch.nn.Dropout(drop_rate),
+                                    torch.nn.Linear(self.k*emb_size, 1)
                                     )
-        self.final_layer = torch.nn.Linear(self.k*emb_size, 1)
 
 
-    def forward(self, batch):
-        
-        outputs = []
-        for i in range(2):
-            
-            if i == 0:
-                graphs = (batch.constraint_features_s, batch.edge_index_s, 
-                          batch.edge_attr_s, batch.variable_features_s, 
-                          batch.variable_features_s_batch)
-            else:
-                graphs = (batch.constraint_features_t, batch.edge_index_t, 
-                          batch.edge_attr_t, batch.variable_features_t,
-                          batch.variable_features_t_batch)
-                
-            outputs.append(self.forward_graphs(*graphs))
-        
+    def forward(self, batch, inv=False):
+    
 
-        #print(( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]))[0])
-        output = self.final_layer( - self.final_mlp(outputs[0])  +  self.final_mlp(outputs[1]) )
+        graphs0 = (batch.constraint_features_s, batch.edge_index_s, 
+                  batch.edge_attr_s, batch.variable_features_s)
         
-        return torch.sigmoid(output).squeeze(1)
+    
+        graphs1 = (batch.constraint_features_t, batch.edge_index_t, 
+                  batch.edge_attr_t, batch.variable_features_t)
+        
+        if inv:
+            graphs0, graphs1 = graphs1, graphs0
         
         
+        
+        variable_conveds_0 = self.forward_graphs(*graphs0)
+        variable_conveds_1 = self.forward_graphs(*graphs1)  #Nconstraint X dim
+
+        variable_pooleds_0 = [ self.pool(variable_conved, batch.variable_features_s_batch, self.k) for variable_conved in variable_conveds_0 ]        
+        variable_pooleds_1 = [ self.pool(variable_conved, batch.variable_features_s_batch, self.k) for variable_conved in variable_conveds_1 ]   
+        
+        
+        features_0 = torch.cat(variable_pooleds_0, dim=1)
+        features_1 = torch.cat(variable_pooleds_1, dim=1)
+        
+        output_0 = self.final_mlp(features_0)
+        output_1 = self.final_mlp(features_1)
+
+        return torch.sigmoid(-output_0 + output_1).squeeze(1)
+        
+         
         
         
        
-    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, variable_batch):
+    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features):
         # First step: linear embedding layers to a common dimension (64)
         
         constraint_features = self.cons_embedding(constraint_features)
@@ -114,12 +124,9 @@ class GNNPolicy(torch.nn.Module):
         
         # 1 half convolutions (is sufficient)
         variable_conveds = [ conv(constraint_features, edge_indices, edge_features, variable_features) for conv in self.convs ]
-        variable_pooleds = [ self.pool(variable_conved, variable_batch, self.k) for variable_conved in variable_conveds ]
+
         
-        variable_pooleds_cat = torch.cat(variable_pooleds, dim=1) #batchX kxembxNconvs
-            
-        
-        return variable_pooleds_cat
+        return variable_conveds
     
         
     
