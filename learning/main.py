@@ -38,18 +38,18 @@ def process(policy, data_loader, loss_fct, optimizer=None):
             batch = batch.to(DEVICE)
             
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
-            y_pred_proba = policy(batch)
-            y_pred = torch.round(y_pred_proba)
+            y_proba = policy(batch)
+            y_pred = torch.round(y_proba)
+            
             
             # Compute the usual cross-entropy classification loss
-            loss = loss_fct(y_pred_proba, y_true )
+            loss = loss_fct(y_proba, y_true )
 
             if optimizer is not None:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
-
-
+          
             accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss.item() * batch.num_graphs
@@ -75,9 +75,9 @@ OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:10]
+    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ]
     
-    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:1000]
+    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
@@ -95,8 +95,8 @@ for problem in problems:
         train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
-        #valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
-        #print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
+        valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
+        print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'gnn_node_comparator_{problem}.pkl')
     
