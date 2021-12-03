@@ -9,7 +9,7 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 
 import torch
 import torch_geometric
-from torch_geometric.nn import GATConv
+from torch_geometric.nn import SAGEConv
 
 class GraphDataset(torch_geometric.data.Dataset):
     """
@@ -69,9 +69,9 @@ class GNNPolicy(torch.nn.Module):
 
         
         #double check
-        #self.convs = torch.nn.ModuleList( [ GATConv((cons_nfeats, var_nfeats ), emb_size, edge_dim=edge_nfeats, dropout=drop_rate) for i in range(self.n_convs) ])
+        self.convs = torch.nn.ModuleList( [ SAGEConv((cons_nfeats, var_nfeats ), emb_size) for i in range(self.n_convs) ])
         
-        self.convs = torch.nn.ModuleList( [ GATConv((emb_size, emb_size ), emb_size, edge_dim=edge_nfeats, dropout=drop_rate) for i in range(self.n_convs) ])
+        #self.convs = torch.nn.ModuleList( [ SAGEConv((emb_size, emb_size ), emb_size) for i in range(self.n_convs) ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
@@ -105,7 +105,7 @@ class GNNPolicy(torch.nn.Module):
         scores0 = self.forward_graphs(*graphs0)
         scores1 = self.forward_graphs(*graphs1)
         
-        print(torch.sigmoid(scores0-scores1).squeeze(1))
+        #print(torch.sigmoid(scores0-scores1).squeeze(1))
         
         return torch.sigmoid(scores0-scores1).squeeze(1)
          
@@ -115,9 +115,9 @@ class GNNPolicy(torch.nn.Module):
     def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, variable_batch):
         # First step: linear embedding layers to a common dimension (64)
   
-        constraint_features = self.cons_embedding(constraint_features)
-        edge_features = self.edge_embedding(edge_features)
-        variable_features = self.var_embedding(variable_features)
+        #constraint_features = self.cons_embedding(constraint_features)
+        #edge_features = self.edge_embedding(edge_features)
+        #variable_features = self.var_embedding(variable_features)
  
         # 1 half convolutions (is sufficient)
         #edge indice var to cons       
@@ -125,15 +125,14 @@ class GNNPolicy(torch.nn.Module):
         
         variable_conveds = [ conv((constraint_features, variable_features), 
                                   edge_indices_cons_to_var,
-                                  edge_attr=edge_features,
                                  size=(constraint_features.size(0), variable_features.size(0))) for conv in self.convs ]
 
 
         variable_pooleds = [ self.pool(variable_conved, variable_batch, self.k) for variable_conved in variable_conveds ]
-   
+        
         feature = torch.cat(variable_pooleds, dim=1) #B,nconv*K*emb
         score = self.final_mlp(feature)
-        
+
         return score #B, F=1
     
         
