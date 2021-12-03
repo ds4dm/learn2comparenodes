@@ -33,9 +33,9 @@ class GNNPolicy(torch.nn.Module):
         super().__init__()
         
         self.emb_size = emb_size = 16 #uniform node feature embedding dim
-        self.k = 16 #kmax pooling
-        self.n_convs = 4 #number of convolutions to perform parralelly
-        drop_rate = 0.35
+        self.k = 32 #kmax pooling
+        self.n_convs = 16 #number of convolutions to perform parralelly
+        drop_rate = 0.3
         
         # static data
         cons_nfeats = 1 
@@ -104,8 +104,6 @@ class GNNPolicy(torch.nn.Module):
         
         scores0 = self.forward_graphs(*graphs0)
         scores1 = self.forward_graphs(*graphs1)
-        
-        #print(torch.sigmoid(scores0-scores1).squeeze(1))
         
         return torch.sigmoid(scores0-scores1).squeeze(1)
          
