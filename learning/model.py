@@ -9,6 +9,7 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 
 import torch
 import torch_geometric
+from torch_geometric.nn import GATConv
 
 class GraphDataset(torch_geometric.data.Dataset):
     """
@@ -31,7 +32,6 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        #HYPERPARAMETERS
         self.emb_size = emb_size = 16 #uniform node feature embedding dim
         self.k = 16 #kmax pooling
         self.n_convs = 4 #number of convolutions to perform parralelly
@@ -66,119 +66,78 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.ReLU(),
         )
 
+
+        
         #double check
-        self.convs = torch.nn.ModuleList( [ BipartiteGraphConvolution(emb_size) for i in range(self.n_convs) ])
+        #self.convs = torch.nn.ModuleList( [ GATConv((cons_nfeats, var_nfeats ), emb_size, edge_dim=edge_nfeats, dropout=drop_rate) for i in range(self.n_convs) ])
+        
+        self.convs = torch.nn.ModuleList( [ GATConv((emb_size, emb_size ), emb_size, edge_dim=edge_nfeats, dropout=drop_rate) for i in range(self.n_convs) ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.Linear(self.k*emb_size*self.n_convs, self.k*emb_size),
+                                    torch.nn.Linear(self.k*emb_size*self.n_convs, 256),
                                     torch.nn.ReLU(),
-                                    torch.nn.Linear(self.k*emb_size, self.k*emb_size),
-                                    torch.nn.ReLU(),
-                                    torch.nn.Dropout(drop_rate),
-                                    torch.nn.Linear(self.k*emb_size, 1)
+                                    torch.nn.Linear(256, 1, bias=False)
                                     )
 
 
     def forward(self, batch, inv=False):
     
 
-        graphs0 = (batch.constraint_features_s, batch.edge_index_s, 
-                  batch.edge_attr_s, batch.variable_features_s)
+        graphs0 = (batch.constraint_features_s, 
+                   batch.edge_index_s, 
+                  batch.edge_attr_s, 
+                  batch.variable_features_s, 
+                  batch.variable_features_s_batch)
         
     
-        graphs1 = (batch.constraint_features_t, batch.edge_index_t, 
-                  batch.edge_attr_t, batch.variable_features_t)
+        graphs1 = (batch.constraint_features_t,
+                   batch.edge_index_t, 
+                  batch.edge_attr_t,
+                  batch.variable_features_t,
+                  batch.variable_features_t_batch)
         
         if inv:
             graphs0, graphs1 = graphs1, graphs0
+            
         
+        scores0 = self.forward_graphs(*graphs0)
+        scores1 = self.forward_graphs(*graphs1)
         
+        print(torch.sigmoid(scores0-scores1).squeeze(1))
         
-        variable_conveds_0 = self.forward_graphs(*graphs0)
-        variable_conveds_1 = self.forward_graphs(*graphs1)  #Nconstraint X dim
-
-        variable_pooleds_0 = [ self.pool(variable_conved, batch.variable_features_s_batch, self.k) for variable_conved in variable_conveds_0 ]        
-        variable_pooleds_1 = [ self.pool(variable_conved, batch.variable_features_s_batch, self.k) for variable_conved in variable_conveds_1 ]   
-        
-        
-        features_0 = torch.cat(variable_pooleds_0, dim=1)
-        features_1 = torch.cat(variable_pooleds_1, dim=1)
-        
-        output_0 = self.final_mlp(features_0)
-        output_1 = self.final_mlp(features_1)
-
-        return torch.sigmoid(-output_0 + output_1).squeeze(1)
-        
+        return torch.sigmoid(scores0-scores1).squeeze(1)
          
         
         
        
-    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features):
+    def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, variable_batch):
         # First step: linear embedding layers to a common dimension (64)
-        
+  
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
         variable_features = self.var_embedding(variable_features)
-        
+ 
         # 1 half convolutions (is sufficient)
-        variable_conveds = [ conv(constraint_features, edge_indices, edge_features, variable_features) for conv in self.convs ]
-
+        #edge indice var to cons       
+        edge_indices_cons_to_var = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
-        return variable_conveds
+        variable_conveds = [ conv((constraint_features, variable_features), 
+                                  edge_indices_cons_to_var,
+                                  edge_attr=edge_features,
+                                 size=(constraint_features.size(0), variable_features.size(0))) for conv in self.convs ]
+
+
+        variable_pooleds = [ self.pool(variable_conved, variable_batch, self.k) for variable_conved in variable_conveds ]
+   
+        feature = torch.cat(variable_pooleds, dim=1) #B,nconv*K*emb
+        score = self.final_mlp(feature)
+        
+        return score #B, F=1
     
         
     
 
-class BipartiteGraphConvolution(torch_geometric.nn.MessagePassing):
-    
-    def __init__(self, emb_size):
-        super().__init__('add', 'target_to_source') #constraints to variables
-        
-        dropout_rate = 0.4
-        
-        self.feature_module_left = torch.nn.Sequential(
-            torch.nn.Linear(emb_size, emb_size)
-        )
-        self.feature_module_edge = torch.nn.Sequential(
-            torch.nn.Linear(1, emb_size, bias=False)
-        )
-        self.feature_module_right = torch.nn.Sequential(
-            torch.nn.Linear(emb_size, emb_size, bias=False)
-        )
-        self.feature_module_final = torch.nn.Sequential(
-            torch.nn.LayerNorm(emb_size),
-            torch.nn.ReLU(),
-            torch.nn.Linear(emb_size, emb_size)
-        )
-           
-        self.post_conv_module = torch.nn.Sequential(
-            torch.nn.LayerNorm(emb_size)
-        )
 
-        # output_layers
-        self.output_module = torch.nn.Sequential(
-            torch.nn.Linear(2*emb_size, emb_size),
-            torch.nn.ReLU(),
-            torch.nn.Dropout(dropout_rate),
-            torch.nn.Linear(emb_size, emb_size),
-        )
-
-    def forward(self, left_features, edge_indices, edge_features, right_features):
-        """
-        This method sends the messages, computed in the message method.
-        """
-        
-        output = self.propagate(edge_indices, size=(left_features.shape[0], right_features.shape[0]), 
-                                node_features=(left_features, right_features), edge_features=edge_features)
-        
-        return self.output_module(torch.cat([self.post_conv_module(output), right_features], dim=-1))
-
-    def message(self, node_features_i, node_features_j, edge_features):
-        output = self.feature_module_final(self.feature_module_left(node_features_i) 
-                                           + self.feature_module_edge(edge_features) 
-                                           + self.feature_module_right(node_features_j))
-        return output
-    
  
