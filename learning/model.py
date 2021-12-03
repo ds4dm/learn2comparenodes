@@ -9,7 +9,7 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 
 import torch
 import torch_geometric
-from torch_geometric.nn import SAGEConv
+from torch_geometric.nn import GeneralConv
 
 class GraphDataset(torch_geometric.data.Dataset):
     """
@@ -67,17 +67,17 @@ class GNNPolicy(torch.nn.Module):
         )
 
 
-        
+
         #double check
-        self.convs = torch.nn.ModuleList( [ SAGEConv((cons_nfeats, var_nfeats ), emb_size) for i in range(self.n_convs) ])
-        
-        #self.convs = torch.nn.ModuleList( [ SAGEConv((emb_size, emb_size ), emb_size) for i in range(self.n_convs) ])
+ 
+        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size ), emb_size, in_edge_channels=edge_nfeats,  attention=True) for i in range(self.n_convs) ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.Linear(self.k*emb_size*self.n_convs, 256),
                                     torch.nn.ReLU(),
+                                    torch.nn.Dropout(drop_rate),
                                     torch.nn.Linear(256, 1, bias=False)
                                     )
 
@@ -114,25 +114,29 @@ class GNNPolicy(torch.nn.Module):
        
     def forward_graphs(self, constraint_features, edge_indices, edge_features, variable_features, variable_batch):
         # First step: linear embedding layers to a common dimension (64)
-  
-        #constraint_features = self.cons_embedding(constraint_features)
-        #edge_features = self.edge_embedding(edge_features)
-        #variable_features = self.var_embedding(variable_features)
- 
+        
         # 1 half convolutions (is sufficient)
         #edge indice var to cons       
+        
+        
+        variable_features = self.var_embedding(variable_features)
+        constraint_features = self.cons_embedding(constraint_features)
+        edge_features = self.edge_embedding(edge_features)
+        
+        
         edge_indices_cons_to_var = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
         variable_conveds = [ conv((constraint_features, variable_features), 
                                   edge_indices_cons_to_var,
-                                 size=(constraint_features.size(0), variable_features.size(0))) for conv in self.convs ]
-
+                                  edge_feature=edge_features,
+                                  size=(constraint_features.size(0), variable_features.size(0))) for conv in self.convs ]
+               
 
         variable_pooleds = [ self.pool(variable_conved, variable_batch, self.k) for variable_conved in variable_conveds ]
-        
+   
         feature = torch.cat(variable_pooleds, dim=1) #B,nconv*K*emb
         score = self.final_mlp(feature)
-
+        
         return score #B, F=1
     
         
