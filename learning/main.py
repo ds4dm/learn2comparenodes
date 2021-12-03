@@ -66,36 +66,37 @@ def process(policy, data_loader, loss_fct, optimizer=None):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.01
-NB_EPOCHS = 5
+NB_EPOCHS = 1000
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+LOSS = torch.nn.BCELoss()
+OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ]
+    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:10]
     
-    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ]
+    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:1000]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
 # TO DO : learn something from the data
-    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=32, shuffle=True, follow_batch=['variable_features_s', 'variable_features_t'])
+    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=16, shuffle=True, follow_batch=['variable_features_s', 'variable_features_t'])
     valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False, follow_batch=['variable_features_s', 'variable_features_t'])
     
     policy = GNNPolicy().to(DEVICE)
-    optimizer = torch.optim.Adam(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
-    loss = torch.nn.BCELoss()
+    optimizer = OPTIMIZER(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
+    
     
     for epoch in range(NB_EPOCHS):
         print(f"Epoch {epoch+1}")
         
-        train_loss, train_acc = process(policy, train_loader, loss, optimizer)
+        train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
-        valid_loss, valid_acc = process(policy, valid_loader, loss, None)
-        print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
+        #valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
+        #print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'gnn_node_comparator_{problem}.pkl')
     
