@@ -8,6 +8,7 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 """
 
 import torch
+import torch.nn.functional as F
 import torch_geometric
 from torch_geometric.nn import GeneralConv
 
@@ -92,7 +93,7 @@ class GNNPolicy(torch.nn.Module):
                                 torch.max(
                                     torch.abs(batch.variable_features_s[:,[0,1]] - batch.variable_features_t[:,[0,1]]), dim=1 )[0] 
                                 > epsilon )[0]
-        
+
         #graph1 edges
         cond = [ batch.edge_index_s[0] == var  for var in vars_to_keep ] 
         edge_to_keep_s = torch.where(sum(cond))[0]
@@ -149,10 +150,10 @@ class GNNPolicy(torch.nn.Module):
         
         
         #Var to cons
-        constraint_conveds = [ conv((variable_features, constraint_features), 
+        constraint_conveds = [ F.relu(conv((variable_features, constraint_features), 
                                   edge_indices,
                                   edge_feature=edge_features,
-                                  size=(variable_features.size(0), constraint_features.size(0))) for idx, conv in enumerate(self.convs) ]
+                                  size=(variable_features.size(0), constraint_features.size(0)))) for idx, conv in enumerate(self.convs) ]
         
         
         
@@ -164,9 +165,8 @@ class GNNPolicy(torch.nn.Module):
 
         constraint_mask[constraint_idxs_to_keep] = 1
         constraint_conved_filtered = constraint_conved*constraint_mask
-
+  
         pooled_features = self.pool(constraint_conved_filtered, constraint_batch, self.k) #B,k*sum(hidden_dims)
-        
         
         score = self.final_mlp(pooled_features)
         
