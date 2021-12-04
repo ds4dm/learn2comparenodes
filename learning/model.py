@@ -110,7 +110,7 @@ class GNNPolicy(torch.nn.Module):
                   batch.edge_attr_s, 
                   batch.variable_features_s, 
                   cons_to_keep_s,
-                  batch.variable_features_s_batch)
+                  batch.constraint_features_s_batch)
         
     
         graph1 = (batch.constraint_features_t,
@@ -118,7 +118,7 @@ class GNNPolicy(torch.nn.Module):
                   batch.edge_attr_t,
                   batch.variable_features_t,
                   cons_to_keep_t,
-                  batch.variable_features_t_batch)
+                  batch.constraint_features_t_batch)
         
         
         
@@ -160,10 +160,11 @@ class GNNPolicy(torch.nn.Module):
         constraint_conved = torch.cat(constraint_conveds, dim=1)  #N, sum(hiddendims)
         
         constraint_mask = torch.zeros(constraint_conved.shape[0], constraint_conved.shape[1])
+        
+
         constraint_mask[constraint_idxs_to_keep] = 1
-        
         constraint_conved_filtered = constraint_conved*constraint_mask
-        
+
         pooled_features = self.pool(constraint_conved_filtered, constraint_batch, self.k) #B,k*sum(hidden_dims)
         
         
