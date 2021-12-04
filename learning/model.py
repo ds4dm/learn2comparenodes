@@ -36,7 +36,7 @@ class GNNPolicy(torch.nn.Module):
         self.k = 32 #kmax pooling
         self.n_convs = 16 #number of convolutions to perform parralelly
         drop_rate = 0.3
-        
+        hidden_dims = [8,8,8,1]
         # static data
         cons_nfeats = 1 
         edge_nfeats = 1
@@ -70,12 +70,12 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size ), emb_size, in_edge_channels=edge_nfeats,  attention=True) for i in range(self.n_convs) ])
+        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size ), hidden_dim , in_edge_channels=edge_nfeats) for hidden_dim in hidden_dims ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.Linear(self.k*emb_size*self.n_convs, 256),
+                                    torch.nn.Linear(self.k*sum(hidden_dims), 256),
                                     torch.nn.ReLU(),
                                     torch.nn.Dropout(drop_rate),
                                     torch.nn.Linear(256, 1, bias=False)
