@@ -70,7 +70,7 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size ), hidden_dim , in_edge_channels=edge_nfeats) for hidden_dim in hidden_dims ])
+        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size), hidden_dim , in_edge_channels=edge_nfeats) for hidden_dim in hidden_dims ])
         
         self.pool = torch_geometric.nn.global_sort_pool
         
@@ -95,11 +95,13 @@ class GNNPolicy(torch.nn.Module):
         
         #graph1 edges
         cond = [ batch.edge_index_s[0] == var  for var in vars_to_keep ] 
-        cons_to_keep_s = torch.where(sum(cond))[0]
+        edge_to_keep_s = torch.where(sum(cond))[0]
+        cons_to_keep_s = batch.edge_index_s[1, edge_to_keep_s]
         
         #graph1 edges
         cond = [ batch.edge_index_t[0] == var  for var in vars_to_keep ] 
-        cons_to_keep_t = torch.where(sum(cond))[0] 
+        edge_to_keep_t = torch.where(sum(cond))[0] 
+        cons_to_keep_t = batch.edge_index_s[1, edge_to_keep_t]
         
     
 
