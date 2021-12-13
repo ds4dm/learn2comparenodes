@@ -308,16 +308,16 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
 
         coeff = torch.max(torch.abs(variable_features[var_to_normalize, :2]) , axis=1)[0]
         
-        print(coeff)
         for v, c in zip(var_to_normalize, coeff):
             
             variable_features[ v, :3] /= c
-            
-            edge_to_normalize = torch.where(edge_index[0,:] == v)[0]
+      
+            edge_to_normalize = torch.where(edge_index[0] == 0)[0]
             edge_attr[edge_to_normalize] /= c
             
             constraint_to_normalize = edge_index[1, edge_to_normalize]
             constraint_features[constraint_to_normalize] /= c
+            
 
         
 
