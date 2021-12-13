@@ -287,17 +287,42 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
                  y=None):
         
         super().__init__()
-        self.variable_features_s = variable_features_s
-        self.constraint_features_s = constraint_features_s
-        self.edge_index_s = edge_indices_s
-        self.edge_attr_s = edge_features_s
         
-        self.variable_features_t = variable_features_t
-        self.constraint_features_t = constraint_features_t
-        self.edge_index_t = edge_indices_t
-        self.edge_attr_t = edge_features_t
+        self.variable_features_s, self.constraint_features_s, self.edge_indices_s, self.edge_features_s  =  self.normalize_graph(
+            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
+        
+        self.variable_features_t, self.constraint_features_t, self.edge_indices_t, self.edge_features_t  =  self.normalize_graph(
+            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
+
         
         self.y = y
+        
+        
+    
+    
+    def normalize_graph(self, variable_features, constraint_features, edge_index, edge_attr):
+        
+
+        
+        var_to_normalize = torch.where( torch.max(torch.abs(variable_features[:,[0,1]]), axis=1)[0] > 1)[0]
+
+        coeff = torch.max(torch.abs(variable_features[var_to_normalize, :2]) , axis=1)[0]
+        
+        print(coeff)
+        for v, c in zip(var_to_normalize, coeff):
+            
+            variable_features[ v, :3] /= c
+            
+            edge_to_normalize = torch.where(edge_index[0,:] == v)[0]
+            edge_attr[edge_to_normalize] /= c
+            
+            constraint_to_normalize = edge_index[1, edge_to_normalize]
+            constraint_features[constraint_to_normalize] /= c
+
+        
+
+        return variable_features, constraint_features, edge_index, edge_attr
+        
     
    
     def __inc__(self, key, value, *args, **kwargs):
