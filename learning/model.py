@@ -76,50 +76,41 @@ class GNNPolicy(torch.nn.Module):
         self.pool = torch_geometric.nn.global_sort_pool
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.Linear(self.k*sum(hidden_dims), 256),
+                                    torch.nn.Linear(2*self.k*sum(hidden_dims), 256),
                                     torch.nn.ReLU(),
                                     torch.nn.Dropout(drop_rate),
-                                    torch.nn.Linear(256, 1, bias=False)
+                                    torch.nn.Linear(256, 1, bias=False),
+                                    torch.nn.ReLU(),
                                     )
+     
 
-
+    
     def forward(self, batch, inv=False, epsilon=0.01):
         
         
         #create constraint masks. COnstraint associated with varialbes for which at least one of their bound have changed
         
         #variables for which at least one of their bound have changed
-        vars_to_keep = torch.where(
-                                torch.max(
-                                    torch.abs(batch.variable_features_s[:,[0,1]] - batch.variable_features_t[:,[0,1]]), dim=1 )[0] 
-                                > epsilon )[0]
 
         #graph1 edges
-        cond = [ batch.edge_index_s[0] == var  for var in vars_to_keep ] 
-        edge_to_keep_s = torch.where(sum(cond))[0]
-        cons_to_keep_s = batch.edge_index_s[1, edge_to_keep_s]
-        
-        #graph1 edges
-        cond = [ batch.edge_index_t[0] == var  for var in vars_to_keep ] 
-        edge_to_keep_t = torch.where(sum(cond))[0] 
-        cons_to_keep_t = batch.edge_index_s[1, edge_to_keep_t]
-        
     
+    
+        
 
         graph0 = (batch.constraint_features_s, 
-                   batch.edge_index_s, 
+                  batch.edge_index_s, 
                   batch.edge_attr_s, 
                   batch.variable_features_s, 
-                  cons_to_keep_s,
-                  batch.constraint_features_s_batch)
+                  batch.constraint_features_s_batch,
+                  batch.variable_features_s_batch)
         
     
         graph1 = (batch.constraint_features_t,
-                   batch.edge_index_t, 
+                  batch.edge_index_t, 
                   batch.edge_attr_t,
                   batch.variable_features_t,
-                  cons_to_keep_t,
-                  batch.constraint_features_t_batch)
+                  batch.constraint_features_t_batch,
+                  batch.variable_features_t_batch)
         
         
         
