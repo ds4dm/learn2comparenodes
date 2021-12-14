@@ -127,16 +127,16 @@ class GNNPolicy(torch.nn.Module):
             graph0, graph1 = graph1, graph0
             
         
-        scores0 = self.forward_graphs(*graph0)
-        scores1 = self.forward_graphs(*graph1)
+        score0 = self.forward_graphs(*graph0)
+        score1 = self.forward_graphs(*graph1)
         
-        return torch.sigmoid(scores0-scores1).squeeze(1)
+        return torch.sigmoid(-score0+score1).squeeze(1)
          
         
         
        
     def forward_graphs(self, constraint_features, edge_indices, edge_features, 
-                       variable_features, constraint_idxs_to_keep, constraint_batch):
+                       variable_features, constraint_batch, variable_batch):
 
         
         #Assume edge indice var to cons, constraint_mask of shape [Nconvs]       
@@ -146,7 +146,8 @@ class GNNPolicy(torch.nn.Module):
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
         
-        edge_indices_cons_to_var = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
+        
+        edge_indices_reversed = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
         
         #Var to cons
@@ -155,22 +156,23 @@ class GNNPolicy(torch.nn.Module):
                                   edge_feature=edge_features,
                                   size=(variable_features.size(0), constraint_features.size(0)))) for idx, conv in enumerate(self.convs) ]
         
+        #cons to var 
+        variable_conveds = [ F.relu(conv((constraint_features, variable_features), 
+                                  edge_indices_reversed,
+                                  edge_feature=edge_features,
+                                  size=(constraint_features.size(0), variable_features.size(0)))) for idx, conv in enumerate(self.convs) ]
+        
         
         
         
         constraint_conved = torch.cat(constraint_conveds, dim=1)  #N, sum(hiddendims)
+        variable_conved = torch.cat(variable_conveds, dim=1)
         
-        constraint_mask = torch.zeros(constraint_conved.shape[0], constraint_conved.shape[1])
         
-
-        constraint_mask[constraint_idxs_to_keep] = 1
-        constraint_conved_filtered = constraint_conved*constraint_mask
-  
-        pooled_features = self.pool(constraint_conved_filtered, constraint_batch, self.k) #B,k*sum(hidden_dims)
+        pooled_constraint = self.pool(constraint_conved, constraint_batch, self.k) #B,k*sum(hidden_dims)
+        pooled_variable = self.pool(variable_conved, variable_batch, self.k) #B,k*sum(hidden_dims)
         
-        score = self.final_mlp(pooled_features)
-        
-        return score #B, F=1
+        return self.final_mlp(torch.cat((pooled_constraint, pooled_variable), dim=0))
     
         
     
