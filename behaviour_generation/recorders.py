@@ -303,23 +303,41 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
     def normalize_graph(self, variable_features, constraint_features, edge_index, edge_attr):
         
 
-        
-        var_to_normalize = torch.where( torch.max(torch.abs(variable_features[:,[0,1]]), axis=1)[0] > 1)[0]
+        #Normalize variable bounds to value between 0,1
+        vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
 
-        coeff = torch.max(torch.abs(variable_features[var_to_normalize, :2]) , axis=1)[0]
+        coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
         
-        for v, c in zip(var_to_normalize, coeff):
+        for v, cf in zip(vars_to_normalize, coeffs):
             
-            variable_features[ v, :3] /= c
-      
-            edge_to_normalize = torch.where(edge_index[0] == 0)[0]
-            edge_attr[edge_to_normalize] /= c
+            #normaize feature bound
+            variable_features[ v, :2] /= cf
             
-            constraint_to_normalize = edge_index[1, edge_to_normalize]
-            constraint_features[constraint_to_normalize] /= c
+            #update obj coeff and associated edges
+            variable_features[ v, 2 ] *= cf 
             
+            associated_edges = torch.where(edge_index[0] == v)[0]
+            edge_attr[associated_edges] *= cf
+            
+        
+        
+        #Normalize constraints 
+        for c in range(constraint_features.shape[0]):
+            
+            associated_edges =  torch.where(edge_index[1] == c)[0]
+            normalizer = torch.max(edge_attr[associated_edges], axis=0)[0]
+            
+            #normalize associated edges
+            edge_attr[associated_edges] /= normalizer
+            
+            #normalize right hand side
+            constraint_features[c] /= normalizer
+        
+        #normalize objective
+        normalizer = torch.max(variable_features[:,2], axis=0)[0]
+        print(normalizer)
+        variable_features[:,2] /= normalizer
 
-        
 
         return variable_features, constraint_features, edge_index, edge_attr
         
