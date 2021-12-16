@@ -66,9 +66,10 @@ class CompBehaviourSaver():
         edge_features = torch.FloatTensor(g_data[3][0]), torch.FloatTensor(g_data[3][1])
         y = g_data[4]
         
-        data = BipartiteGraphPairData(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0],
-                                      variable_features[1], constraint_features[1], edge_indices[1], edge_features[1],
-                                      y)
+        g1 = normalize_graph(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0])
+        g2 = normalize_graph(variable_features[1], constraint_features[1], edge_indices[1], edge_features[1])
+        
+        data = BipartiteGraphPairData(*g1, *g2, y)
         
         torch.save(data, path, _use_new_zipfile_serialization=False)
         
@@ -288,60 +289,16 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
         
         super().__init__()
         
-        self.variable_features_s, self.constraint_features_s, self.edge_indices_s, self.edge_features_s  =  self.normalize_graph(
+        self.variable_features_s, self.constraint_features_s, self.edge_indices_s, self.edge_features_s  =  (
             variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
         
-        self.variable_features_t, self.constraint_features_t, self.edge_indices_t, self.edge_features_t  =  self.normalize_graph(
+        self.variable_features_t, self.constraint_features_t, self.edge_indices_t, self.edge_features_t  = (
             variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
 
         
         self.y = y
         
-        
-    
-    
-    def normalize_graph(self, variable_features, constraint_features, edge_index, edge_attr):
-        
 
-        #Normalize variable bounds to value between 0,1
-        vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
-
-        coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
-        
-        for v, cf in zip(vars_to_normalize, coeffs):
-            
-            #normaize feature bound
-            variable_features[ v, :2] /= cf
-            
-            #update obj coeff and associated edges
-            variable_features[ v, 2 ] *= cf 
-            
-            associated_edges = torch.where(edge_index[0] == v)[0]
-            edge_attr[associated_edges] *= cf
-            
-        
-        
-        #Normalize constraints 
-        for c in range(constraint_features.shape[0]):
-            
-            associated_edges =  torch.where(edge_index[1] == c)[0]
-            normalizer = torch.max(edge_attr[associated_edges], axis=0)[0]
-            
-            #normalize associated edges
-            edge_attr[associated_edges] /= normalizer
-            
-            #normalize right hand side
-            constraint_features[c] /= normalizer
-        
-        #normalize objective
-        normalizer = torch.max(variable_features[:,2], axis=0)[0]
-        print(normalizer)
-        variable_features[:,2] /= normalizer
-
-
-        return variable_features, constraint_features, edge_index, edge_attr
-        
-    
    
     def __inc__(self, key, value, *args, **kwargs):
         """
@@ -356,4 +313,51 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
             return super().__inc__(key, value, *args, **kwargs)
 
 
+
+
+
+        
+    
+    
+def normalize_graph(variable_features, constraint_features, edge_index, edge_attr):
+    
+
+    #Normalize variable bounds to value between 0,1
+    vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
+
+    coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    
+    for v, cf in zip(vars_to_normalize, coeffs):
+        
+        #normaize feature bound
+        variable_features[ v, :2] /= cf
+        
+        #update obj coeff and associated edges
+        variable_features[ v, 2 ] *= cf 
+        
+        associated_edges = torch.where(edge_index[0] == v)[0]
+        edge_attr[associated_edges] *= cf
+        
+    
+    
+    #Normalize constraints 
+    for c in range(constraint_features.shape[0]):
+        
+        associated_edges =  torch.where(edge_index[1] == c)[0]
+        normalizer = torch.max(edge_attr[associated_edges], axis=0)[0]
+        
+        #normalize associated edges
+        edge_attr[associated_edges] /= normalizer
+        
+        #normalize right hand side
+        constraint_features[c] /= normalizer
+    
+    #normalize objective
+    normalizer = torch.max(variable_features[:,2], axis=0)[0]
+    print(normalizer)
+    variable_features[:,2] /= normalizer
+
+
+    return variable_features, constraint_features, edge_index, edge_attr
+    
 
