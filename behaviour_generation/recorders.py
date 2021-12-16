@@ -344,7 +344,7 @@ def normalize_graph(variable_features, constraint_features, edge_index, edge_att
     for c in range(constraint_features.shape[0]):
         
         associated_edges =  torch.where(edge_index[1] == c)[0]
-        normalizer = torch.max(edge_attr[associated_edges], axis=0)[0]
+        normalizer = torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0]
         
         #normalize associated edges
         edge_attr[associated_edges] /= normalizer
@@ -353,7 +353,7 @@ def normalize_graph(variable_features, constraint_features, edge_index, edge_att
         constraint_features[c] /= normalizer
     
     #normalize objective
-    normalizer = torch.max(variable_features[:,2], axis=0)[0]
+    normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
     print(normalizer)
     variable_features[:,2] /= normalizer
 
