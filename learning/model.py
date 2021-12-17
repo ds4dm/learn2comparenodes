@@ -33,8 +33,8 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        self.emb_size = emb_size = 16 #uniform node feature embedding dim
-        self.k = 32 #kmax pooling
+        self.emb_size = emb_size = 64 #uniform node feature embedding dim
+        self.k = 128 #kmax pooling
         self.n_convs = 16 #number of convolutions to perform parralelly
         drop_rate = 0.3
         hidden_dims = [8,8,8,1]
@@ -162,8 +162,8 @@ class GNNPolicy(torch.nn.Module):
         
         pooled_constraint = self.pool(constraint_conved, constraint_batch, self.k) #B,k*sum(hidden_dims)
         pooled_variable = self.pool(variable_conved, variable_batch, self.k) #B,k*sum(hidden_dims)
-        
-        return self.final_mlp(torch.cat((pooled_constraint, pooled_variable), dim=0))
+
+        return self.final_mlp(torch.cat((pooled_constraint, pooled_variable), dim=1))
     
         
     
