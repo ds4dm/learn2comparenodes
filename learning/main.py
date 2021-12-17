@@ -82,7 +82,7 @@ for problem in problems:
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
 # TO DO : learn something from the data
-    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=16, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t','variable_features_s','variable_features_t'])
+    train_loader = torch_geometric.loader.DataLoader(train_data, batch_size=16, shuffle=True, follow_batch=['constraint_features_s', 'constraint_features_t','variable_features_s','variable_features_t'])
     valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t', 'variable_features_s', 'variable_features_t'])
     
     policy = GNNPolicy().to(DEVICE)
