@@ -36,6 +36,7 @@ def process(policy, data_loader, loss_fct, optimizer=None):
         for idx,batch in enumerate(data_loader):
             
             batch = batch.to(DEVICE)
+            test1(batch)
             
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
             y_proba = policy(batch)
@@ -60,13 +61,23 @@ def process(policy, data_loader, loss_fct, optimizer=None):
     mean_acc /= n_samples_processed
     return mean_loss, mean_acc
 
-
 #main
+def test1(data):
+    assert(not torch.allclose(data.variable_features_s, data.variable_features_t))
+    #assert(not torch.allclose(data.constraint_features_s, data.constraint_features_t))
+    #assert(not torch.allclose(data.edge_features_s, data.edge_features_t))
+    
+    assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
+    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
+    assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
+    
+    
+
 
 
 problems = ["GISP"]
-LEARNING_RATE = 0.01
-NB_EPOCHS = 1000
+LEARNING_RATE = 0.005
+NB_EPOCHS = 100
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -75,14 +86,15 @@ OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:10]
+    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:100]
     
     valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:20]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
+    
 # TO DO : learn something from the data
-    train_loader = torch_geometric.loader.DataLoader(train_data,batch_size=16, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t','variable_features_s','variable_features_t'])
+    train_loader = torch_geometric.loader.DataLoader(train_data, batch_size=16, shuffle=True, follow_batch=['constraint_features_s', 'constraint_features_t','variable_features_s','variable_features_t'])
     valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t', 'variable_features_s', 'variable_features_t'])
     
     policy = GNNPolicy().to(DEVICE)
@@ -99,18 +111,7 @@ for problem in problems:
         print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'gnn_node_comparator_{problem}.pkl')
-    
 
-#main
-def test1(data):
-    assert(not torch.allclose(data.variable_features_s, data.variable_features_t))
-    #assert(not torch.allclose(data.constraint_features_s, data.constraint_features_t))
-    #assert(not torch.allclose(data.edge_features_s, data.edge_features_t))
-    
-    assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
-    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
-    assert( torch.max(data.edge_features_s) <= 1 and torch.min(data.edge_features_s) >= -1 )
-    
-    
+
 
     
