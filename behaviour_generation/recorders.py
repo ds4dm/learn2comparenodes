@@ -289,10 +289,10 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
         
         super().__init__()
         
-        self.variable_features_s, self.constraint_features_s, self.edge_indices_s, self.edge_features_s  =  (
+        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s  =  (
             variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
         
-        self.variable_features_t, self.constraint_features_t, self.edge_indices_t, self.edge_features_t  = (
+        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t  = (
             variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
 
         
@@ -354,7 +354,6 @@ def normalize_graph(variable_features, constraint_features, edge_index, edge_att
     
     #normalize objective
     normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-    print(normalizer)
     variable_features[:,2] /= normalizer
 
 
