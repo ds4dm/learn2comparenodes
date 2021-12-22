@@ -158,11 +158,15 @@ class GNNPolicy(torch.nn.Module):
         constraint_conved = torch.cat(constraint_conveds, dim=1)  #N, sum(hiddendims)
         variable_conved = torch.cat(variable_conveds, dim=1)
         
+        constraint_conved = torch_geometric.nn.pool.avg_pool_x(constraint_batch, 
+                                                               constraint_conved,
+                                                               constraint_batch)[0]
+        variable_conved = torch_geometric.nn.pool.avg_pool_x(variable_batch, 
+                                                             variable_conved,
+                                                             variable_batch)[0]
         
-        pooled_constraint = self.pool(constraint_conved, constraint_batch, self.k) #B,k*sum(hidden_dims)
-        pooled_variable = self.pool(variable_conved, variable_batch, self.k) #B,k*sum(hidden_dims)
 
-        return self.final_mlp(torch.cat((pooled_constraint, pooled_variable), dim=1))
+        return torch.cat(( variable_conved, constraint_conved ), dim=1)
     
         
     
