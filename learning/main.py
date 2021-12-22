@@ -25,7 +25,7 @@ osp = os.path
 
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
-def process(policy, data_loader, loss_fct, optimizer=None):
+def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
     """
     This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
     """
@@ -47,6 +47,10 @@ def process(policy, data_loader, loss_fct, optimizer=None):
             loss = loss_fct(y_proba, y_true )
 
             if optimizer is not None:
+                if balance:
+                    y_proba_inv = policy(batch, inv=True)
+                    loss += loss_fct(y_proba_inv, -1*y_true + 1)
+                    
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
