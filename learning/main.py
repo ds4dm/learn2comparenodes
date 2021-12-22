@@ -90,16 +90,29 @@ OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:100]
+    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:1000]
     
-    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:20]
+    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:100]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
     
 # TO DO : learn something from the data
-    train_loader = torch_geometric.loader.DataLoader(train_data, batch_size=16, shuffle=True, follow_batch=['constraint_features_s', 'constraint_features_t','variable_features_s','variable_features_t'])
-    valid_loader = torch_geometric.loader.DataLoader(valid_data, batch_size=128, shuffle=False, follow_batch=['constraint_features_s', 'constraint_features_t', 'variable_features_s', 'variable_features_t'])
+    train_loader = torch_geometric.loader.DataLoader(train_data, 
+                                                     batch_size=16, 
+                                                     shuffle=True, 
+                                                     follow_batch=['constraint_features_s', 
+                                                                   'constraint_features_t',
+                                                                   'variable_features_s',
+                                                                   'variable_features_t'])
+    
+    valid_loader = torch_geometric.loader.DataLoader(valid_data, 
+                                                     batch_size=128, 
+                                                     shuffle=False, 
+                                                     follow_batch=['constraint_features_s',
+                                                                   'constraint_features_t',
+                                                                   'variable_features_s',
+                                                                   'variable_features_t'])
     
     policy = GNNPolicy().to(DEVICE)
     optimizer = OPTIMIZER(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best

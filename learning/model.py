@@ -76,11 +76,11 @@ class GNNPolicy(torch.nn.Module):
         self.pool = torch_geometric.nn.global_sort_pool
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.Linear(2*self.k*sum(hidden_dims), 256),
+                                    torch.nn.LayerNorm(2*sum(hidden_dims)),
+                                    torch.nn.Linear(2*sum(hidden_dims), 256),
                                     torch.nn.ReLU(),
-                                    torch.nn.Dropout(drop_rate),
                                     torch.nn.Linear(256, 1, bias=False),
-                                    torch.nn.ReLU(),
+                                    torch.nn.Sigmoid()
                                     )
      
 
@@ -118,11 +118,10 @@ class GNNPolicy(torch.nn.Module):
             graph0, graph1 = graph1, graph0
             
         
-        score0 = self.forward_graphs(*graph0)
+        score0 = self.forward_graphs(*graph0) #concatenation of averages variable/constraint features after conv 
         score1 = self.forward_graphs(*graph1)
         
-        return torch.sigmoid(-score0+score1).squeeze(1)
-         
+        return self.final_mlp(-score0 + score1).squeeze(1)
         
         
        
