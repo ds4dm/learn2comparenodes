@@ -1,6 +1,36 @@
 from pyscipopt import  Nodesel
 
-
+class Estimate(Nodesel):
+    def estimate_compare(self, node1, node2):#SCIP 
+        estimate1 = node1.getEstimate()
+        estimate2 = node2.getEstimate()
+        if (self.model.isInfinity(estimate1) and self.model.isInfinity(estimate2)) or \
+            (self.model.isInfinity(-estimate1) and self.model.isInfinity(-estimate2)) or \
+            self.model.isEQ(estimate1, estimate2):
+                lb1 = node1.getLowerbound()
+                lb2 = node2.getLowerbound()
+                
+                if self.model.isLT(lb1, lb2):
+                    return -1
+                elif self.model.isGT(lb1, lb2):
+                    return 1
+                else:
+                    ntype1 = node1.getType()
+                    ntype2 = node2.getType()
+                    CHILD, SIBLING = 3,2
+                    
+                    if (ntype1 == CHILD and ntype2 != CHILD) or (ntype1 == SIBLING and ntype2 != SIBLING):
+                        return -1
+                    elif (ntype1 != CHILD and ntype2 == CHILD) or (ntype1 != SIBLING and ntype2 == SIBLING):
+                        return 1
+                    else:
+                        return -self.dfs_compare(node1, node2)
+     
+        
+        elif self.model.isLT(estimate1, estimate2):
+            return -1
+        else:
+            return 1
 
 class FiFo(Nodesel):
 
