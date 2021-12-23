@@ -43,29 +43,57 @@ class CompBehaviourSaver():
         all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
         all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
         
-        
-        data = (node1.getNumber(), node2.getNumber(), comp_res)
-        g1_idx, g2_idx, comp_res = data[0], data[1], data[2]
+        g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
         
         
-        var_attributes0, cons_block_idxs0 = graphidx2graphdata[g1_idx]
-        var_attributes1, cons_block_idxs1 = graphidx2graphdata[g2_idx]
+        var_attributes0, cons_block_idxs0, objbound0 = graphidx2graphdata[g0_idx]
+        var_attributes1, cons_block_idxs1, objbound1 = graphidx2graphdata[g1_idx]
         
-        g_data = CompBehaviourSaver._get_graph_pair_data(var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res)
+        g_data = CompBehaviourSaver._get_graph_pair_data(var_attributes0, 
+                                                         var_attributes1, 
+                                                         
+                                                         cons_block_idxs0, 
+                                                         cons_block_idxs1, 
+
+                                                         all_conss_blocks, 
+                                                         all_conss_blocks_features, 
+                                                         comp_res)
         
         file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
-        self._save_to_tensor(g_data, file_path)        
+        self._save_to_tensor(g_data, objbound0, objbound1, file_path)        
         
         return self
     
-    def _save_to_tensor(self, g_data, path):
+    def _save_to_tensor(self, g_data, objbound0, objbound1, path):
 
-        variable_features = torch.FloatTensor(g_data[0][0]), torch.FloatTensor(g_data[0][1])
-        constraint_features = torch.FloatTensor(g_data[1][0]),torch.FloatTensor(g_data[1][1])
-        edge_indices = torch.LongTensor(g_data[2][0]), torch.LongTensor(g_data[2][1])
-        edge_features = torch.FloatTensor(g_data[3][0]), torch.FloatTensor(g_data[3][1])
+        variable_features = [ torch.FloatTensor(g_data[0][0]), torch.FloatTensor(g_data[0][1]) ]
+        constraint_features = [ torch.FloatTensor(g_data[1][0]),torch.FloatTensor(g_data[1][1]) ]
+        edge_indices = [ torch.LongTensor(g_data[2][0]), torch.LongTensor(g_data[2][1]) ] 
+        edge_features =  [ torch.FloatTensor(g_data[3][0]), torch.FloatTensor(g_data[3][1]) ]
         y = g_data[4]
         
+        
+        constraint_features[0] = torch.cat((constraint_features[0], 
+                                          torch.FloatTensor([[objbound0]])))
+        
+        constraint_features[1] = torch.cat((constraint_features[1], 
+                                          torch.FloatTensor([[objbound1]])))
+        
+        obj_bound_weight = variable_features[0][:,2].unsqueeze(1), variable_features[1][:,2].unsqueeze(1)
+        
+        edge_features[0] = torch.cat((edge_features[0], obj_bound_weight[0]))
+        edge_features[1] = torch.cat((edge_features[1], obj_bound_weight[1]))
+        
+        
+        edge_to_stack0 = torch.LongTensor([range(0,variable_features[0].shape[0]), 
+                                          [constraint_features[0].shape[0] - 1 for _ in range(variable_features[0].shape[0]) ]])
+        
+        edge_to_stack1 = torch.LongTensor([range(0,variable_features[1].shape[0]), 
+                                          [constraint_features[1].shape[0] - 1 for _ in range(variable_features[1].shape[0]) ]])
+        
+        edge_indices[0] = torch.cat((edge_indices[0], edge_to_stack0), dim=1)
+        edge_indices[1] = torch.cat((edge_indices[1], edge_to_stack1), dim=1)
+
         g1 = normalize_graph(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0])
         g2 = normalize_graph(variable_features[1], constraint_features[1], edge_indices[1], edge_features[1])
         
@@ -156,8 +184,12 @@ class LPFeatureRecorder():
                 self._add_conss_to_graph(graph, model, parent.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
                 
+            graph.objbounds = sub_milp.getEstimate()
+            
             self.recorded[sub_milp.getNumber()] = graph
-            self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, graph.cons_block_idxs)
+            self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
+                                                         graph.cons_block_idxs,
+                                                         graph.objbounds)
     
     
     def get_root_graph(self, model):
@@ -206,7 +238,6 @@ class LPFeatureRecorder():
         #add appropriate structure to self
         self.all_conss_blocks_features.append(cons_attributes)
         self.all_conss_blocks.append(adjacency_matrix)
-
     
         
         

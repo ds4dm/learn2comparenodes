@@ -68,9 +68,10 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 #main
 def test1(data):
     assert(not torch.allclose(data.variable_features_s, data.variable_features_t))
-    #assert(not torch.allclose(data.constraint_features_s, data.constraint_features_t))
-    #assert(not torch.allclose(data.edge_features_s, data.edge_features_t))
     
+    assert(not ((torch.allclose(data.constraint_features_s, data.constraint_features_t) 
+                and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
+
     assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
     assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
     assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
