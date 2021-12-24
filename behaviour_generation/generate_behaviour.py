@@ -36,7 +36,12 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
     def nodecomp(self, node1, node2):
         comp_res = super().nodecomp(node1, node2)
-        self.comp_behaviour_saver.save_comp(self.model, node1, node2, comp_res, self.counter)
+        
+        self.comp_behaviour_saver.save_comp(self.model, node1, 
+                                            node2,
+                                            comp_res,
+                                            self.counter)
+        
         print("saved comp # " + str(self.counter))
         self.counter += 1
         return comp_res
@@ -53,12 +58,15 @@ def run_episode(instance,  save_dir):
     model.readProblem(instance)
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-    comp_behaviour_saver = CompBehaviourSaver(f"{save_dir}", instance_name=str(instance).split("/")[-1])
+    comp_behaviour_saver = CompBehaviourSaver(f"{save_dir}", 
+                                              instance_name=str(instance).split("/")[-1])
     oracle_ns = OracleNodeSelRecorder(comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
-    oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss()))
+    oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
+                                                        model.getConss()))
     
-    model.includeNodesel(oracle_ns, "oracle_recorder", "testing", 536870911,  536870911)
+    model.includeNodesel(oracle_ns, "oracle_recorder", "testing",
+                         536870911,  536870911)
 
     #print(f"Getting behaviour for instance {problem} "+ str(instance).split("/")[-1] )
 
@@ -106,14 +114,16 @@ if __name__ == "__main__":
         chunck_size_train = int(np.ceil(len(instances_train)/cpu_count))
         chunck_size_valid = int(np.ceil(len(instances_valid)/cpu_count))
         
-        processes_train = [  md.Process(name=f"worker {p}", target=partial(run_episodes, 
-                                                                     instances=instances_train[ p*chunck_size_train : (p+1)*chunck_size_train], 
-                                                                     save_dir=save_train_dir))
-                       for p in range(cpu_count)]
+        processes_train = [  md.Process(name=f"worker {p}", 
+                                        target=partial(run_episodes,
+                                                       instances=instances_train[ p*chunck_size_train : (p+1)*chunck_size_train], 
+                                                       save_dir=save_train_dir))
+                       for p in range(cpu_count) ]
         
-        processes_valid = [  md.Process(name=f"worker {p}", target=partial(run_episodes, 
-                                                                     instances=instances_valid[ p*chunck_size_valid : (p+1)*chunck_size_valid], 
-                                                                     save_dir=save_valid_dir))
+        processes_valid = [  md.Process(name=f"worker {p}", 
+                                        target=partial(run_episodes, 
+                                                       instances=instances_valid[ p*chunck_size_valid : (p+1)*chunck_size_valid], 
+                                                       save_dir=save_valid_dir))
                        for p in range(cpu_count)]
         
         a = list(map(lambda p: p.start(), processes_train)) #run processes
