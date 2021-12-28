@@ -71,9 +71,10 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( [ GeneralConv((emb_size, emb_size), hidden_dim , in_edge_channels=edge_nfeats) for hidden_dim in hidden_dims ])
-        
-        self.pool = torch_geometric.nn.global_sort_pool
+        self.convs = torch.nn.ModuleList( GeneralConv((emb_size, emb_size), 
+                                                        hidden_dim , 
+                                                        in_edge_channels=edge_nfeats) 
+                                           for hidden_dim in hidden_dims )
         
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.LayerNorm(2*sum(hidden_dims)),
@@ -144,13 +145,15 @@ class GNNPolicy(torch.nn.Module):
         constraint_conveds = [ F.relu(conv((variable_features, constraint_features), 
                                   edge_indices,
                                   edge_feature=edge_features,
-                                  size=(variable_features.size(0), constraint_features.size(0)))) for idx, conv in enumerate(self.convs) ]
+                                  size=(variable_features.size(0), constraint_features.size(0))))
+                              for idx, conv in enumerate(self.convs) ]
         
         #cons to var 
         variable_conveds = [ F.relu(conv((constraint_features, variable_features), 
                                   edge_indices_reversed,
                                   edge_feature=edge_features,
-                                  size=(constraint_features.size(0), variable_features.size(0)))) for idx, conv in enumerate(self.convs) ]
+                                  size=(constraint_features.size(0), variable_features.size(0)))) 
+                            for idx, conv in enumerate(self.convs) ]
         
         
         
