@@ -162,7 +162,7 @@ if __name__ == "__main__":
             
             
     cpu_count = md.cpu_count()//2 if n_cpu == None else n_cpu
-    chunk_size = np.ceil(n_instance/cpu_count)
+    chunk_size = int(np.ceil(n_instance/cpu_count))
 
     
     processes = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
