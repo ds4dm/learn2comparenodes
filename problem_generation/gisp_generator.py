@@ -106,6 +106,7 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 
 if __name__ == "__main__":
     instance = None
+    n_cpu = None
     exp_dir = ""
     min_n = 60
     max_n = 50
@@ -145,7 +146,9 @@ if __name__ == "__main__":
             seed = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
-        
+        if sys.argv[i] == '-n_cpu':
+            n_cpu = int(sys.argv[i + 1])
+    
     assert exp_dir is not None
     if instance is None:
         assert min_n is not None
@@ -158,8 +161,8 @@ if __name__ == "__main__":
         ""
             
             
-    cpu_count = md.cpu_count()
-    chunk_size = int(np.ceil(n_instance/cpu_count))
+    cpu_count = md.cpu_count()//2 if n_cpu == None else n_cpu
+    chunk_size = np.ceil(n_instance/cpu_count)
 
     
     processes = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
