@@ -86,7 +86,7 @@ class GNNPolicy(torch.nn.Module):
      
 
     
-    def forward(self, batch, inv=False, epsilon=0.01):
+    def forward(self, graph0, graph1, inv=False, epsilon=0.01):
         
         
         #create constraint masks. COnstraint associated with varialbes for which at least one of their bound have changed
@@ -94,25 +94,6 @@ class GNNPolicy(torch.nn.Module):
         #variables for which at least one of their bound have changed
 
         #graph1 edges
-    
-    
-        
-
-        graph0 = (batch.constraint_features_s, 
-                  batch.edge_index_s, 
-                  batch.edge_attr_s, 
-                  batch.variable_features_s, 
-                  batch.constraint_features_s_batch,
-                  batch.variable_features_s_batch)
-        
-    
-        graph1 = (batch.constraint_features_t,
-                  batch.edge_index_t, 
-                  batch.edge_attr_t,
-                  batch.variable_features_t,
-                  batch.constraint_features_t_batch,
-                  batch.variable_features_t_batch)
-        
         
         
         if inv:

@@ -35,11 +35,30 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
     with torch.set_grad_enabled(optimizer is not None):
         for idx,batch in enumerate(data_loader):
             
+ 
+                
             batch = batch.to(DEVICE)
             test1(batch)
             
+                       
+            graph0 = (batch.constraint_features_s, 
+                      batch.edge_index_s, 
+                      batch.edge_attr_s, 
+                      batch.variable_features_s, 
+                      batch.constraint_features_s_batch,
+                      batch.variable_features_s_batch)
+            
+        
+            graph1 = (batch.constraint_features_t,
+                      batch.edge_index_t, 
+                      batch.edge_attr_t,
+                      batch.variable_features_t,
+                      batch.constraint_features_t_batch,
+                      batch.variable_features_t_batch)
+            
+            
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
-            y_proba = policy(batch)
+            y_proba = policy(graph0, graph1)
             y_pred = torch.round(y_proba)
             
             
@@ -48,7 +67,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
             if optimizer is not None:
                 if balance:
-                    y_proba_inv = policy(batch, inv=True)
+                    y_proba_inv = policy(graph0, graph1, inv=True)
                     loss += loss_fct(y_proba_inv, -1*y_true + 1)
                     
                 optimizer.zero_grad()
@@ -61,8 +80,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
 
-    mean_loss /= n_samples_processed
-    mean_acc /= n_samples_processed
+    mean_loss /= n_samples_processed + 1
+    mean_acc /= n_samples_processed + 1
     return mean_loss, mean_acc
 
 #main
@@ -82,7 +101,7 @@ def test1(data):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.005
-NB_EPOCHS = 100
+NB_EPOCHS = 1
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -128,7 +147,7 @@ for problem in problems:
         valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
         print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
-    torch.save(policy.state_dict(),f'gnn_node_comparator_{problem}.pkl')
+    torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
 
