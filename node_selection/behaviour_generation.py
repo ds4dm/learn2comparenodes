@@ -18,7 +18,7 @@ Created on Tue Oct 12 12:54:57 2021
 import os
 import sys
 from node_selectors.oracle_selectors import OracleNodeSelectorAbdel
-from recorders import LPFeatureRecorder, CompBehaviourSaver
+from recorders import LPFeatureRecorder, CompFeaturizer
 from pathlib import Path 
 import pyscipopt.scip as sp
 import numpy as np
@@ -61,7 +61,7 @@ def run_episode(oracle_type, instance,  save_dir):
     model.readProblem(instance)
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-    comp_behaviour_saver = CompBehaviourSaver(f"{save_dir}", 
+    comp_behaviour_saver = CompFeaturizer(f"{save_dir}", 
                                               instance_name=str(instance).split("/")[-1])
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
