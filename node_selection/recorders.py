@@ -18,9 +18,9 @@ import torch_geometric
 import os.path as osp
 
 
-class CompBehaviourSaver():
+class CompFeaturizer():
     
-    def __init__(self, save_dir, instance_name):
+    def __init__(self, save_dir=None, instance_name=None):
         self.instance_name = instance_name
         self.save_dir = save_dir
     
@@ -33,6 +33,38 @@ class CompBehaviourSaver():
         self.LP_feature_recorder = LP_feature_recorder
         return self
     
+    
+    def get_inference_features(self, model, node1, node2):
+        
+        self.LP_feature_recorder.record_sub_milp_graph(model, node1)
+        self.LP_feature_recorder.record_sub_milp_graph(model, node2)
+        graphidx2graphdata = self.LP_feature_recorder.recorded_light
+        all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
+        all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
+        
+        comp_res = 0 #useless data
+        
+        g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
+        
+        
+        var_attributes0, cons_block_idxs0, objbound0 = graphidx2graphdata[g0_idx]
+        var_attributes1, cons_block_idxs1, objbound1 = graphidx2graphdata[g1_idx]
+        
+        g_data = CompFeaturizer._get_graph_pair_data(var_attributes0, 
+                                                         var_attributes1, 
+                                                         
+                                                         cons_block_idxs0, 
+                                                         cons_block_idxs1, 
+
+                                                         all_conss_blocks, 
+                                                         all_conss_blocks_features, 
+                                                         comp_res)
+        
+        data = self._to_tensors(g_data, objbound0, objbound1)
+        
+        return data
+        
+        
     
     def save_comp(self, model, node1, node2, comp_res, comp_id):
         
@@ -49,7 +81,7 @@ class CompBehaviourSaver():
         var_attributes0, cons_block_idxs0, objbound0 = graphidx2graphdata[g0_idx]
         var_attributes1, cons_block_idxs1, objbound1 = graphidx2graphdata[g1_idx]
         
-        g_data = CompBehaviourSaver._get_graph_pair_data(var_attributes0, 
+        g_data = CompFeaturizer._get_graph_pair_data(var_attributes0, 
                                                          var_attributes1, 
                                                          
                                                          cons_block_idxs0, 
@@ -60,11 +92,12 @@ class CompBehaviourSaver():
                                                          comp_res)
         
         file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
-        self._save_to_tensor(g_data, objbound0, objbound1, file_path)        
+        data = self._to_tensors(g_data, objbound0, objbound1)    
+        torch.save(data, file_path, _use_new_zipfile_serialization=False)
         
         return self
     
-    def _save_to_tensor(self, g_data, objbound0, objbound1, path):
+    def _to_tensors(self, g_data, objbound0, objbound1):
 
         variable_features = [ torch.FloatTensor(g_data[0][0]), torch.FloatTensor(g_data[0][1]) ]
         constraint_features = [ torch.FloatTensor(g_data[1][0]),torch.FloatTensor(g_data[1][1]) ]
@@ -97,9 +130,9 @@ class CompBehaviourSaver():
         g1 = normalize_graph(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0])
         g2 = normalize_graph(variable_features[1], constraint_features[1], edge_indices[1], edge_features[1])
         
-        data = BipartiteGraphPairData(*g1, *g2, y)
+        return BipartiteGraphPairData(*g1, *g2, y)
         
-        torch.save(data, path, _use_new_zipfile_serialization=False)
+        
         
    
     

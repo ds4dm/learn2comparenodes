@@ -6,8 +6,42 @@ Created on Fri May 14 14:43:54 2021
 @author: abdel
 """
 
+def load_src(name, fpath):
+     import os, imp
+     return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
+load_src("model", "../../learning/model.py" )
+
+import torch
 from pyscipopt import Nodesel
+from model import GNNPolicy
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+class OracleNodeSelectorEstimator(Nodesel):
+    
+    def __init__(self, problem, comp_featurizer):
+        policy = GNNPolicy()
+        policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl")) #run from main
+        policy.to(DEVICE)
+        self.policy = policy
+        self.comp_featurizer = comp_featurizer
+    
+    def set_LP_feature_recorder(self, LP_feature_recorder):
+        self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
+
+    def nodeselect(self):
+        return {"selnode": self.model.getBestNode()}
+    
+    def nodecomp(self, node1,node2):
+        batch = self.comp_featurizer.get_inference_features(self.model, 
+                                                            node1, 
+                                                            node2).to(DEVICE)  
+        return 2*(self.policy(batch).item() - 0.5)
+    
+    
+    
 
 
 class OracleNodeSelectorAbdel(Nodesel):
