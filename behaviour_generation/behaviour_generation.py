@@ -14,6 +14,7 @@ Created on Tue Oct 12 12:54:57 2021
 @author: abdel
 """
 import os
+import sys
 from node_selectors.oracle_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompBehaviourSaver
 from pathlib import Path 
@@ -25,8 +26,8 @@ from functools import partial
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
-    def __init__(self, comp_behaviour_saver=None):
-        super().__init__()
+    def __init__(self, oracle_type, comp_behaviour_saver=None):
+        super().__init__(oracle_type)
         self.counter = 0
         self.comp_behaviour_saver = comp_behaviour_saver
     
@@ -48,7 +49,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 
 
-def run_episode(instance,  save_dir):
+def run_episode(oracle_type, instance,  save_dir):
     
     model = sp.Model()
     model.hideOutput()
@@ -60,7 +61,7 @@ def run_episode(instance,  save_dir):
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
     comp_behaviour_saver = CompBehaviourSaver(f"{save_dir}", 
                                               instance_name=str(instance).split("/")[-1])
-    oracle_ns = OracleNodeSelRecorder(comp_behaviour_saver)
+    oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
     oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
                                                         model.getConss()))
@@ -77,64 +78,61 @@ def run_episode(instance,  save_dir):
     
     return 1#sucess
 
-def run_episodes(instances, save_dir):
+def run_episodes(oracle_type, instances, save_dir):
     for instance in instances:
-        run_episode(instance, save_dir)
+        run_episode(oracle_type, instance, save_dir)
     print("finished running episodes for process " + str(md.current_process()))
     
 
 if __name__ == "__main__":
     
-    #Defining some variables
-    problems = ["GISP"]
+
     
+    oracle = "optimal_plunger"
+    problem = "GISP"
+    data_partition = "train"
+    cpu_count = md.cpu_count()//2
     
     #Initializing the model 
-    
-            
-            
-    
-    for problem in problems:
-        
-        save_train_dir = f"./data/{problem}/train"
-        save_valid_dir = f"./data/{problem}/valid"
-        try:
-            os.makedirs(save_train_dir)
-            os.makedirs(save_valid_dir)
-            
-        except FileExistsError:
-            ""
+    for i in range(1, len(sys.argv), 2):
 
-                
+        if sys.argv[i] == '-oracle':
+            oracle = str(sys.argv[i + 1])
+        if sys.argv[i] == 'problem':
+            problem = str(sys.argv[i + 1])
+        if sys.argv[i] == 'data_partition':
+            data_partition = str(sys.argv[i + 1])
+        if sys.argv[i] == '-n_cpu':
+            cpu_count = int(sys.argv[i + 1])
+   
+  
         
-        instances_train = list(Path(f"../problem_generation/data/{problem}/train").glob("*.lp"))
-        instances_valid = list(Path(f"../problem_generation/data/{problem}/valid").glob("*.lp"))
-
-        cpu_count = md.cpu_count()
-        chunck_size_train = int(np.ceil(len(instances_train)/cpu_count))
-        chunck_size_valid = int(np.ceil(len(instances_valid)/cpu_count))
-        
-        processes_train = [  md.Process(name=f"worker {p}", 
-                                        target=partial(run_episodes,
-                                                       instances=instances_train[ p*chunck_size_train : (p+1)*chunck_size_train], 
-                                                       save_dir=save_train_dir))
-                       for p in range(cpu_count) ]
-        
-        processes_valid = [  md.Process(name=f"worker {p}", 
-                                        target=partial(run_episodes, 
-                                                       instances=instances_valid[ p*chunck_size_valid : (p+1)*chunck_size_valid], 
-                                                       save_dir=save_valid_dir))
-                       for p in range(cpu_count)]
-        
-        a = list(map(lambda p: p.start(), processes_train)) #run processes
-        b = list(map(lambda p: p.join(), processes_train)) #join processes
-        c = list(map(lambda p: p.start(), processes_valid)) #run processes
-        d = list(map(lambda p: p.join(), processes_valid)) #join processes
-        
-        
-            
-        
-                             
+       
+    save_dir = f"./data/{problem}/{data_partition}"
+    print(save_dir)
+    
+    try:
+        os.makedirs(save_dir)
+    except FileExistsError:
+        ""
+    
+    
+    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
+    
+    chunck_size = int(np.ceil(len(instances)/cpu_count))
+    
+    processes = [  md.Process(name=f"worker {p}", 
+                                    target=partial(run_episodes,
+                                                   oracle_type=oracle,
+                                                   instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                   save_dir=save_dir))
+                   for p in range(cpu_count) ]
+    
+    a = list(map(lambda p: p.start(), processes)) #run processes
+    b = list(map(lambda p: p.join(), processes)) #join processes
+    
+    
+                         
             
         
 

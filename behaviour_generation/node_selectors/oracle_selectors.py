@@ -12,8 +12,8 @@ from pyscipopt import Nodesel
 
 class OracleNodeSelectorAbdel(Nodesel):
     
-    def __init__(self, optsol=0, prune_policy='estimate'):
-        
+    def __init__(self, oracle_type, optsol=0, prune_policy='estimate'):
+        self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
     
@@ -25,23 +25,32 @@ class OracleNodeSelectorAbdel(Nodesel):
     
     def nodecomp(self, node1,node2):
         
-        d1 = self.is_sol_in_domaine(self.optsol, node1)
-        d2 = self.is_sol_in_domaine(self.optsol, node2)
+        if self.oracle_type == "optimal_plunger":
         
-        if d1 and d2:
-            return self.dfs_compare(node1, node2)
-        
-        elif d1:
-            return -1
-        
-        elif d2:
-            return 1
-        
+            d1 = self.is_sol_in_domaine(self.optsol, node1)
+            d2 = self.is_sol_in_domaine(self.optsol, node2)
+            
+            if d1 and d2:
+                return self.dfs_compare(node1, node2)
+            
+            elif d1:
+                return -1
+            
+            elif d2:
+                return 1
+            
+            else:
+                if self.prune_policy == "estimate":
+                    return self.estimate_compare(node1, node2)
+                raise NotImplementedError
         else:
-            if self.prune_policy == "estimate":
-                return self.estimate_compare(node1, node2)
             raise NotImplementedError
-        
+                
+                
+                
+                
+                
+            
     # def dfs_sel(self):
     #     selnode = self.model.getPrioChild()  #aka best child of current node
     #     if selnode == None:
