@@ -86,7 +86,7 @@ class GNNPolicy(torch.nn.Module):
      
 
     
-    def forward(self, graph0, graph1, inv=False, epsilon=0.01):
+    def forward(self, batch, inv=False, epsilon=0.01):
         
         
         #create constraint masks. COnstraint associated with varialbes for which at least one of their bound have changed
@@ -95,20 +95,47 @@ class GNNPolicy(torch.nn.Module):
 
         #graph1 edges
         
+        try :
+       
+            graph0 = (batch.constraint_features_s, 
+                      batch.edge_index_s, 
+                      batch.edge_attr_s, 
+                      batch.variable_features_s, 
+                      batch.constraint_features_s_batch,
+                      batch.variable_features_s_batch)
+            
+        
+            graph1 = (batch.constraint_features_t,
+                      batch.edge_index_t, 
+                      batch.edge_attr_t,
+                      batch.variable_features_t,
+                      batch.constraint_features_t_batch,
+                      batch.variable_features_t_batch)
+                
+        except AttributeError:
+            graph0 = (batch.constraint_features_s, 
+                      batch.edge_index_s, 
+                      batch.edge_attr_s, 
+                      batch.variable_features_s)
+            
+        
+            graph1 = (batch.constraint_features_t,
+                      batch.edge_index_t, 
+                      batch.edge_attr_t,
+                      batch.variable_features_t)
         
         if inv:
             graph0, graph1 = graph1, graph0
-            
         
         score0 = self.forward_graphs(*graph0) #concatenation of averages variable/constraint features after conv 
         score1 = self.forward_graphs(*graph1)
-        
+
         return self.final_mlp(-score0 + score1).squeeze(1)
         
         
        
     def forward_graphs(self, constraint_features, edge_indices, edge_features, 
-                       variable_features, constraint_batch, variable_batch):
+                       variable_features, constraint_batch=None, variable_batch=None):
 
         
         #Assume edge indice var to cons, constraint_mask of shape [Nconvs]       
@@ -142,13 +169,18 @@ class GNNPolicy(torch.nn.Module):
         constraint_conved = torch.cat(constraint_conveds, dim=1)  #N, sum(hiddendims)
         variable_conved = torch.cat(variable_conveds, dim=1)
         
-        constraint_conved = torch_geometric.nn.pool.avg_pool_x(constraint_batch, 
-                                                               constraint_conved,
-                                                               constraint_batch)[0]
-        variable_conved = torch_geometric.nn.pool.avg_pool_x(variable_batch, 
-                                                             variable_conved,
-                                                             variable_batch)[0]
+        if constraint_batch is not None:
         
+            constraint_conved = torch_geometric.nn.pool.avg_pool_x(constraint_batch, 
+                                                                   constraint_conved,
+                                                                   constraint_batch)[0]
+            variable_conved = torch_geometric.nn.pool.avg_pool_x(variable_batch, 
+                                                                 variable_conved,
+                                                                 variable_batch)[0]
+        else:
+            constraint_conved = torch.mean(constraint_conved, axis=0, keepdim=True)
+            variable_conved = torch.mean(variable_conved, axis=0, keepdim=True)
+            
 
         return torch.cat(( variable_conved, constraint_conved ), dim=1)
     

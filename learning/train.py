@@ -7,20 +7,17 @@ Created on Sat Nov 20 10:38:45 2021
 """
 
 #Imports 
-
 def load_src(name, fpath):
      import os, imp
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
-load_src("recorders", "../behaviour_generation/recorders.py" )
+load_src("recorders", "../node_selection/recorders.py" )
 
 import os
 import torch
-import torch.nn.functional as F
 import torch_geometric
 from pathlib import Path
 from model import GNNPolicy, GraphDataset
-from sklearn.model_selection import train_test_split
 osp = os.path
 
 #function definition
@@ -40,25 +37,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             batch = batch.to(DEVICE)
             test1(batch)
             
-                       
-            graph0 = (batch.constraint_features_s, 
-                      batch.edge_index_s, 
-                      batch.edge_attr_s, 
-                      batch.variable_features_s, 
-                      batch.constraint_features_s_batch,
-                      batch.variable_features_s_batch)
-            
-        
-            graph1 = (batch.constraint_features_t,
-                      batch.edge_index_t, 
-                      batch.edge_attr_t,
-                      batch.variable_features_t,
-                      batch.constraint_features_t_batch,
-                      batch.variable_features_t_batch)
-            
-            
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
-            y_proba = policy(graph0, graph1)
+            y_proba = policy(batch)
             y_pred = torch.round(y_proba)
             
             
@@ -67,7 +47,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
             if optimizer is not None:
                 if balance:
-                    y_proba_inv = policy(graph0, graph1, inv=True)
+                    y_proba_inv = policy(batch, inv=True)
                     loss += loss_fct(y_proba_inv, -1*y_true + 1)
                     
                 optimizer.zero_grad()
@@ -110,9 +90,9 @@ OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/train").glob("*.pt") ][:1000]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:1000]
     
-    valid_files = [ str(path) for path in Path(f"../behaviour_generation/data/{problem}/valid").glob("*.pt") ][:100]
+    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ][:100]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
