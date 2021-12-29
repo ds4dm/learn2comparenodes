@@ -10,8 +10,10 @@ Created on Tue Oct 19 19:24:33 2021
 #Test different nodesels under different problems
 
 
+
 from pathlib import Path 
-from learning import oracle_ns_estimator
+from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
+from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
 
@@ -19,12 +21,18 @@ import numpy as np
 def get_stats(nodesels, instances, problem):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
-    model = sp.model()
-    model.includeNodesel(oracle_ns_estimator(problem), nodesels[0], 'testing',100, 100)
+    model = sp.Model()
+    comp_featurizer = CompFeaturizer()
+    oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
+    model.includeNodesel(oracle_estimator, nodesels[0], 'testing',100, 100)
+    
     for instance in instances:
         
         instance = str(instance)
         model.readProblem(instance)
+        
+        oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
+                                                                   model.getConss()))
         
        #test nodesels
         for nodesel in nodesels:
@@ -63,8 +71,8 @@ def display_stats(nodesels_record, problem):
 problems = ["GISP"]
 nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
 for problem in problems:
-    instances = Path("./problem_generation/{problem}/test").glob("*.lp")
-    display_stats(get_stats(nodesels,instances, problem))
+    instances = Path(f"./problem_generation/data/{problem}/test").glob("*.lp")
+    display_stats(get_stats(nodesels,instances, problem), problem)
 
 
 
