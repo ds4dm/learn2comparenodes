@@ -97,9 +97,10 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
         createIP(g, E2, lp_dir + "/" + lpname + ".lp")
         if solve:
             model = sp.Model()
+            model.hideOutput()
             model.readProblem(lp_dir +"/" + lpname + ".lp")
             model.optimize()
-            model.writeBestSol(lp_dir +"/" + lpname + ".sol")        
+            model.writeBestSol(lp_dir +"/" + lpname + ".sol")
 
         
 
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     setParam = 100.0
     alphaE2 = 0.5
     timelimit = 7200.0
-    solveInstance = True
+    solveInstance = False
     n_instance = 10000
     seed = 0
     
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-timelimit':
             timelimit = float(sys.argv[i + 1])
         if sys.argv[i] == '-solve':
-            solveInstance = bool(sys.argv[i + 1])
+            solveInstance = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-seed_start':
             seed = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_instance':

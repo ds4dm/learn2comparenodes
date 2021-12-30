@@ -93,11 +93,11 @@ if __name__ == "__main__":
     oracle = "optimal_plunger"
     problem = "GISP"
     data_partition = "train"
-    cpu_count = md.cpu_count()//2
+    cpu_count = 1
     
     #Initializing the model 
     for i in range(1, len(sys.argv), 2):
-
+        
         if sys.argv[i] == '-oracle':
             oracle = str(sys.argv[i + 1])
         if sys.argv[i] == 'problem':
@@ -111,8 +111,6 @@ if __name__ == "__main__":
         
        
     save_dir = f"./data/{problem}/{data_partition}"
-    print(save_dir)
-    
     try:
         os.makedirs(save_dir)
     except FileExistsError:
@@ -121,19 +119,22 @@ if __name__ == "__main__":
     
     instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
     
-    chunck_size = int(np.ceil(len(instances)/cpu_count))
-    
-    processes = [  md.Process(name=f"worker {p}", 
-                                    target=partial(run_episodes,
-                                                   oracle_type=oracle,
-                                                   instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                   save_dir=save_dir))
-                   for p in range(cpu_count) ]
-    
-    a = list(map(lambda p: p.start(), processes)) #run processes
-    b = list(map(lambda p: p.join(), processes)) #join processes
-    
-    
+    if cpu_count == 1:
+        run_episodes(oracle, instances, save_dir)
+    else:
+        chunck_size = int(np.ceil(len(instances)/cpu_count))
+        
+        processes = [  md.Process(name=f"worker {p}", 
+                                        target=partial(run_episodes,
+                                                       oracle_type=oracle,
+                                                       instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                       save_dir=save_dir))
+                       for p in range(cpu_count) ]
+        
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        b = list(map(lambda p: p.join(), processes)) #join processes
+        
+        
                          
             
         

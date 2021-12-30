@@ -90,9 +90,9 @@ OPTIMIZER = torch.optim.Adam
 
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:1000]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
     
-    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ][:100]
+    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)

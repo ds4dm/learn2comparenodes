@@ -22,6 +22,7 @@ def get_stats(nodesels, instances, problem):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
+    model.hideOutput()
     comp_featurizer = CompFeaturizer()
     oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
     model.includeNodesel(oracle_estimator, nodesels[0], 'testing',100, 100)
