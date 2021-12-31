@@ -34,10 +34,11 @@ class GNNPolicy(torch.nn.Module):
         super().__init__()
         
         self.emb_size = emb_size = 64 #uniform node feature embedding dim
-        self.k = 128 #kmax pooling
-        self.n_convs = 16 #number of convolutions to perform parralelly
-        drop_rate = 0.3
-        hidden_dims = [8,8,8,1]
+        
+        hidden_dims = [16,16,16,1]
+        
+        final_mlp_hidden_dim = 512
+        
         # static data
         cons_nfeats = 1 
         edge_nfeats = 1
@@ -78,9 +79,9 @@ class GNNPolicy(torch.nn.Module):
         
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.LayerNorm(2*sum(hidden_dims)),
-                                    torch.nn.Linear(2*sum(hidden_dims), 256),
+                                    torch.nn.Linear(2*sum(hidden_dims), final_mlp_hidden_dim),
                                     torch.nn.ReLU(),
-                                    torch.nn.Linear(256, 1, bias=False),
+                                    torch.nn.Linear(final_mlp_hidden_dim, 1, bias=False),
                                     torch.nn.Sigmoid()
                                     )
      
