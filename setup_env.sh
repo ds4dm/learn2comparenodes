@@ -8,7 +8,7 @@ conda env create -f env.yml
 conda activate l2sn
 
 pip install ./pyscipopt
-pip install torch torchvision torchaudio
+pip install torch==1.10.1+cu113 -f https://download.pytorch.org/whl/cu113/torch_stable.html
 
 #CPU
 
