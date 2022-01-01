@@ -15,8 +15,11 @@ pip install torch torchvision torchaudio
 #pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.10.0+cpu.html
 
 #GPU
-pip install torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
-
+pip install torch-scatter -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
+pip install torch-sparse -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
+pip install torch-cluster -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
+pip install torch-spline-conv -f https://data.pyg.org/whl/torch-1.10.0+cu102.html
+pip install torch-geometric
 
 
 #cuda=10.2
