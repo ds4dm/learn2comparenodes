@@ -1,1 +1,4 @@
-source activate l2snpython behaviour_generation.py -oracle optimal_plunger -problem GISP -data_partition train -n_cpu 8python behaviour_generation.py -oracle optimal_plunger -problem GISP -data_partition valid -n_cpu 8
+source activate l2sn
+python gisp_generator.py -min_n 50 -max_n 60 -exp_dir data/GISP/train -solve 1 -n_instance 10000 -n_cpu 8
+python gisp_generator.py -min_n 50 -max_n 60 -exp_dir data/GISP/valid -solve 1 -n_instance 1000 -n_cpu 8
+python gisp_generator.py -min_n 50 -max_n 60 -exp_dir data/GISP/test -solve 0  -n_instance 1000  -n_cpu 8
