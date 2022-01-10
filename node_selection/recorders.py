@@ -10,13 +10,12 @@ Contains utilities to save and load comparaison behavioural data
 
 """
 
-import numpy as np
 from scipy.sparse import csr_matrix
 from scipy import sparse
 import torch
 import torch_geometric
 import os.path as osp
-
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class CompFeaturizer():
     
@@ -47,8 +46,8 @@ class CompFeaturizer():
         g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
         
         
-        var_attributes0, cons_block_idxs0, objbound0 = graphidx2graphdata[g0_idx]
-        var_attributes1, cons_block_idxs1, objbound1 = graphidx2graphdata[g1_idx]
+        var_attributes0, cons_block_idxs0 = graphidx2graphdata[g0_idx]
+        var_attributes1, cons_block_idxs1 = graphidx2graphdata[g1_idx]
         
         g_data = CompFeaturizer._get_graph_pair_data(var_attributes0, 
                                                          var_attributes1, 
@@ -60,7 +59,7 @@ class CompFeaturizer():
                                                          all_conss_blocks_features, 
                                                          comp_res)
         
-        data = self._to_tensors(g_data, objbound0, objbound1)
+        data = self._to_tensors(g_data)
         
         return data
         
@@ -78,54 +77,32 @@ class CompFeaturizer():
         g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
         
         
-        var_attributes0, cons_block_idxs0, objbound0 = graphidx2graphdata[g0_idx]
-        var_attributes1, cons_block_idxs1, objbound1 = graphidx2graphdata[g1_idx]
+        var_attributes0, cons_block_idxs0 = graphidx2graphdata[g0_idx]
+        var_attributes1, cons_block_idxs1 = graphidx2graphdata[g1_idx]
         
-        g_data = CompFeaturizer._get_graph_pair_data(var_attributes0, 
-                                                         var_attributes1, 
-                                                         
-                                                         cons_block_idxs0, 
-                                                         cons_block_idxs1, 
+        g_data = CompFeaturizer._get_graph_pair_data(var_attributes0,
+                                                    var_attributes1, 
+                                                    
+                                                    cons_block_idxs0, 
+                                                    cons_block_idxs1, 
 
-                                                         all_conss_blocks, 
-                                                         all_conss_blocks_features, 
-                                                         comp_res)
+                                                    all_conss_blocks, 
+                                                    all_conss_blocks_features, 
+                                                    comp_res)
         
         file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
-        data = self._to_tensors(g_data, objbound0, objbound1)    
+        data = self._to_tensors(g_data)
         torch.save(data, file_path, _use_new_zipfile_serialization=False)
         
         return self
     
-    def _to_tensors(self, g_data, objbound0, objbound1):
+    def _to_tensors(self, g_data):
 
-        variable_features = [ torch.FloatTensor(g_data[0][0]), torch.FloatTensor(g_data[0][1]) ]
-        constraint_features = [ torch.FloatTensor(g_data[1][0]),torch.FloatTensor(g_data[1][1]) ]
-        edge_indices = [ torch.LongTensor(g_data[2][0]), torch.LongTensor(g_data[2][1]) ] 
-        edge_features =  [ torch.FloatTensor(g_data[3][0]), torch.FloatTensor(g_data[3][1]) ]
+        variable_features = g_data[0]
+        constraint_features = g_data[1]
+        edge_indices = g_data[2]
+        edge_features = g_data[3]
         y = g_data[4]
-        
-        
-        constraint_features[0] = torch.cat((constraint_features[0], 
-                                          torch.FloatTensor([[objbound0]])))
-        
-        constraint_features[1] = torch.cat((constraint_features[1], 
-                                          torch.FloatTensor([[objbound1]])))
-        
-        obj_bound_weight = variable_features[0][:,2].unsqueeze(1), variable_features[1][:,2].unsqueeze(1)
-        
-        edge_features[0] = torch.cat((edge_features[0], obj_bound_weight[0]))
-        edge_features[1] = torch.cat((edge_features[1], obj_bound_weight[1]))
-        
-        
-        edge_to_stack0 = torch.LongTensor([range(0,variable_features[0].shape[0]), 
-                                          [constraint_features[0].shape[0] - 1 for _ in range(variable_features[0].shape[0]) ]])
-        
-        edge_to_stack1 = torch.LongTensor([range(0,variable_features[1].shape[0]), 
-                                          [constraint_features[1].shape[0] - 1 for _ in range(variable_features[1].shape[0]) ]])
-        
-        edge_indices[0] = torch.cat((edge_indices[0], edge_to_stack0), dim=1)
-        edge_indices[1] = torch.cat((edge_indices[1], edge_to_stack1), dim=1)
 
         g1 = normalize_graph(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0])
         g2 = normalize_graph(variable_features[1], constraint_features[1], edge_indices[1], edge_features[1])
@@ -138,17 +115,17 @@ class CompFeaturizer():
     
     def _get_graph_pair_data( var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res ):
         
-        adjacency_matrixes0 = np.array(all_conss_blocks)[cons_block_idxs0]
-        adjacency_matrixes1 = np.array(all_conss_blocks)[cons_block_idxs1]
+        adjacency_matrixes0 = map(all_conss_blocks.__getitem__, cons_block_idxs0)
+        adjacency_matrixes1 = map(all_conss_blocks.__getitem__, cons_block_idxs1)
         
-        cons_attributes_blocks0 = np.array(all_conss_blocks_features)[cons_block_idxs0]
-        cons_attributes_blocks1 = np.array(all_conss_blocks_features)[cons_block_idxs1]
+        cons_attributes_blocks0 = map(all_conss_blocks_features.__getitem__, cons_block_idxs0)
+        cons_attributes_blocks1 = map(all_conss_blocks_features.__getitem__, cons_block_idxs1)
         
-        adjacency_matrix0 = sparse.hstack(tuple(adjacency_matrixes0), format="coo") #n_var x card(conss1 )
-        adjacency_matrix1 = sparse.hstack(tuple(adjacency_matrixes1), format="coo") #n_var x card(conss1
+        adjacency_matrix0 = torch.hstack(tuple(adjacency_matrixes0)) #n_var x card(conss )
+        adjacency_matrix1 = torch.hstack(tuple(adjacency_matrixes1)) 
         
-        cons_attributes0 = np.vstack(tuple(cons_attributes_blocks0)) #card(conss1 U conss2) X cons_dim
-        cons_attributes1 = np.vstack(tuple(cons_attributes_blocks1))
+        cons_attributes0 = torch.vstack(tuple(cons_attributes_blocks0)) #card(conss) X cons_dim
+        cons_attributes1 = torch.vstack(tuple(cons_attributes_blocks1))
         
         
         var_attributes = (var_attributes0, var_attributes1)
@@ -188,8 +165,9 @@ class LPFeatureRecorder():
         self.recorded_light = dict()
         self.all_conss_blocks = []
         self.all_conss_blocks_features = []
-        
-    
+        self.obj_adjacency  == None
+
+   
     def get_graph(self, model, sub_milp):
         
         sub_milp_number = sub_milp.getNumber()
@@ -206,24 +184,19 @@ class LPFeatureRecorder():
         if sub_milp.getNumber() not in self.recorded:
             
             parent = sub_milp.getParent()
-
             if parent == None: #Root
                 graph = self.get_root_graph(model)
                 
             else:
-               
                 graph = self.get_graph(model, parent).copy()
-                
-                self._add_conss_to_graph(graph, model, parent.getAddedConss())
+                self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
-                
-            graph.objbounds = sub_milp.getEstimate()
+            
+            self._add_scip_estimate_cons(sub_milp, graph)
             
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
-                                                         graph.cons_block_idxs,
-                                                         graph.objbounds)
-    
+                                                         graph.cons_block_idxs)
     
     def get_root_graph(self, model):
         
@@ -245,25 +218,21 @@ class LPFeatureRecorder():
     
     def _add_conss_to_graph(self, graph, model, conss):
 
-        cons_attributes = np.zeros((len(conss), graph.d1))        
-        
+        cons_attributes = torch.FloatTensor(len(conss), graph.d1, device=DEVICE)
         var_idxs = []
-        cons_block_idxs = []
+        cons_idxs = []
         weigths = []
         for cons_idx, cons in enumerate(conss):
-            #vstack the cons n graph
-            cons_attributes[cons_idx] =  self._get_feature_cons(model, cons)
-            #h stack the coeff
 
+            cons_attributes[cons_idx] =  self._get_feature_cons(model, cons)
+          
             for var, coeff in model.getValsLinear(cons).items():
-                
                 var_idxs.append(self.var2idx[str(var)] )
-                cons_block_idxs.append(cons_idx)
+                cons_idxs.append(cons_idx)
                 weigths.append(coeff)
 
-            
-        
-        adjacency_matrix =  csr_matrix( (weigths, (var_idxs, cons_block_idxs) ), shape=(self.n0, len(conss))) 
+
+        adjacency_matrix =  torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, len(conss))) 
         
         #add idx to graph
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features)) #carreful with parralelization
@@ -271,9 +240,27 @@ class LPFeatureRecorder():
         #add appropriate structure to self
         self.all_conss_blocks_features.append(cons_attributes)
         self.all_conss_blocks.append(adjacency_matrix)
+
+    def _get_obj_adjacency(self, model):
     
-        
-        
+       if self.obj_adjacency  == None:
+           var_coeff = { self.var2idx[ str(t) ]:c for (t,c) in model.getObjective().terms.items() if c != 0.0 }
+           var_idxs = list(var_coeff.keys())
+           weigths = list(var_coeff.values())
+           cons_idxs = [0]*len(var_idxs)
+    
+           self.obj_adjacency =  torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, 1))
+      
+       return self.obj_adjacency         
+       
+    
+    def _add_scip_estimate_cons(self, sub_milp, graph):
+        adjacency_matrix = self._get_obj_adjacency()
+        cons_feature = torch.FloatTensor([[sub_milp.getEstimate()]], device=DEVICE)
+        graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
+        self.all_conss_blocks_featureså.append(cons_feature)
+        self.all_conss_blocks.append(adjacency_matrix)
+
     def _change_branched_bounds(self, graph, sub_milp):
         
         bvars, bbounds, btypes = sub_milp.getParentBranchings()
@@ -286,7 +273,7 @@ class LPFeatureRecorder():
     
     def _get_feature_cons(self, model, cons):
         rhs = model.getRhs(cons)
-        return np.array([ rhs ])
+        return torch.FloatTensor([ rhs ], device=DEVICE)
     
     def _get_feature_var(self, model, var):
         
@@ -302,7 +289,7 @@ class LPFeatureRecorder():
         binary, integer, continuous = self._one_hot_type(var)
     
         
-        return np.array([ lb, ub, objective_coeff, binary, integer, continuous ])
+        return torch.FloatTensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=DEVICE)
     
     
     def _one_hot_type(self, var):
@@ -323,64 +310,26 @@ class LPFeatureRecorder():
 class BipartiteGraphStatic0():
     
     #Defines the structure of the problem solved. Invariant toward problems
-    def __init__(self, n0, d0=6, d1=1):
+    def __init__(self, n0, d0=6, d1=1, allocate=True):
         
         self.n0, self.d0, self.d1 = n0, d0, d1
         
-        self.var_attributes = np.zeros((n0,d0))
-        self.cons_block_idxs = []
+        if allocate:
+            self.var_attributes = torch.zeros(n0,d0)
+            self.cons_block_idxs = []
+        else:
+            self.var_attributes = None
+            self.cons_block_idxs = None
     
     
     def copy(self):
         
-        copy = BipartiteGraphStatic0(self.n0)
+        copy = BipartiteGraphStatic0(self.n0, allocate=False)
         
-        copy.var_attributes = np.copy(self.var_attributes)
+        copy.var_attributes = self.var_attributes.clone()
         copy.cons_block_idxs = self.cons_block_idxs[:]
         
-        return copy
-   
-
-
-    
-class BipartiteGraphPairData(torch_geometric.data.Data):
-    """
-    This class encode a pair of node bipartite graphs observation 
-    """
-    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, 
-                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, 
-                 y=None):
-        
-        super().__init__()
-        
-        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s  =  (
-            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
-        
-        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t  = (
-            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
-
-        
-        self.y = y
-        
-
-   
-    def __inc__(self, key, value, *args, **kwargs):
-        """
-        We overload the pytorch geometric method that tells how to increment indices when concatenating graphs 
-        for those entries (edge index, candidates) for which this is not obvious.
-        """
-        if key == 'edge_index_s':
-            return torch.tensor([[self.variable_features_s.size(0)], [self.constraint_features_s.size(0)]])
-        elif key == 'edge_index_t':
-            return torch.tensor([[self.variable_features_t.size(0)], [self.constraint_features_t.size(0)]])
-        else:
-            return super().__inc__(key, value, *args, **kwargs)
-
-
-
-
-
-        
+        return copy        
     
     
 def normalize_graph(variable_features, constraint_features, edge_index, edge_attr):
