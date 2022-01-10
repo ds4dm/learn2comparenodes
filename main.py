@@ -16,8 +16,11 @@ from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEst
 from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
+import torch
 
 
+#take a list of nodeselectors to evaluate, a list of instance to test on, and the 
+#problem type for printing purposes
 def get_stats(nodesels, instances, problem):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
@@ -34,7 +37,8 @@ def get_stats(nodesels, instances, problem):
         
         oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
                                                                    model.getConss()))
-        
+        print("----------------------------")
+        print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
        #test nodesels
         for nodesel in nodesels:
             
@@ -48,14 +52,14 @@ def get_stats(nodesels, instances, problem):
             #activate this nodesel, WORKS
             model.setNodeselPriority(nodesel, 536870911)
             
-            
-            print( nodesel + f" on {problem} " + instance.split("/")[-1].split(".lp")[0] + '\n') 
             model.optimize()
-            print("    # of processed nodes : " + str(model.getNNodes()) +"\n")
-            print("    Time                 : " + str(model.getSolvingTime()) +"\n")
+            print(f"  Nodeselector : {nodesel}")
+            print(f"    # of processed nodes : {model.getNNodes()} \n")
+            print(f"    Time                 : {model.getSolvingTime()} \n")
             nodesels_record[nodesel].append((model.getNNodes(), model.getSolvingTime()))
 
     return nodesels_record
+
 
 
 
@@ -69,6 +73,8 @@ def display_stats(nodesels_record, problem):
               f"\n \t Medians : NNodes {int(nnode_med)}, time {int(time_med)}" )
         
 
+
+DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 problems = ["GISP"]
 nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
 for problem in problems:
