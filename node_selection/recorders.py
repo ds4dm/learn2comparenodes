@@ -10,8 +10,6 @@ Contains utilities to save and load comparaison behavioural data
 
 """
 
-from scipy.sparse import csr_matrix
-from scipy import sparse
 import torch
 import torch_geometric
 import os.path as osp
@@ -44,7 +42,6 @@ class CompFeaturizer():
         comp_res = 0 #useless data
         
         g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
-        
         
         var_attributes0, cons_block_idxs0 = graphidx2graphdata[g0_idx]
         var_attributes1, cons_block_idxs1 = graphidx2graphdata[g1_idx]
@@ -128,10 +125,10 @@ class CompFeaturizer():
         cons_attributes1 = torch.vstack(tuple(cons_attributes_blocks1))
         
         
-        var_attributes = (var_attributes0, var_attributes1)
-        cons_attributes = (cons_attributes0, cons_attributes1)
-        edge_idxs = (np.vstack( (adjacency_matrix0.row, adjacency_matrix0.col)), np.vstack( (adjacency_matrix1.row, adjacency_matrix1.col)))
-        edge_features =  (adjacency_matrix0.data[:, np.newaxis], adjacency_matrix1.data[:, np.newaxis])
+        var_attributes = var_attributes0, var_attributes1
+        cons_attributes = cons_attributes0, cons_attributes1
+        edge_idxs = adjacency_matrix0.coalesce().indices(), adjacency_matrix1.coalesce().indices()
+        edge_features =  adjacency_matrix0.coalesce().values().unsqueeze(1), adjacency_matrix1.coalesce().values().unsqueeze(1)
             
         return var_attributes, cons_attributes, edge_idxs, edge_features, comp_res
                 
@@ -165,7 +162,7 @@ class LPFeatureRecorder():
         self.recorded_light = dict()
         self.all_conss_blocks = []
         self.all_conss_blocks_features = []
-        self.obj_adjacency  == None
+        self.obj_adjacency  = None
 
    
     def get_graph(self, model, sub_milp):
@@ -180,7 +177,6 @@ class LPFeatureRecorder():
     
     def record_sub_milp_graph(self, model, sub_milp):
         
-             
         if sub_milp.getNumber() not in self.recorded:
             
             parent = sub_milp.getParent()
@@ -192,7 +188,7 @@ class LPFeatureRecorder():
                 self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
             
-            self._add_scip_estimate_cons(sub_milp, graph)
+            self._add_scip_estimate_cons(model, sub_milp, graph)
             
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
@@ -244,7 +240,7 @@ class LPFeatureRecorder():
     def _get_obj_adjacency(self, model):
     
        if self.obj_adjacency  == None:
-           var_coeff = { self.var2idx[ str(t) ]:c for (t,c) in model.getObjective().terms.items() if c != 0.0 }
+           var_coeff = { self.var2idx[ str(t[0]) ]:c for (t,c) in model.getObjective().terms.items() if c != 0.0 }
            var_idxs = list(var_coeff.keys())
            weigths = list(var_coeff.values())
            cons_idxs = [0]*len(var_idxs)
@@ -254,11 +250,11 @@ class LPFeatureRecorder():
        return self.obj_adjacency         
        
     
-    def _add_scip_estimate_cons(self, sub_milp, graph):
-        adjacency_matrix = self._get_obj_adjacency()
+    def _add_scip_estimate_cons(self, model, sub_milp, graph):
+        adjacency_matrix = self._get_obj_adjacency(model)
         cons_feature = torch.FloatTensor([[sub_milp.getEstimate()]], device=DEVICE)
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
-        self.all_conss_blocks_featureså.append(cons_feature)
+        self.all_conss_blocks_features.append(cons_feature)
         self.all_conss_blocks.append(adjacency_matrix)
 
     def _change_branched_bounds(self, graph, sub_milp):
@@ -373,3 +369,34 @@ def normalize_graph(variable_features, constraint_features, edge_index, edge_att
     return variable_features, constraint_features, edge_index, edge_attr
     
 
+class BipartiteGraphPairData(torch_geometric.data.Data):
+    """
+    This class encode a pair of node bipartite graphs observation, s is graph0, t is graph1 
+    """
+    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, 
+                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, 
+                 y=None):
+        
+        super().__init__()
+        
+        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s  =  (
+            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
+        
+        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t  = (
+            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
+        
+        self.y = y
+        
+
+   
+    def __inc__(self, key, value, *args, **kwargs):
+        """
+        We overload the pytorch geometric method that tells how to increment indices when concatenating graphs 
+        for those entries (edge index, candidates) for which this is not obvious.
+        """
+        if key == 'edge_index_s':
+            return torch.tensor([[self.variable_features_s.size(0)], [self.constraint_features_s.size(0)]])
+        elif key == 'edge_index_t':
+            return torch.tensor([[self.variable_features_t.size(0)], [self.constraint_features_t.size(0)]])
+        else:
+            return super().__inc__(key, value, *args, **kwargs)
