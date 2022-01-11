@@ -90,10 +90,10 @@ if __name__ == "__main__":
     
 
     
-    oracle = "optimal_plunger"
-    problem = "GISP"
-    data_partition = "train"
-    cpu_count = 1
+    oracle = None
+    problem = None
+    data_partition = None
+    cpu_count = None
     
     #Initializing the model 
     for i in range(1, len(sys.argv), 2):
