@@ -35,9 +35,9 @@ class GNNPolicy(torch.nn.Module):
         
         self.emb_size = emb_size = 64 #uniform node feature embedding dim
         
-        hidden_dims = [8,8,8,1]
+        hidden_dims = [16,16,16,1]
         
-        final_mlp_hidden_dim = 256
+        final_mlp_hidden_dim = 512
         
         # static data
         cons_nfeats = 1 
