@@ -13,7 +13,6 @@ Contains utilities to save and load comparaison behavioural data
 import torch
 import torch_geometric
 import os.path as osp
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class CompFeaturizer():
     
@@ -214,7 +213,7 @@ class LPFeatureRecorder():
     
     def _add_conss_to_graph(self, graph, model, conss):
 
-        cons_attributes = torch.FloatTensor(len(conss), graph.d1, device=DEVICE)
+        cons_attributes = torch.FloatTensor(len(conss), graph.d1)
         var_idxs = []
         cons_idxs = []
         weigths = []
@@ -252,7 +251,7 @@ class LPFeatureRecorder():
     
     def _add_scip_estimate_cons(self, model, sub_milp, graph):
         adjacency_matrix = self._get_obj_adjacency(model)
-        cons_feature = torch.FloatTensor([[sub_milp.getEstimate()]], device=DEVICE)
+        cons_feature = torch.FloatTensor([[sub_milp.getEstimate()]])
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
         self.all_conss_blocks_features.append(cons_feature)
         self.all_conss_blocks.append(adjacency_matrix)
@@ -269,7 +268,7 @@ class LPFeatureRecorder():
     
     def _get_feature_cons(self, model, cons):
         rhs = model.getRhs(cons)
-        return torch.FloatTensor([ rhs ], device=DEVICE)
+        return torch.FloatTensor([ rhs ])
     
     def _get_feature_var(self, model, var):
         
@@ -285,7 +284,7 @@ class LPFeatureRecorder():
         binary, integer, continuous = self._one_hot_type(var)
     
         
-        return torch.FloatTensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=DEVICE)
+        return torch.FloatTensor([ lb, ub, objective_coeff, binary, integer, continuous ])
     
     
     def _one_hot_type(self, var):
@@ -367,7 +366,7 @@ def normalize_graph(variable_features, constraint_features, edge_index, edge_att
 
 
     return variable_features, constraint_features, edge_index, edge_attr
-    
+
 
 class BipartiteGraphPairData(torch_geometric.data.Data):
     """
