@@ -15,6 +15,7 @@ load_src("model", "../../learning/model.py" )
 import torch
 from pyscipopt import Nodesel
 from model import GNNPolicy
+import time
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -22,23 +23,43 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class OracleNodeSelectorEstimator(Nodesel):
     
     def __init__(self, problem, comp_featurizer):
+        
         policy = GNNPolicy()
-        policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl")) #run from main
+        
+        print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl"))) #run from main
         policy.to(DEVICE)
         self.policy = policy
         self.comp_featurizer = comp_featurizer
-    
+        self.inference_time = 0
+        self.fe_time = 0
+        self.decision = []
+        
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
+        self.inference_time = 0
+        self.fe_time = 0
 
     def nodeselect(self):
         return {"selnode": self.model.getBestNode()}
     
     def nodecomp(self, node1,node2):
+        start = time.time()
         batch = self.comp_featurizer.get_inference_features(self.model, 
                                                             node1, 
-                                                            node2).to(DEVICE)  
-        return 2*(self.policy(batch).item() - 0.5)
+                                                            node2).to(DEVICE)
+        end = time.time()
+        
+        self.fe_time += (end - start)
+        
+        start = time.time()
+        results = self.policy(batch).item() 
+        end = time.time()
+        
+        self.inference_time += (end - start)
+        
+        self.decision += [results]
+        
+        return 2*(results - 0.5)
     
     
     
@@ -79,28 +100,6 @@ class OracleNodeSelectorAbdel(Nodesel):
                 raise NotImplementedError
         else:
             raise NotImplementedError
-                
-                
-                
-                
-                
-            
-    # def dfs_sel(self):
-    #     selnode = self.model.getPrioChild()  #aka best child of current node
-    #     if selnode == None:
-            
-    #         selnode = self.model.getPrioSibling() #if current node is a leaf, get 
-    #         # a sibling
-    #         if selnode == None: #if no sibling, just get a leaf
-    #             selnode = self.model.getBestLeaf()
-                
-    #     #Prio == unqueue depending of priority assigned by branching ,
-    #     #Best == unqueue depending of priority defined only by node selection strategy, i.e nodecomp
-            
-    #     return {"selnode": selnode}
-        
-    def dfs_compare(self, node1, node2):
-        return -node1.getDepth() + node2.getDepth()
     
     def estimate_compare(self, node1, node2):#SCIP 
         estimate1 = node1.getEstimate()
