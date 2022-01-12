@@ -90,10 +90,10 @@ if __name__ == "__main__":
     
 
     
-    oracle = None
-    problem = None
-    data_partition = None
-    cpu_count = None
+    oracle = 'optimal_plunger'
+    problem = 'GISP'
+    data_partition = 'train'
+    cpu_count = 1
     
     #Initializing the model 
     for i in range(1, len(sys.argv), 2):
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         ""
     
     
-    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
+    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))[:2]
     
     if cpu_count == 1:
         run_episodes(oracle, instances, save_dir)
