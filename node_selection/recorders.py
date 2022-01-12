@@ -100,8 +100,8 @@ class CompFeaturizer():
         edge_features = g_data[3]
         y = g_data[4]
 
-        g1 = normalize_graph(variable_features[0], constraint_features[0], edge_indices[0], edge_features[0])
-        g2 = normalize_graph(variable_features[1], constraint_features[1], edge_indices[1], edge_features[1])
+        g1 = variable_features[0], constraint_features[0], edge_indices[0], edge_features[0]
+        g2 = variable_features[1], constraint_features[1], edge_indices[1], edge_features[1]
         
         return BipartiteGraphPairData(*g1, *g2, y)
         
@@ -324,48 +324,7 @@ class BipartiteGraphStatic0():
         copy.var_attributes = self.var_attributes.clone()
         copy.cons_block_idxs = self.cons_block_idxs[:]
         
-        return copy        
-    
-    
-def normalize_graph(variable_features, constraint_features, edge_index, edge_attr):
-    
-
-    #Normalize variable bounds to value between 0,1
-    vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
-
-    coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
-    
-    for v, cf in zip(vars_to_normalize, coeffs):
-        
-        #normaize feature bound
-        variable_features[ v, :2] /= cf
-        
-        #update obj coeff and associated edges
-        variable_features[ v, 2 ] *= cf 
-        
-        associated_edges = torch.where(edge_index[0] == v)[0]
-        edge_attr[associated_edges] *= cf
-        
-    
-    
-    #Normalize constraints 
-    for c in range(constraint_features.shape[0]):
-        
-        associated_edges =  torch.where(edge_index[1] == c)[0]
-        normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], torch.abs(constraint_features[c]))
-        
-        #normalize associated edges
-        edge_attr[associated_edges] /= normalizer
-        
-        #normalize right hand side
-        constraint_features[c] /= normalizer
-    
-    #normalize objective
-    normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-    variable_features[:,2] /= normalizer
-
-
-    return variable_features, constraint_features, edge_index, edge_attr
+        return copy
 
 
 class BipartiteGraphPairData(torch_geometric.data.Data):
