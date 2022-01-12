@@ -297,7 +297,7 @@ class BipartiteGraphStatic0():
         copy = BipartiteGraphStatic0(self.n0, allocate=False)
         
         copy.var_attributes = self.var_attributes.clone()
-        copy.cons_block_idxs = self.cons_block_idxs[:]
+        copy.cons_block_idxs = self.cons_block_idxs[:-1] #dont add estimate constraint
         
         return copy
 
