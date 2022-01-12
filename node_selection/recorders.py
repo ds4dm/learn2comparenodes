@@ -30,15 +30,13 @@ class CompFeaturizer():
         return self
     
     
-    def get_inference_features(self, model, node1, node2):
+    def get_inference_features(self, model, node1, node2, comp_res=0):
         
         self.LP_feature_recorder.record_sub_milp_graph(model, node1)
         self.LP_feature_recorder.record_sub_milp_graph(model, node2)
         graphidx2graphdata = self.LP_feature_recorder.recorded_light
         all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
         all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
-        
-        comp_res = 0 #useless data
         
         g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
         
@@ -63,31 +61,8 @@ class CompFeaturizer():
     
     def save_comp(self, model, node1, node2, comp_res, comp_id):
         
-        self.LP_feature_recorder.record_sub_milp_graph(model, node1)
-        self.LP_feature_recorder.record_sub_milp_graph(model, node2)
-        
-        graphidx2graphdata = self.LP_feature_recorder.recorded_light
-        all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
-        all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
-        
-        g0_idx, g1_idx, comp_res = node1.getNumber(), node2.getNumber(), comp_res
-        
-        
-        var_attributes0, cons_block_idxs0 = graphidx2graphdata[g0_idx]
-        var_attributes1, cons_block_idxs1 = graphidx2graphdata[g1_idx]
-        
-        g_data = CompFeaturizer._get_graph_pair_data(var_attributes0,
-                                                    var_attributes1, 
-                                                    
-                                                    cons_block_idxs0, 
-                                                    cons_block_idxs1, 
-
-                                                    all_conss_blocks, 
-                                                    all_conss_blocks_features, 
-                                                    comp_res)
-        
+        data = self.get_inference_features(model, node1, node2, comp_res)
         file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
-        data = self._to_tensors(g_data)
         torch.save(data, file_path, _use_new_zipfile_serialization=False)
         
         return self
