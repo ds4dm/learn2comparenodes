@@ -56,9 +56,13 @@ def get_stats(nodesels, instances, problem):
             print(f"  Nodeselector : {nodesel}")
             print(f"    # of processed nodes : {model.getNNodes()} \n")
             print(f"    Time                 : {model.getSolvingTime()} \n")
+            if nodesel == "oracle_estimator":
+                print(f"fe time : {oracle_estimator.fe_time}")
+                print(f"inference time : {oracle_estimator.inference_time}")
+                
             nodesels_record[nodesel].append((model.getNNodes(), model.getSolvingTime()))
 
-    return nodesels_record
+    return nodesels_record, oracle_estimator.decision
 
 
 
@@ -77,9 +81,20 @@ def display_stats(nodesels_record, problem):
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 problems = ["GISP"]
 nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
+
+import matplotlib.pyplot as plt
+
 for problem in problems:
     instances = Path(f"./problem_generation/data/{problem}/test").glob("*.lp")
-    display_stats(get_stats(nodesels,instances, problem), problem)
+    stats, decisions = get_stats(nodesels,instances, problem)
+    display_stats(stats, problem)
+    plt.hist(decisions)
+    plt.title(f"{problem}")
+    plt.savefig(f'{problem}.png')
+    
+    
+
+
 
 
 
