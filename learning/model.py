@@ -35,9 +35,9 @@ class GNNPolicy(torch.nn.Module):
         
         self.emb_size = emb_size = 64 #uniform node feature embedding dim
         
-        hidden_dims = [16,16,16,1]
+        hidden_dims = [8,8,8,1]
         
-        final_mlp_hidden_dim = 512
+        final_mlp_hidden_dim = 128
         
         # static data
         cons_nfeats = 1 
@@ -128,8 +128,8 @@ class GNNPolicy(torch.nn.Module):
         if inv:
             graph0, graph1 = graph1, graph0
         
-        score0 = self.forward_graphs(*self.normalize_graph(*graph0)) #concatenation of averages variable/constraint features after conv 
-        score1 = self.forward_graphs(*self.normalize_graph(*graph1))
+        score0 = self.forward_graphs(*graph0) #concatenation of averages variable/constraint features after conv 
+        score1 = self.forward_graphs(*graph1)
 
         return self.final_mlp(-score0 + score1).squeeze(1)
         
@@ -185,56 +185,9 @@ class GNNPolicy(torch.nn.Module):
 
         return torch.cat(( variable_conved, constraint_conved ), dim=1)
     
+
     
-    def normalize_graph(self, constraint_features, 
-                        edge_index,
-                        edge_attr,
-                        variable_features,
-                        constraint_features_t_batch=None,
-                        variable_features_t_batch=None):
-        
 
-        #Normalize variable bounds to value between 0,1
-        vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
-
-        coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
-        
-        for v, cf in zip(vars_to_normalize, coeffs):
-            
-            #normaize feature bound
-            variable_features[ v, :2] /= cf
-            
-            #update obj coeff and associated edges
-            variable_features[ v, 2 ] *= cf 
-            
-            associated_edges = torch.where(edge_index[0] == v)[0]
-            edge_attr[associated_edges] *= cf
-            
-        
-        
-        #Normalize constraints 
-        for c in range(constraint_features.shape[0]):
-            
-            associated_edges =  torch.where(edge_index[1] == c)[0]
-            normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
-                             torch.abs(constraint_features[c]))
-            
-            #normalize associated edges
-            edge_attr[associated_edges] /= normalizer
-            
-            #normalize right hand side
-            constraint_features[c] /= normalizer
-        
-        #normalize objective
-        normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-        variable_features[:,2] /= normalizer
-
-
-        return (constraint_features, edge_index, edge_attr, variable_features,
-                constraint_features_t_batch, variable_features_t_batch)
-    
-        
-    
 
 
  

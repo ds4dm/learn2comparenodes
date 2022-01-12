@@ -20,6 +20,65 @@ from pathlib import Path
 from model import GNNPolicy, GraphDataset
 osp = os.path
 
+
+
+def normalize_graph(constraint_features, 
+                    edge_index,
+                    edge_attr,
+                    variable_features):
+    
+    
+    #Normalize variable bounds to value between 0,1
+    vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
+
+    coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    
+    for v, cf in zip(vars_to_normalize, coeffs):
+        
+        #normaize feature bound
+        variable_features[ v, :2] = variable_features[ v, :2]/cf
+        
+        #update obj coeff and associated edges
+        variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
+        
+        associated_edges = torch.where(edge_index[0] == v)[0]
+        edge_attr[associated_edges] = edge_attr[associated_edges]*cf
+        
+    
+    
+    #Normalize constraints 
+    for c in range(constraint_features.shape[0]):
+        
+        associated_edges =  torch.where(edge_index[1] == c)[0]
+        normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+                         torch.abs(constraint_features[c]))
+        
+        #normalize associated edges
+        edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
+        
+        #normalize right hand side
+        constraint_features[c] = constraint_features[c] / normalizer
+    
+    #normalize objective
+    normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
+    variable_features[:,2] = variable_features[:,2] / normalizer
+
+
+    return (constraint_features, edge_index, edge_attr, variable_features)
+
+#main
+def test1(data):
+    assert(not torch.allclose(data.variable_features_s, data.variable_features_t))
+    
+    assert(not ((torch.allclose(data.constraint_features_s, data.constraint_features_t) 
+                and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
+
+    assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
+    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
+    assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
+    
+
+
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
 def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
@@ -35,6 +94,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
  
                 
             batch = batch.to(DEVICE)
+            normalize_graph(batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s)
+            normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
             test1(batch)
             
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
@@ -44,11 +105,10 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             
             # Compute the usual cross-entropy classification loss
             loss = loss_fct(y_proba, y_true )
-
             if optimizer is not None:
                 if balance:
                     y_proba_inv = policy(batch, inv=True)
-                    loss += loss_fct(y_proba_inv, -1*y_true + 1)
+                    loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
                     
                 optimizer.zero_grad()
                 loss.backward()
@@ -64,24 +124,10 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
     mean_acc /= n_samples_processed + 1
     return mean_loss, mean_acc
 
-#main
-def test1(data):
-    assert(not torch.allclose(data.variable_features_s, data.variable_features_t))
-    
-    assert(not ((torch.allclose(data.constraint_features_s, data.constraint_features_t) 
-                and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
-
-    assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
-    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
-    assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
-    
-    
-
-
 
 problems = ["GISP"]
-LEARNING_RATE = 0.005
-NB_EPOCHS = 1
+LEARNING_RATE = 0.01
+NB_EPOCHS = 2
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -128,6 +174,8 @@ for problem in problems:
         print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
+    
+
 
 
 
