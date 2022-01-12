@@ -97,12 +97,11 @@ if __name__ == "__main__":
     
     #Initializing the model 
     for i in range(1, len(sys.argv), 2):
-        
         if sys.argv[i] == '-oracle':
             oracle = str(sys.argv[i + 1])
-        if sys.argv[i] == 'problem':
+        if sys.argv[i] == '-problem':
             problem = str(sys.argv[i + 1])
-        if sys.argv[i] == 'data_partition':
+        if sys.argv[i] == '-data_partition':
             data_partition = str(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
@@ -111,6 +110,7 @@ if __name__ == "__main__":
         
        
     save_dir = f"./data/{problem}/{data_partition}"
+
     try:
         os.makedirs(save_dir)
     except FileExistsError:
