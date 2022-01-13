@@ -160,6 +160,10 @@ for problem in problems:
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
+    print(train_data)
+    print(valid_data)
+    print(train_data[0].variable_features_s)
+    print(train_data[0].constraint_features_s)
     
 # TO DO : learn something from the data
     train_loader = torch_geometric.loader.DataLoader(train_data, 
