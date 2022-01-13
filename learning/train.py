@@ -204,12 +204,14 @@ import matplotlib.pyplot as plt
 plt.figure(0)
 plt.hist(decisions)
 plt.title('decisions histogramme')
+plt.savefig("./hist.png")
 
 plt.figure(1)
 plt.plot(train_losses, label='train')
 plt.plot(valid_losses, label='valid')
 plt.title('losses')
 plt.legend()
+plt.savefig("./losses.png")
 
 
 
