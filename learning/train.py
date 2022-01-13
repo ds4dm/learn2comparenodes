@@ -142,7 +142,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.01
-NB_EPOCHS = 10
+NB_EPOCHS = 50
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
