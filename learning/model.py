@@ -10,7 +10,7 @@ from https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipy
 import torch
 import torch.nn.functional as F
 import torch_geometric
-from torch_geometric.nn import GeneralConv
+from torch_geometric.nn import GraphConv
 
 class GraphDataset(torch_geometric.data.Dataset):
     """
@@ -33,7 +33,7 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        self.emb_size = emb_size = 32 #uniform node feature embedding dim
+        self.emb_size = emb_size = 64 #uniform node feature embedding dim
         
         hidden_dims = [8,8,8,1]
         
@@ -72,9 +72,8 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( GeneralConv((emb_size, emb_size), 
-                                                        hidden_dim , 
-                                                        in_edge_channels=edge_nfeats) 
+        self.convs = torch.nn.ModuleList( GraphConv((emb_size, emb_size), 
+                                                        hidden_dim ) 
                                            for hidden_dim in hidden_dims )
         
         self.final_mlp = torch.nn.Sequential( 
@@ -153,14 +152,14 @@ class GNNPolicy(torch.nn.Module):
         #Var to cons
         constraint_conveds = [ F.relu(conv((variable_features, constraint_features), 
                                   edge_indices,
-                                  edge_feature=edge_features,
+                                  edge_weight=edge_features,
                                   size=(variable_features.size(0), constraint_features.size(0))))
                               for idx, conv in enumerate(self.convs) ]
         
         #cons to var 
         variable_conveds = [ F.relu(conv((constraint_features, variable_features), 
                                   edge_indices_reversed,
-                                  edge_feature=edge_features,
+                                  edge_weight=edge_features,
                                   size=(constraint_features.size(0), variable_features.size(0)))) 
                             for idx, conv in enumerate(self.convs) ]
         
