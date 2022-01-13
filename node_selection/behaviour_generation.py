@@ -87,6 +87,7 @@ def run_episodes(oracle_type, instances, save_dir):
     global times
     for instance in instances:
         nnode, time = run_episode(oracle_type, instance, save_dir)
+        print(nnode, time)
         nnodes.append(nnode)
         times.append(time)
     print("finished running episodes for process " + str(md.current_process()))
