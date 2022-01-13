@@ -78,11 +78,17 @@ def run_episode(oracle_type, instance,  save_dir):
     model.readProblem(instance)
     model.optimize()
     
-    return 1#sucess
+    return model.getNNodes(),  model.getSolvingTime()
 
+nnodes = []
+times = []
 def run_episodes(oracle_type, instances, save_dir):
+    global nnodes
+    global times
     for instance in instances:
-        run_episode(oracle_type, instance, save_dir)
+        nnode, time = run_episode(oracle_type, instance, save_dir)
+        nnodes.append(nnode)
+        times.append(time)
     print("finished running episodes for process " + str(md.current_process()))
     
 
@@ -133,6 +139,10 @@ if __name__ == "__main__":
         
         a = list(map(lambda p: p.start(), processes)) #run processes
         b = list(map(lambda p: p.join(), processes)) #join processes
+        print(f"Mean number of node created  {np.mean(nnodes)}")
+        print(f"Mean solving time  {np.mean(times)}")
+        print(f"Median number of node created  {np.median(nnodes)}")
+        print(f"Median solving time  {np.median(times)}")
         
         
                          
