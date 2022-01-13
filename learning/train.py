@@ -27,25 +27,39 @@ def normalize_graph(constraint_features,
                     edge_attr,
                     variable_features):
     
+    # variable_normalizer = torch.max(torch.abs(variable_features[:,:2]))
+    # variable_features[:,:2] /= variable_normalizer
+    # variable_features[:,2] /= torch.max(torch.abs(variable_features[:,2]))
     
-    #Normalize variable bounds to value between 0,1
+    # constraint_features /= variable_normalizer
+    
+    
+    # def normalize_cons(c):
+    #     associated_edges =  torch.where(edge_index[1] == c)[0]
+    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+    #                      torch.abs(constraint_features[c]))
+    #     #normalize associated edges
+    #     edge_attr[associated_edges] /= normalizer
+        
+    #     #normalize right hand side
+    #     constraint_features[c] = constraint_features[c] / normalizer
+    
     vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
 
     coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
     
     for v, cf in zip(vars_to_normalize, coeffs):
-        
-        #normaize feature bound
-        variable_features[ v, :2] = variable_features[ v, :2]/cf
-        
-        #update obj coeff and associated edges
-        variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
-        
-        associated_edges = torch.where(edge_index[0] == v)[0]
-        edge_attr[associated_edges] = edge_attr[associated_edges]*cf
-        
+     
+     #normaize feature bound
+     variable_features[ v, :2] = variable_features[ v, :2]/cf
+     
+     #update obj coeff and associated edges
+     variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
+     
+     associated_edges = torch.where(edge_index[0] == v)[0]
+     edge_attr[associated_edges] = edge_attr[associated_edges]*cf
     
-    
+        
     #Normalize constraints 
     for c in range(constraint_features.shape[0]):
         
@@ -62,8 +76,8 @@ def normalize_graph(constraint_features,
     #normalize objective
     normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
     variable_features[:,2] = variable_features[:,2] / normalizer
-
-
+    
+    
     return (constraint_features, edge_index, edge_attr, variable_features)
 
 #main
@@ -72,9 +86,8 @@ def test1(data):
     
     assert(not ((torch.allclose(data.constraint_features_s, data.constraint_features_t) 
                 and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
-
     assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
-    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
+    #assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
     assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
     
 
@@ -127,13 +140,16 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.01
-NB_EPOCHS = 2
+NB_EPOCHS = 10
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 LOSS = torch.nn.BCELoss()
 OPTIMIZER = torch.optim.Adam
 
+
+train_losses = []
+valid_losses = []
 for problem in problems:
 
     train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
@@ -168,15 +184,28 @@ for problem in problems:
         print(f"Epoch {epoch+1}")
         
         train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
+        train_losses.append(train_loss)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
         valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
+        valid_losses.append(valid_loss)
         print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
-    
+
+
+decisions = [ policy(dvalid).item() for dvalid in valid_data ]
+
+import matplotlib.pyplot as plt
+plt.figure(0)
+plt.hist(decisions)
+plt.title('decisions histogramme')
+
+plt.figure(1)
+plt.plot(train_losses, label='train')
+plt.plot(valid_losses, label='valid')
+plt.title('losses')
+plt.legend()
 
 
 
-
-    
