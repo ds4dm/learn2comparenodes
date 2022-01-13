@@ -117,7 +117,7 @@ if __name__ == "__main__":
         ""
     
     
-    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))[:2]
+    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
     
     if cpu_count == 1:
         run_episodes(oracle, instances, save_dir)
