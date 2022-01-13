@@ -37,7 +37,7 @@ class GNNPolicy(torch.nn.Module):
         
         hidden_dims = [8,8,8,1]
         
-        final_mlp_hidden_dim = 128
+        final_mlp_hidden_dim = 256
         
         # static data
         cons_nfeats = 1 
