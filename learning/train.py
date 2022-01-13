@@ -42,41 +42,44 @@ def normalize_graph(constraint_features,
     #     edge_attr[associated_edges] /= normalizer
         
     #     #normalize right hand side
+    #     constraint_features[c] /= normalizer
+    
+    # vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
+
+    # coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    
+    # for v, cf in zip(vars_to_normalize, coeffs):
+     
+    #  #normaize feature bound
+    #  variable_features[ v, :2] = variable_features[ v, :2]/cf
+     
+    #  #update obj coeff and associated edges
+    #  variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
+     
+    #  associated_edges = torch.where(edge_index[0] == v)[0]
+    #  edge_attr[associated_edges] = edge_attr[associated_edges]*cf
+    
+        
+    # #Normalize constraints 
+    # for c in range(constraint_features.shape[0]):
+        
+    #     associated_edges =  torch.where(edge_index[1] == c)[0]
+    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+    #                      torch.abs(constraint_features[c]))
+        
+    #     #normalize associated edges
+    #     edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
+        
+    #     #normalize right hand side
     #     constraint_features[c] = constraint_features[c] / normalizer
     
-    vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
-
-    coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    # #normalize objective
+    # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
+    # variable_features[:,2] = variable_features[:,2] / normalizer
     
-    for v, cf in zip(vars_to_normalize, coeffs):
-     
-     #normaize feature bound
-     variable_features[ v, :2] = variable_features[ v, :2]/cf
-     
-     #update obj coeff and associated edges
-     variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
-     
-     associated_edges = torch.where(edge_index[0] == v)[0]
-     edge_attr[associated_edges] = edge_attr[associated_edges]*cf
-    
-        
-    #Normalize constraints 
-    for c in range(constraint_features.shape[0]):
-        
-        associated_edges =  torch.where(edge_index[1] == c)[0]
-        normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
-                         torch.abs(constraint_features[c]))
-        
-        #normalize associated edges
-        edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
-        
-        #normalize right hand side
-        constraint_features[c] = constraint_features[c] / normalizer
-    
-    #normalize objective
-    normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-    variable_features[:,2] = variable_features[:,2] / normalizer
-    
+    constraint_features /= 300.0
+    variable_features[:3] /= 300.0
+    edge_attr /= 300.0
     
     return (constraint_features, edge_index, edge_attr, variable_features)
 
@@ -86,8 +89,9 @@ def test1(data):
     
     assert(not ((torch.allclose(data.constraint_features_s, data.constraint_features_t) 
                 and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
+    print(min(data.constraint_features_s))
     assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
-    #assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
+    assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
     assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
     
 
@@ -104,12 +108,11 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
     with torch.set_grad_enabled(optimizer is not None):
         for idx,batch in enumerate(data_loader):
             
- 
-                
+            
             batch = batch.to(DEVICE)
             normalize_graph(batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s)
             normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
-            test1(batch)
+            #test1(batch)
             
             y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
             y_proba = policy(batch)
@@ -130,6 +133,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss.item() * batch.num_graphs
+            print(loss.item())
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
 
