@@ -77,19 +77,24 @@ def run_episode(oracle_type, instance,  save_dir):
     model.freeTransform()
     model.readProblem(instance)
     model.optimize()
-    
-    return model.getNNodes(),  model.getSolvingTime()
+    with open("nnodes.csv", "a+") as f:
+        f.write(f"{model.getNNodes()},")
+        f.close()
+    with open("times.csv", "a+") as f:
+        f.write(f"{model.getSolvingTime()},")
+        f.close()
+        
+    return 1
 
-nnodes = []
-times = []
+
 def run_episodes(oracle_type, instances, save_dir):
-    global nnodes
-    global times
+    
     for instance in instances:
-        nnode, time = run_episode(oracle_type, instance, save_dir)
-        nnodes.append(nnode)
-        times.append(time)
+        run_episode(oracle_type, instance, save_dir)
+        
     print("finished running episodes for process " + str(md.current_process()))
+        
+    return 1
     
 
 if __name__ == "__main__":
@@ -100,6 +105,14 @@ if __name__ == "__main__":
     problem = 'GISP'
     data_partition = 'train'
     cpu_count = 1
+    
+    with open("nnodes.csv", "w") as f:
+        f.write("")
+        f.close()
+    with open("times.csv", "w") as f:
+        f.write("")
+        f.close()
+        
     
     #Initializing the model 
     for i in range(1, len(sys.argv), 2):
@@ -129,22 +142,24 @@ if __name__ == "__main__":
         run_episodes(oracle, instances, save_dir)
     else:
         chunck_size = int(np.ceil(len(instances)/cpu_count))
-        
         processes = [  md.Process(name=f"worker {p}", 
                                         target=partial(run_episodes,
-                                                       oracle_type=oracle,
-                                                       instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                       save_dir=save_dir))
-                       for p in range(cpu_count) ]
-        
+                                                        oracle_type=oracle,
+                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        save_dir=save_dir))
+                        for p in range(cpu_count) ]
+            
         a = list(map(lambda p: p.start(), processes)) #run processes
         b = list(map(lambda p: p.join(), processes)) #join processes
-        print(f"Mean number of node created  {np.mean(nnodes)}")
-        print(f"Mean solving time  {np.mean(times)}")
-        print(f"Median number of node created  {np.median(nnodes)}")
-        print(f"Median solving time  {np.median(times)}")
         
-        
+    nnodes = np.genfromtxt("nnodes.csv", delimiter=",")[:-1]
+    times = np.genfromtxt("times.csv", delimiter=",")[:-1]
+    print(f"Mean number of node created  {np.mean(nnodes)}")
+    print(f"Mean solving time  {np.mean(times)}")
+    print(f"Median number of node created  {np.median(nnodes)}")
+    print(f"Median solving time  {np.median(times)}")
+    
+    
                          
             
         
