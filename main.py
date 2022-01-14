@@ -17,6 +17,7 @@ from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
 import torch
+import sys
 import multiprocessing as md
 from functools import partial
 
@@ -98,40 +99,45 @@ def display_stats(nodesels, problem):
         print("--------------------------")
    
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-cpu_count = 1
-problems = ["GISP"]
-nodesels = ["oracle", "oracle_estimator", "dfs", "bfs", "estimate"] 
+if __name__ == "__main__":
+    DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    cpu_count = 1
+    problems = ["GISP"]
+    nodesels = ["oracle", "oracle_estimator", "dfs", "bfs", "estimate"] 
+    
+    for i in range(1, len(sys.argv), 2):
+        if sys.argv[i] == '-n_cpu':
+            cpu_count = int(sys.argv[i + 1])
 
-for problem in problems:
-    
-    #clear records
-    for nodesel in nodesels:
-        with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
-            f.write("")
-            f.close()
-        with open(f"times_{problem}_{nodesel}.csv", "w") as f:
-            f.write("")
-            f.close()
-        
-    instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
-        
-    if cpu_count == 1:
-        record_stats(nodesels, instances, problem)
-    else:
-        chunck_size = int(np.ceil(len(instances)/cpu_count))
-        processes = [  md.Process(name=f"worker {p}", 
-                                        target=partial(record_stats,
-                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                        problem=problem,
-                                                        nodesels=nodesels))
-                        for p in range(cpu_count) ]
-            
-        a = list(map(lambda p: p.start(), processes)) #run processes
-        b = list(map(lambda p: p.join(), processes)) #join processes
-    
-    print("SUMMARIES")
-    display_stats(nodesels, problem)
+    for problem in problems:
+
+        #clear records
+        for nodesel in nodesels:
+            with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
+                f.write("")
+                f.close()
+            with open(f"times_{problem}_{nodesel}.csv", "w") as f:
+                f.write("")
+                f.close()
+
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
+
+        if cpu_count == 1:
+            record_stats(nodesels, instances, problem)
+        else:
+            chunck_size = int(np.ceil(len(instances)/cpu_count))
+            processes = [  md.Process(name=f"worker {p}", 
+                                            target=partial(record_stats,
+                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                            problem=problem,
+                                                            nodesels=nodesels))
+                            for p in range(cpu_count) ]
+
+            a = list(map(lambda p: p.start(), processes)) #run processes
+            b = list(map(lambda p: p.join(), processes)) #join processes
+
+        print("SUMMARIES")
+        display_stats(nodesels, problem)
 
 
 
