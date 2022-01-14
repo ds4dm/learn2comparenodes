@@ -12,7 +12,7 @@ Created on Tue Oct 19 19:24:33 2021
 
 
 from pathlib import Path 
-from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
+from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
 from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
@@ -36,7 +36,7 @@ def record_stats(nodesels, instances, problem):
     
     oracle = OracleNodeSelectorAbdel("optimal_plunger")
     
-    model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
+    #model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
     model.includeNodesel(oracle, "oracle", 'testing',100, 100)
     for instance in instances:
         
@@ -79,7 +79,7 @@ def record_stats(nodesels, instances, problem):
                 f.close()
             
 
-    return nodesels_record, oracle_estimator.decision
+    return nodesels_record, [4]
 
 
 
