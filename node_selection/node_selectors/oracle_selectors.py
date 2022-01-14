@@ -17,10 +17,8 @@ from pyscipopt import Nodesel
 from model import GNNPolicy
 import time
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
-class OracleNodeSelectorEstimator(Nodesel):
+class OracleNodeSelectorEstimator(Nodesel, DEVICE='cpu'):
     
     def __init__(self, problem, comp_featurizer):
         
