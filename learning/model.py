@@ -80,7 +80,7 @@ class GNNPolicy(torch.nn.Module):
                                     torch.nn.LayerNorm(2*sum(hidden_dims)),
                                     torch.nn.Linear(2*sum(hidden_dims), final_mlp_hidden_dim),
                                     torch.nn.ReLU(),
-                                    torch.nn.Linear(2*sum(hidden_dims), 1),
+                                    torch.nn.Linear(final_mlp_hidden_dim, 1),
                                     torch.nn.Sigmoid()
                                     )
      
