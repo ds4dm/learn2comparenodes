@@ -132,6 +132,7 @@ if __name__ == "__main__":
                                                             problem=problem,
                                                             nodesels=nodesels))
                             for p in range(cpu_count) ]
+            print(processes[0])
 
             a = list(map(lambda p: p.start(), processes)) #run processes
             b = list(map(lambda p: p.join(), processes)) #join processes
