@@ -35,7 +35,7 @@ class GNNPolicy(torch.nn.Module):
         
         self.emb_size = emb_size = 64 #uniform node feature embedding dim
         
-        hidden_dims = [64]
+        hidden_dims = [64,1]
         
         final_mlp_hidden_dim = 256
         
@@ -72,7 +72,7 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( GraphConv((var_nfeats, cons_nfeats), 
+        self.convs = torch.nn.ModuleList( GraphConv((emb_size, emb_size), 
                                                         hidden_dim ) 
                                            for hidden_dim in hidden_dims )
         
@@ -141,9 +141,9 @@ class GNNPolicy(torch.nn.Module):
         #Assume edge indice var to cons, constraint_mask of shape [Nconvs]       
         
         
-        #variable_features = self.var_embedding(variable_features)
-        #constraint_features = self.cons_embedding(constraint_features)
-        #edge_features = self.edge_embedding(edge_features)
+        variable_features = self.var_embedding(variable_features)
+        constraint_features = self.cons_embedding(constraint_features)
+        edge_features = self.edge_embedding(edge_features)
         
         
         edge_indices_reversed = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
