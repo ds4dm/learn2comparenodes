@@ -18,9 +18,9 @@ from model import GNNPolicy
 import time
 
 
-class OracleNodeSelectorEstimator(Nodesel, DEVICE='cpu'):
+class OracleNodeSelectorEstimator(Nodesel):
     
-    def __init__(self, problem, comp_featurizer):
+    def __init__(self, problem, comp_featurizer,  DEVICE='cpu'):
         
         policy = GNNPolicy()
         
@@ -28,6 +28,7 @@ class OracleNodeSelectorEstimator(Nodesel, DEVICE='cpu'):
         policy.to(DEVICE)
         self.policy = policy
         self.comp_featurizer = comp_featurizer
+        self.DEVICE = DEVICE
         self.inference_time = 0
         self.fe_time = 0
         self.decision = []
@@ -44,7 +45,7 @@ class OracleNodeSelectorEstimator(Nodesel, DEVICE='cpu'):
         start = time.time()
         batch = self.comp_featurizer.get_inference_features(self.model, 
                                                             node1, 
-                                                            node2).to(DEVICE)
+                                                            node2).to(self.DEVICE)
         end = time.time()
         
         self.fe_time += (end - start)
