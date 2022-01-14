@@ -13,7 +13,6 @@ Created on Tue Oct 19 19:24:33 2021
 
 from pathlib import Path 
 from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
-from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
 import torch
