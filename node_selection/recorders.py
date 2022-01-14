@@ -162,7 +162,7 @@ class LPFeatureRecorder():
                 self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
             
-            self._add_scip_estimate_cons(model, sub_milp, graph)
+            self._add_scip_obj_cons(model, sub_milp, graph)
             
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
@@ -218,15 +218,16 @@ class LPFeatureRecorder():
            var_idxs = list(var_coeff.keys())
            weigths = list(var_coeff.values())
            cons_idxs = [0]*len(var_idxs)
-    
-           self.obj_adjacency =  torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, 1))
-      
+           
+           self.obj_adjacency =  torch.torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, 1))
+           self.obj_adjacency = torch.hstack((-1*self.obj_adjacency, self.obj_adjacency))
+           
        return self.obj_adjacency         
        
     
-    def _add_scip_estimate_cons(self, model, sub_milp, graph):
+    def _add_scip_obj_cons(self, model, sub_milp, graph):
         adjacency_matrix = self._get_obj_adjacency(model)
-        cons_feature = torch.FloatTensor([[sub_milp.getEstimate()]])
+        cons_feature = torch.FloatTensor([[ sub_milp.getEstimate() ], [ -sub_milp.getLowerbound() ]])
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
         self.all_conss_blocks_features.append(cons_feature)
         self.all_conss_blocks.append(adjacency_matrix)
@@ -297,7 +298,7 @@ class BipartiteGraphStatic0():
         copy = BipartiteGraphStatic0(self.n0, allocate=False)
         
         copy.var_attributes = self.var_attributes.clone()
-        copy.cons_block_idxs = self.cons_block_idxs[:-1] #dont add estimate constraint
+        copy.cons_block_idxs = self.cons_block_idxs[:-1] #dont add estimate/dual constraints
         
         return copy
 
