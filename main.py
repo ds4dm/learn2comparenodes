@@ -12,24 +12,31 @@ Created on Tue Oct 19 19:24:33 2021
 
 
 from pathlib import Path 
-from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
+from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
 from node_selection.recorders import LPFeatureRecorder, CompFeaturizer
 import pyscipopt.scip as sp
 import numpy as np
 import torch
+import multiprocessing as md
+from functools import partial
+
 
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def get_stats(nodesels, instances, problem):
+def record_stats(nodesels, instances, problem):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
     model.hideOutput()
+    
     comp_featurizer = CompFeaturizer()
     oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
-    model.includeNodesel(oracle_estimator, nodesels[0], 'testing',100, 100)
     
+    oracle = OracleNodeSelectorAbdel("optimal_plunger")
+    
+    model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
+    model.includeNodesel(oracle, "oracle", 'testing',100, 100)
     for instance in instances:
         
         instance = str(instance)
@@ -37,6 +44,8 @@ def get_stats(nodesels, instances, problem):
         
         oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
                                                                    model.getConss()))
+        optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+        oracle.setOptsol(optsol)
         print("----------------------------")
         print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
        #test nodesels
@@ -59,40 +68,71 @@ def get_stats(nodesels, instances, problem):
             if nodesel == "oracle_estimator":
                 print(f"fe time : {oracle_estimator.fe_time}")
                 print(f"inference time : {oracle_estimator.inference_time}")
+            
                 
-            nodesels_record[nodesel].append((model.getNNodes(), model.getSolvingTime()))
+            with open(f"nnodes_{problem}_{nodesel}.csv", "a+") as f:
+                f.write(f"{model.getNNodes()},")
+                f.close()
+            with open(f"times_{problem}_{nodesel}.csv", "a+") as f:
+                f.write(f"{model.getSolvingTime()},")
+                f.close()
+            
 
     return nodesels_record, oracle_estimator.decision
 
 
 
 
-def display_stats(nodesels_record, problem):
-    
-    for k in nodesels_record:
-        nnode_mean, time_mean = np.mean(nodesels_record[k], axis=0)
-        nnode_med, time_med = np.median(nodesels_record[k], axis=0)
-        print(f"Problem {problem}")
-        print( k + f"\n \t Means : NNode {int(nnode_mean)}, time {int(time_mean)}" + 
-              f"\n \t Medians : NNodes {int(nnode_med)}, time {int(time_med)}" )
-        
-
+def display_stats(nodesels, problem):
+   
+   print("========================")    
+   print(f'{problem}') 
+   for nodesel in nodesels:
+        nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:-1]
+        times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:-1]
+        print(f"  {nodesel} ")
+        print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
+        print(f"    Mean solving time             : {np.mean(times):.2f}")
+        print(f"    Median number of node created : {np.median(nnodes):.2f}")
+        print(f"    Median solving time           : {np.median(times):.2f}")
+        print("--------------------------")
+   
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+cpu_count = 1
 problems = ["GISP"]
-nodesels = ["oracle_estimator", "dfs", "bfs", "estimate"] #always start with oracle_estimator
-
-import matplotlib.pyplot as plt
+nodesels = ["oracle", "oracle_estimator", "dfs", "bfs", "estimate"] 
 
 for problem in problems:
-    instances = Path(f"./problem_generation/data/{problem}/test").glob("*.lp")
-    stats, decisions = get_stats(nodesels,instances, problem)
-    display_stats(stats, problem)
-    plt.hist(decisions)
-    plt.title(f"{problem}")
-    plt.savefig(f'{problem}.png')
     
+    #clear records
+    for nodesel in nodesels:
+        with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
+            f.write("")
+            f.close()
+        with open(f"times_{problem}_{nodesel}.csv", "w") as f:
+            f.write("")
+            f.close()
+        
+    instances = list(Path(f"./problem_generation/data/{problem}/train").glob("*.lp"))[:10]
+        
+    if cpu_count == 1:
+        record_stats(nodesels, instances, problem)
+    else:
+        chunck_size = int(np.ceil(len(instances)/cpu_count))
+        processes = [  md.Process(name=f"worker {p}", 
+                                        target=partial(record_stats,
+                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        problem=problem,
+                                                        nodesels=nodesels))
+                        for p in range(cpu_count) ]
+            
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        b = list(map(lambda p: p.join(), processes)) #join processes
     
+    print("SUMMARIES")
+    display_stats(nodesels, problem)
+
 
 
 
