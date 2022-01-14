@@ -31,8 +31,8 @@ def record_stats(nodesels, instances, problem):
     model = sp.Model()
     model.hideOutput()
     
-    comp_featurizer = CompFeaturizer()
-    oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
+    #comp_featurizer = CompFeaturizer()
+    #oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
     
     oracle = OracleNodeSelectorAbdel("optimal_plunger")
     
@@ -43,8 +43,8 @@ def record_stats(nodesels, instances, problem):
         instance = str(instance)
         model.readProblem(instance)
         
-        oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                                   model.getConss()))
+        #oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
+                                                                   #model.getConss()))
         optsol = model.readSolFile(instance.replace(".lp", ".sol"))
         oracle.setOptsol(optsol)
         print("----------------------------")
