@@ -53,3 +53,8 @@ Thumbs.db
 *.sol
 *.pt
 *.pkl
+
+# Data
+*.csv
+*.pt
+*.pkl
