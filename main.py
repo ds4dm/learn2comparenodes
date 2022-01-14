@@ -103,7 +103,7 @@ if __name__ == "__main__":
     DEVICE = 'cpu'
     cpu_count = 1
     problems = ["GISP"]
-    nodesels = ["oracle", "oracle_estimator", "dfs", "bfs", "estimate"] 
+    nodesels = ["oracle", "dfs", "bfs", "estimate"] 
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
