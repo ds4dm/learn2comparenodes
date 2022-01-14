@@ -114,7 +114,7 @@ for problem in problems:
             f.write("")
             f.close()
         
-    instances = list(Path(f"./problem_generation/data/{problem}/train").glob("*.lp"))[:10]
+    instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
         
     if cpu_count == 1:
         record_stats(nodesels, instances, problem)
