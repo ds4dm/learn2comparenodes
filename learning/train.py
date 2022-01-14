@@ -141,7 +141,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 
 problems = ["GISP"]
-LEARNING_RATE = 0.005
+LEARNING_RATE = 0.1
 NB_EPOCHS = 50
 PATIENCE = 10
 EARLY_STOPPING = 20

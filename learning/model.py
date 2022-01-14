@@ -35,9 +35,9 @@ class GNNPolicy(torch.nn.Module):
         
         self.emb_size = emb_size = 64 #uniform node feature embedding dim
         
-        hidden_dims = [64,1]
+        hidden_dims = [8,8,8,1]
         
-        final_mlp_hidden_dim = 64
+        final_mlp_hidden_dim = 128
         
         # static data
         cons_nfeats = 1 
@@ -49,8 +49,8 @@ class GNNPolicy(torch.nn.Module):
         self.cons_embedding = torch.nn.Sequential(
             torch.nn.LayerNorm(cons_nfeats),
             torch.nn.Linear(cons_nfeats, emb_size),
-            #torch.nn.ReLU(),
-            #torch.nn.Linear(emb_size, emb_size),
+            torch.nn.ReLU(),
+            torch.nn.Linear(emb_size, emb_size),
             torch.nn.ReLU(),
         )
 
@@ -64,8 +64,8 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.LayerNorm(var_nfeats),
             torch.nn.Linear(var_nfeats, emb_size),
             torch.nn.ReLU(),
-            #torch.nn.Linear(emb_size, emb_size),
-            #torch.nn.ReLU(),
+            torch.nn.Linear(emb_size, emb_size),
+            torch.nn.ReLU(),
         )
 
 
@@ -78,8 +78,8 @@ class GNNPolicy(torch.nn.Module):
         
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.LayerNorm(2*sum(hidden_dims)),
-                                    #torch.nn.Linear(2*sum(hidden_dims), final_mlp_hidden_dim),
-                                    #torch.nn.ReLU(),
+                                    torch.nn.Linear(2*sum(hidden_dims), final_mlp_hidden_dim),
+                                    torch.nn.ReLU(),
                                     torch.nn.Linear(2*sum(hidden_dims), 1),
                                     torch.nn.Sigmoid()
                                     )
