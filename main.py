@@ -85,12 +85,13 @@ def record_stats(nodesels, instances, problem):
 
 def display_stats(nodesels, problem):
    
-   print("========================")    
+   print("========================")
    print(f'{problem}') 
    for nodesel in nodesels:
         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         print(f"  {nodesel} ")
+        print(f"    Number of instances solved    : {len(nnodes)}")
         print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
         print(f"    Mean solving time             : {np.mean(times):.2f}")
         print(f"    Median number of node created : {np.median(nnodes):.2f}")
