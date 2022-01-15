@@ -44,38 +44,38 @@ def normalize_graph(constraint_features,
     #     #normalize right hand side
     #     constraint_features[c] /= normalizer
     
-    vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
+    # vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
 
-    coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    # coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
     
-    for v, cf in zip(vars_to_normalize, coeffs):
+    # for v, cf in zip(vars_to_normalize, coeffs):
      
-      #normaize feature bound
-      variable_features[ v, :2] = variable_features[ v, :2]/cf
+    #   #normaize feature bound
+    #   variable_features[ v, :2] = variable_features[ v, :2]/cf
      
-      #update obj coeff and associated edges
-      variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
+    #   #update obj coeff and associated edges
+    #   variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
      
-      associated_edges = torch.where(edge_index[0] == v)[0]
-      edge_attr[associated_edges] = edge_attr[associated_edges]*cf
+    #   associated_edges = torch.where(edge_index[0] == v)[0]
+    #   edge_attr[associated_edges] = edge_attr[associated_edges]*cf
     
         
-    #Normalize constraints 
-    for c in range(constraint_features.shape[0]):
+    # #Normalize constraints 
+    # for c in range(constraint_features.shape[0]):
         
-        associated_edges =  torch.where(edge_index[1] == c)[0]
-        normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
-                          torch.abs(constraint_features[c]))
+    #     associated_edges =  torch.where(edge_index[1] == c)[0]
+    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+    #                       torch.abs(constraint_features[c]))
         
-        #normalize associated edges
-        edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
+    #     #normalize associated edges
+    #     edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
         
-        #normalize right hand side
-        constraint_features[c] = constraint_features[c] / normalizer
+    #     #normalize right hand side
+    #     constraint_features[c] = constraint_features[c] / normalizer
     
-    #normalize objective
-    normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-    variable_features[:,2] = variable_features[:,2] / normalizer
+    # #normalize objective
+    # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
+    # variable_features[:,2] = variable_features[:,2] / normalizer
     
     # constraint_features /= 300.0
     # variable_features[:3] /= 300.0
@@ -141,13 +141,13 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 
 problems = ["GISP"]
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 NB_EPOCHS = 30
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 LOSS = torch.nn.BCELoss()
-OPTIMIZER = torch.optim.SGD
+OPTIMIZER = torch.optim.Adam
 
 
 train_losses = []
@@ -163,7 +163,8 @@ for problem in problems:
     print(train_data)
     print(valid_data)
     print(train_data[0].variable_features_s[-1])
-    print(train_data[0].constraint_features_s[-1])
+    print(train_data[0].constraint_features_s[-2:])
+    print(train_data[0].constraint_features_t[-2:])
     
 # TO DO : learn something from the data
     train_loader = torch_geometric.loader.DataLoader(train_data, 
@@ -200,7 +201,7 @@ for problem in problems:
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
-decisions = [ policy(dvalid).item() for dvalid in valid_data ]
+decisions = [ policy(dvalid).item() for dvalid in train_data ]
 
 import matplotlib.pyplot as plt
 plt.figure(0)
