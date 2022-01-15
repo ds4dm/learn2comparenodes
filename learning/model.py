@@ -33,11 +33,13 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        self.emb_size = emb_size = 64 #uniform node feature embedding dim
+        self.emb_size = emb_size = 128 #uniform node feature embedding dim
         
-        hidden_dims = [8,8,8,1]
+        hidden_dim1 = 64
+        hidden_dim2 = 32
+        hidden_dim3 = 16
         
-        final_mlp_hidden_dim = 128
+        final_mlp_hidden_dim = 256
         
         # static data
         cons_nfeats = 1 
@@ -72,13 +74,15 @@ class GNNPolicy(torch.nn.Module):
 
         #double check
  
-        self.convs = torch.nn.ModuleList( GraphConv((emb_size, emb_size), 
-                                                        hidden_dim ) 
-                                           for hidden_dim in hidden_dims )
+        self.conv1 = GraphConv((emb_size, emb_size), hidden_dim1 )
+        self.conv2 = GraphConv((hidden_dim1, hidden_dim1), hidden_dim2 )
+        self.conv3 = GraphConv((hidden_dim2, hidden_dim2), hidden_dim3 )
+        
+        self.convs = [ self.conv1, self.conv2, self.conv3]
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.LayerNorm(2*sum(hidden_dims)),
-                                    torch.nn.Linear(2*sum(hidden_dims), final_mlp_hidden_dim),
+                                    torch.nn.LayerNorm(2*hidden_dim3),
+                                    torch.nn.Linear(2*hidden_dim3, final_mlp_hidden_dim),
                                     torch.nn.ReLU(),
                                     torch.nn.Linear(final_mlp_hidden_dim, 1),
                                     torch.nn.Sigmoid()
@@ -127,14 +131,14 @@ class GNNPolicy(torch.nn.Module):
         if inv:
             graph0, graph1 = graph1, graph0
         
-        score0 = self.forward_graphs(*graph0) #concatenation of averages variable/constraint features after conv 
-        score1 = self.forward_graphs(*graph1)
+        score0 = self.forward_graph(*graph0) #concatenation of averages variable/constraint features after conv 
+        score1 = self.forward_graph(*graph1)
 
         return self.final_mlp(-score0 + score1).squeeze(1)
         
         
        
-    def forward_graphs(self, constraint_features, edge_indices, edge_features, 
+    def forward_graph(self, constraint_features, edge_indices, edge_features, 
                        variable_features, constraint_batch=None, variable_batch=None):
 
         
@@ -149,40 +153,43 @@ class GNNPolicy(torch.nn.Module):
         edge_indices_reversed = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
         
-        #Var to cons
-        constraint_conveds = [ F.relu(conv((variable_features, constraint_features), 
-                                  edge_indices,
-                                  edge_weight=edge_features,
-                                  size=(variable_features.size(0), constraint_features.size(0))))
-                              for idx, conv in enumerate(self.convs) ]
         
-        #cons to var 
-        variable_conveds = [ F.relu(conv((constraint_features, variable_features), 
-                                  edge_indices_reversed,
-                                  edge_weight=edge_features,
-                                  size=(constraint_features.size(0), variable_features.size(0)))) 
-                            for idx, conv in enumerate(self.convs) ]
-        
-        
-        
-        
-        constraint_conved = torch.cat(constraint_conveds, dim=1)  #N, sum(hiddendims)
-        variable_conved = torch.cat(variable_conveds, dim=1)
+        for conv in self.convs:
+            
+            #Var to cons
+            constraint_features_next = conv((variable_features, constraint_features), 
+                                      edge_indices,
+                                      edge_weight=edge_features,
+                                      size=(variable_features.size(0), constraint_features.size(0)))
+            
+            #cons to var 
+            variable_features = conv((constraint_features, variable_features), 
+                                      edge_indices_reversed,
+                                      edge_weight=edge_features,
+                                      size=(constraint_features.size(0), variable_features.size(0)))
+            
+            constraint_features = constraint_features_next
+            
+            
+            
+            
+            
+            
         
         if constraint_batch is not None:
         
-            constraint_conved = torch_geometric.nn.pool.avg_pool_x(constraint_batch, 
-                                                                   constraint_conved,
+            constraint_avg = torch_geometric.nn.pool.avg_pool_x(constraint_batch, 
+                                                                   constraint_features,
                                                                    constraint_batch)[0]
-            variable_conved = torch_geometric.nn.pool.avg_pool_x(variable_batch, 
-                                                                 variable_conved,
-                                                                 variable_batch)[0]
+            variable_avg = torch_geometric.nn.pool.avg_pool_x(variable_batch, 
+                                                                 variable_features,
+                                                                 variable_features)[0]
         else:
-            constraint_conved = torch.mean(constraint_conved, axis=0, keepdim=True)
-            variable_conved = torch.mean(variable_conved, axis=0, keepdim=True)
+            constraint_avg = torch.mean(constraint_features, axis=0, keepdim=True)
+            variable_avg = torch.mean(variable_features, axis=0, keepdim=True)
             
 
-        return torch.cat(( variable_conved, constraint_conved ), dim=1)
+        return torch.cat(( variable_avg, constraint_avg ), dim=1)
     
 
     
