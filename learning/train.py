@@ -144,8 +144,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 
 problems = ["GISP"]
-LEARNING_RATE = 0.001
-NB_EPOCHS = 30
+LEARNING_RATE = 0.01
+NB_EPOCHS = 50
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -157,7 +157,7 @@ train_losses = []
 valid_losses = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:16]
     
     valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
@@ -204,7 +204,7 @@ for problem in problems:
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
-decisions = [ policy(dvalid).item() for dvalid in train_data ]
+decisions = [ policy(dvalid.to(DEVICE)).item() for dvalid in train_data ]
 
 import matplotlib.pyplot as plt
 plt.figure(0)
