@@ -124,6 +124,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
                 if balance:
                     y_proba_inv = policy(batch, inv=True)
                     loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
+                    loss /= 2
                     
                 optimizer.zero_grad()
                 loss.backward()
@@ -132,8 +133,10 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss.item() * batch.num_graphs
+            print(loss.item())
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
+            print(n_samples_processed)
 
     mean_loss /= n_samples_processed + 1
     mean_acc /= n_samples_processed + 1
@@ -187,12 +190,10 @@ for problem in problems:
     optimizer = OPTIMIZER(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
     
     
-    for epoch in range(NB_EPOCHS+1):
-        print(f"Epoch {epoch}")
-     
-        optim = optimizer if epoch > 0 else None 
+    for epoch in range(NB_EPOCHS):
+        print(f"Epoch {epoch + 1}")
         
-        train_loss, train_acc = process(policy, train_loader, LOSS, optim)
+        train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
         train_losses.append(train_loss)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
