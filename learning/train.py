@@ -187,10 +187,12 @@ for problem in problems:
     optimizer = OPTIMIZER(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
     
     
-    for epoch in range(NB_EPOCHS):
-        print(f"Epoch {epoch+1}")
+    for epoch in range(NB_EPOCHS+1):
+        print(f"Epoch {epoch}")
+     
+        optim = optimizer if epoch > 0 else None 
         
-        train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
+        train_loss, train_acc = process(policy, train_loader, LOSS, optim)
         train_losses.append(train_loss)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
