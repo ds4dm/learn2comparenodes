@@ -120,12 +120,13 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             
             # Compute the usual cross-entropy classification loss
             loss = loss_fct(y_proba, y_true )
+            
+            if balance:
+                y_proba_inv = policy(batch, inv=True)
+                loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
+                loss /= 2
+                       
             if optimizer is not None:
-                if balance:
-                    y_proba_inv = policy(batch, inv=True)
-                    loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
-                    loss /= 2
-                    
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
