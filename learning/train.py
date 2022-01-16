@@ -77,9 +77,9 @@ def normalize_graph(constraint_features,
     # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
     # variable_features[:,2] = variable_features[:,2] / normalizer
     
-    constraint_features /= 300.0
-    variable_features[:3] /= 300.0
-    edge_attr /= 300.0
+    #constraint_features /= 300.0
+    #variable_features[:3] /= 300.0
+    #edge_attr /= 300.0
     
     return (constraint_features, edge_index, edge_attr, variable_features)
 
