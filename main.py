@@ -12,7 +12,6 @@ Created on Tue Oct 19 19:24:33 2021
 
 
 from pathlib import Path 
-from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
 import pyscipopt.scip as sp
 import numpy as np
 import torch
@@ -43,6 +42,7 @@ def record_stats(nodesels, instances, problem):
         model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
     
     if "oracle" in nodesels:
+        from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
         oracle = OracleNodeSelectorAbdel("optimal_plunger")
         model.includeNodesel(oracle, "oracle", 'testing',100, 100)
         
