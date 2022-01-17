@@ -30,22 +30,33 @@ def record_stats(nodesels, instances, problem):
     model = sp.Model()
     model.hideOutput()
     
-    #comp_featurizer = CompFeaturizer()
-    #oracle_estimator = OracleNodeSelectorEstimator(problem, comp_featurizer)
+    oracle_estimator = None
+    oracle = None
+    if "oracle_estimator" in nodesels:
+        from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
+        from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
+        comp_featurizer = CompFeaturizer()
+        oracle_estimator = OracleNodeSelectorEstimator(problem, 
+                                                       comp_featurizer,
+                                                       DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+        model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
     
-    oracle = OracleNodeSelectorAbdel("optimal_plunger")
-    
-    #model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
-    model.includeNodesel(oracle, "oracle", 'testing',100, 100)
+    if "oracle" in nodesels:
+        oracle = OracleNodeSelectorAbdel("optimal_plunger")
+        model.includeNodesel(oracle, "oracle", 'testing',100, 100)
+        
     for instance in instances:
         
         instance = str(instance)
         model.readProblem(instance)
         
-        #oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                                   #model.getConss()))
-        optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-        oracle.setOptsol(optsol)
+        if "oracle_estimator" in nodesels:
+            oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
+                                                                       model.getConss()))
+        if "oracle" in nodesels:         
+            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+            oracle.setOptsol(optsol)
+            
         print("----------------------------")
         print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
        #test nodesels
@@ -101,9 +112,11 @@ def display_stats(nodesels, problem):
 
 if __name__ == "__main__":
     DEVICE = 'cpu'
-    cpu_count = 1
+    cpu_count = 2
     problems = ["GISP"]
-    nodesels = ["oracle", "dfs", "bfs", "estimate"] 
+    nodesels_gpu = ["oracle_estimator"]
+    nodesels_cpu = ["oracle", "dfs", "bfs", "estimate"] 
+    nodesels = nodesels_gpu + nodesels_cpu
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -128,12 +141,13 @@ if __name__ == "__main__":
             chunck_size = int(np.ceil(len(instances)/cpu_count))
             processes = [  md.Process(name=f"worker {p}", 
                                             target=partial(record_stats,
+                                                            nodesels=nodesels_cpu,
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                            problem=problem,
-                                                            nodesels=nodesels))
+                                                            problem=problem))
                             for p in range(cpu_count) ]
-            print(processes[0])
 
+
+            record_stats(nodesels_gpu, instances, problem)
             a = list(map(lambda p: p.start(), processes)) #run processes
             b = list(map(lambda p: p.join(), processes)) #join processes
 

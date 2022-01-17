@@ -20,7 +20,7 @@ import time
 
 class OracleNodeSelectorEstimator(Nodesel):
     
-    def __init__(self, problem, comp_featurizer,  DEVICE='cpu'):
+    def __init__(self, problem, comp_featurizer,  DEVICE):
         
         policy = GNNPolicy()
         
