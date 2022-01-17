@@ -20,7 +20,7 @@ import time
 
 class OracleNodeSelectorEstimator(Nodesel):
     
-    def __init__(self, problem, comp_featurizer,  DEVICE):
+    def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None):
         
         policy = GNNPolicy()
         
@@ -29,9 +29,10 @@ class OracleNodeSelectorEstimator(Nodesel):
         self.policy = policy
         self.comp_featurizer = comp_featurizer
         self.DEVICE = DEVICE
+        self.record_fpath = record_fpath
         self.inference_time = 0
         self.fe_time = 0
-        self.decision = []
+        
         
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
@@ -51,14 +52,18 @@ class OracleNodeSelectorEstimator(Nodesel):
         self.fe_time += (end - start)
         
         start = time.time()
-        results = self.policy(batch).item() 
+        decision = self.policy(batch).item() 
         end = time.time()
         
         self.inference_time += (end - start)
         
-        self.decision += [results]
+        if self.record_fpath != None:
+            with open(f"{self.record_fpath}", "a+") as f:
+                f.write(f"{decision:0.3f},")
+                f.close()
         
-        return 2*(results - 0.5)
+        
+        return 2*(decision - 0.5)#between -1,1
     
     
     

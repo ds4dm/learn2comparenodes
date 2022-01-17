@@ -38,7 +38,8 @@ def record_stats(nodesels, instances, problem):
         comp_featurizer = CompFeaturizer()
         oracle_estimator = OracleNodeSelectorEstimator(problem, 
                                                        comp_featurizer,
-                                                       DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+                                                       DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+                                                       record_fpath="decisions.csv")
         model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
     
     if "oracle" in nodesels:
@@ -132,6 +133,12 @@ if __name__ == "__main__":
             with open(f"times_{problem}_{nodesel}.csv", "w") as f:
                 f.write("")
                 f.close()
+                
+        #clear decisions make by oracle
+        with open(f"decisions.csv", "w") as f:
+            f.write("")
+            f.close()
+        
 
         instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
 
