@@ -77,9 +77,9 @@ def normalize_graph(constraint_features,
     # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
     # variable_features[:,2] = variable_features[:,2] / normalizer
     
-    # constraint_features /= 300.0
-    # variable_features[:3] /= 300.0
-    # edge_attr /= 300.0
+    #constraint_features /= 300.0
+    #variable_features[:3] /= 300.0
+    #edge_attr /= 300.0
     
     return (constraint_features, edge_index, edge_attr, variable_features)
 
@@ -120,12 +120,13 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             
             # Compute the usual cross-entropy classification loss
             loss = loss_fct(y_proba, y_true )
+            
+            if balance:
+                y_proba_inv = policy(batch, inv=True)
+                loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
+                loss /= 2
+                       
             if optimizer is not None:
-                if balance:
-                    y_proba_inv = policy(batch, inv=True)
-                    loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
-                    loss /= 2
-                    
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -157,7 +158,7 @@ train_losses = []
 valid_losses = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:16]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
     
     valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
