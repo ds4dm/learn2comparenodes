@@ -147,8 +147,8 @@ if __name__ == "__main__":
                             for p in range(cpu_count) ]
 
 
-            record_stats(nodesels_gpu, instances, problem)
             a = list(map(lambda p: p.start(), processes)) #run processes
+            record_stats(nodesels_gpu, instances, problem)
             b = list(map(lambda p: p.join(), processes)) #join processes
 
         print("SUMMARIES")
