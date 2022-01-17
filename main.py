@@ -109,6 +109,9 @@ def display_stats(nodesels, problem):
         print(f"    Median number of node created : {np.median(nnodes):.2f}")
         print(f"    Median solving time           : {np.median(times):.2f}")
         print("--------------------------")
+    from scipy.stats import entropy
+    decisions = np.genfromtxt(f"decisions.csv", delimiter=",")[:-1]
+    print(f"Entropy of decisions (oracle estimator ) : { entropy(decisions):.3f }") 
    
 
 if __name__ == "__main__":
