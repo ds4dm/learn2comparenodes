@@ -63,7 +63,7 @@ class OracleNodeSelectorEstimator(Nodesel):
                 f.close()
         
         
-        return 2*(decision - 0.5)#between -1,1
+        return -1 if decision < 0.5 else 1
     
     
     

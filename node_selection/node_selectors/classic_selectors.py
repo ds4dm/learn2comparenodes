@@ -13,7 +13,7 @@ class Random(Nodesel):
     
     def nodecomp(self, node1,node2):
         import numpy as np
-        return 2*np.random.rand() - 1
+        return -1 if np.random.rand() < 0.5 else 1
 
 
 class Estimate(Nodesel):
