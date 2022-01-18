@@ -34,7 +34,7 @@ def record_stats(nodesels, instances, problem):
     if "oracle_estimator" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer()
+        comp_featurizer = CompFeaturizer(normalize=True)
         oracle_estimator = OracleNodeSelectorEstimator(problem, 
                                                        comp_featurizer,
                                                        DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
@@ -118,7 +118,6 @@ def display_stats(nodesels, problem):
    
 
 if __name__ == "__main__":
-    DEVICE = 'cpu'
     cpu_count = 2
     problems = ["GISP"]
     nodesels_gpu = []

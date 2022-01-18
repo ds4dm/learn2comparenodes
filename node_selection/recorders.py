@@ -14,11 +14,74 @@ import torch
 import torch_geometric
 import os.path as osp
 
+def normalize_graph(variable_features,
+                    constraint_features, 
+                    edge_index,
+                    edge_attr):
+    
+    # variable_normalizer = torch.max(torch.abs(variable_features[:,:2]))
+    # variable_features[:,:2] /= variable_normalizer
+    # variable_features[:,2] /= torch.max(torch.abs(variable_features[:,2]))
+    
+    # constraint_features /= variable_normalizer
+    
+    
+    # def normalize_cons(c):
+    #     associated_edges =  torch.where(edge_index[1] == c)[0]
+    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+    #                      torch.abs(constraint_features[c]))
+    #     #normalize associated edges
+    #     edge_attr[associated_edges] /= normalizer
+        
+    #     #normalize right hand side
+    #     constraint_features[c] /= normalizer
+    
+    # vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
+
+    # coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
+    
+    # for v, cf in zip(vars_to_normalize, coeffs):
+     
+    #   #normaize feature bound
+    #   variable_features[ v, :2] = variable_features[ v, :2]/cf
+     
+    #   #update obj coeff and associated edges
+    #   variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
+     
+    #   associated_edges = torch.where(edge_index[0] == v)[0]
+    #   edge_attr[associated_edges] = edge_attr[associated_edges]*cf
+    
+        
+    # #Normalize constraints 
+    # for c in range(constraint_features.shape[0]):
+        
+    #     associated_edges =  torch.where(edge_index[1] == c)[0]
+    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
+    #                       torch.abs(constraint_features[c]))
+        
+    #     #normalize associated edges
+    #     edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
+        
+    #     #normalize right hand side
+    #     constraint_features[c] = constraint_features[c] / normalizer
+    
+    # #normalize objective
+    # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
+    # variable_features[:,2] = variable_features[:,2] / normalizer
+    
+    constraint_features /= 300.0
+    variable_features[:3] /= 300.0
+    edge_attr /= 300.0
+    
+    return (constraint_features, edge_index, edge_attr, variable_features)
+
+
 class CompFeaturizer():
     
-    def __init__(self, save_dir=None, instance_name=None):
+    def __init__(self, save_dir=None, instance_name=None, normalize=False):
         self.instance_name = instance_name
         self.save_dir = save_dir
+        self.normalize = normalize
     
     def set_save_dir(self, save_dir):
         self.save_dir = save_dir
@@ -53,7 +116,7 @@ class CompFeaturizer():
                                                          all_conss_blocks_features, 
                                                          comp_res)
         
-        data = self._to_tensors(g_data)
+        data = self._to_torch_geometric_data(g_data)
         
         return data
         
@@ -67,7 +130,7 @@ class CompFeaturizer():
         
         return self
     
-    def _to_tensors(self, g_data):
+    def _to_torch_geometric_data(self, g_data):
 
         variable_features = g_data[0]
         constraint_features = g_data[1]
@@ -78,6 +141,11 @@ class CompFeaturizer():
         g1 = variable_features[0], constraint_features[0], edge_indices[0], edge_features[0]
         g2 = variable_features[1], constraint_features[1], edge_indices[1], edge_features[1]
         
+        if self.normalize:
+            normalize_graph(*g1)
+            normalize_graph(*g2)
+        print(g1[0])
+        print(g1[1])
         return BipartiteGraphPairData(*g1, *g2, y)
         
         
