@@ -126,7 +126,7 @@ def display_stats(nodesels, problem):
 if __name__ == "__main__":
     
     cpu_count = 1
-    nodesels_cpu = ['random']
+    nodesels_cpu = ['estimate', 'oracle']
     nodesels_gpu = ['oracle_estimator']
     problems = ["GISP"]
     normalize = True
