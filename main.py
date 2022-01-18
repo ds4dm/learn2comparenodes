@@ -23,7 +23,7 @@ from functools import partial
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def record_stats(nodesels, instances, problem):
+def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
@@ -31,13 +31,14 @@ def record_stats(nodesels, instances, problem):
     
     oracle_estimator = None
     oracle = None
+    
     if "oracle_estimator" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer(normalize=True)
-        oracle_estimator = OracleNodeSelectorEstimator(problem, 
+        comp_featurizer = CompFeaturizer(normalize=normalize)
+        oracle_estimator = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
-                                                       DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+                                                       DEVICE=device,
                                                        record_fpath="decisions.csv")
         model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
     if "oracle" in nodesels:
