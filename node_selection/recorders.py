@@ -144,8 +144,7 @@ class CompFeaturizer():
         if self.normalize:
             normalize_graph(*g1)
             normalize_graph(*g2)
-        print(g1[0])
-        print(g1[1])
+            
         return BipartiteGraphPairData(*g1, *g2, y)
         
         
