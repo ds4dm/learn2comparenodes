@@ -119,10 +119,14 @@ def display_stats(nodesels, problem):
    
 
 if __name__ == "__main__":
+    
     cpu_count = 2
     problems = ["GISP"]
-    nodesels_gpu = []
-    nodesels_cpu = [] 
+    normalize = False
+    nodesels_cpu = ['random', 'estimate', 'oracle']
+    nodesels_gpu = ['oracle_estimator']
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
 
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -133,8 +137,12 @@ if __name__ == "__main__":
             nodesels_gpu = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-problems':
             problems = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-normalize':
+            normalize = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-device':
+            device = str(sys.argv[i + 1])
             
-    nodesels = nodesels_gpu + nodesels_cpu
+    nodesels = nodesels_cpu + nodesels_gpu
     
     for problem in problems:
 
@@ -155,21 +163,23 @@ if __name__ == "__main__":
 
         instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
 
-        if cpu_count == 1:
-            record_stats(nodesels, instances, problem)
-        else:
-            chunck_size = int(np.ceil(len(instances)/cpu_count))
-            processes = [  md.Process(name=f"worker {p}", 
-                                            target=partial(record_stats,
-                                                            nodesels=nodesels_cpu,
-                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                            problem=problem))
-                            for p in range(cpu_count) ]
+
+        chunck_size = int(np.ceil(len(instances)/cpu_count))
+        processes = [  md.Process(name=f"worker {p}", 
+                                        target=partial(record_stats,
+                                                        nodesels=nodesels_cpu,
+                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        problem=problem))
+                        for p in range(cpu_count) ]
 
 
-            a = list(map(lambda p: p.start(), processes)) #run processes
-            record_stats(nodesels_gpu, instances, problem)
-            b = list(map(lambda p: p.join(), processes)) #join processes
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        record_stats(nodesels_gpu,
+                     instances,
+                     problem, 
+                     normalize=normalize, 
+                     device=device)
+        b = list(map(lambda p: p.join(), processes)) #join processes
 
         print("SUMMARIES")
         display_stats(nodesels, problem)
