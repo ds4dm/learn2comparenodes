@@ -40,11 +40,14 @@ def record_stats(nodesels, instances, problem):
                                                        DEVICE=torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
                                                        record_fpath="decisions.csv")
         model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
-    
     if "oracle" in nodesels:
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
         oracle = OracleNodeSelectorAbdel("optimal_plunger")
         model.includeNodesel(oracle, "oracle", 'testing',100, 100)
+    if "random" in nodesels:
+        from node_selection.node_selectors.classic_selectors import Random
+        random = Random()
+        model.includeNodesel(random, "random", 'testing',100, 100)
         
     for instance in instances:
         
@@ -110,7 +113,7 @@ def display_stats(nodesels, problem):
         print(f"    Median solving time           : {np.median(times):.2f}")
         print("--------------------------")
    from scipy.stats import entropy
-   decisions = np.genfromtxt(f"decisions.csv", delimiter=",")[:-1]
+   decisions = np.genfromtxt("decisions.csv", delimiter=",")[:-1]
    print(f"Entropy of decisions (oracle estimator ) : { entropy(decisions):.3f }") 
    
 
@@ -118,14 +121,21 @@ if __name__ == "__main__":
     DEVICE = 'cpu'
     cpu_count = 2
     problems = ["GISP"]
-    nodesels_gpu = ["oracle_estimator"]
-    nodesels_cpu = ["oracle", "dfs", "bfs", "estimate"] 
-    nodesels = nodesels_gpu + nodesels_cpu
-    
+    nodesels_gpu = []
+    nodesels_cpu = [] 
+
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
-
+        if sys.argv[i] == '-nodesels_cpu':
+            nodesels_cpu = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-nodesels_gpu':
+            nodesels_gpu = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-problems':
+            problems = str(sys.argv[i + 1]).split(',')
+            
+    nodesels = nodesels_gpu + nodesels_cpu
+    
     for problem in problems:
 
         #clear records
@@ -138,7 +148,7 @@ if __name__ == "__main__":
                 f.close()
                 
         #clear decisions make by oracle
-        with open(f"decisions.csv", "w") as f:
+        with open("decisions.csv", "w") as f:
             f.write("")
             f.close()
         

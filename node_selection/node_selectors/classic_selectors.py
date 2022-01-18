@@ -1,5 +1,21 @@
 from pyscipopt import  Nodesel
 
+
+
+
+class Random(Nodesel):
+    def __init__(self):
+        pass
+    
+    def nodeselect(self):
+        return {"selnode": self.model.getBestNode()}
+    
+    
+    def nodecomp(self, node1,node2):
+        import numpy as np
+        return 2*np.random.rand() - 1
+
+
 class Estimate(Nodesel):
     def estimate_compare(self, node1, node2):#SCIP 
         estimate1 = node1.getEstimate()
