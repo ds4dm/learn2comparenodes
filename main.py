@@ -114,14 +114,19 @@ def display_stats(nodesels, problem):
         print(f"    Median solving time           : {np.median(times):.2f}")
         print("--------------------------")
    from scipy.stats import entropy
+   import matplotlib.pyplot as plt
    decisions = np.genfromtxt("decisions.csv", delimiter=",")[:-1]
-   print(f"Entropy of decisions (oracle estimator ) : { entropy(decisions):.3f }") 
+   plt.figure()
+   plt.title("decisions")
+   plt.hist(decisions)
+   plt.savefig("decisions.png")
+   print(f"Entropy of decisions (oracle estimator ) : { entropy(decisions) }") 
    
 
 if __name__ == "__main__":
     
-    cpu_count = 2
-    nodesels_cpu = ['random', 'estimate', 'oracle']
+    cpu_count = 1
+    nodesels_cpu = ['random']
     nodesels_gpu = ['oracle_estimator']
     problems = ["GISP"]
     normalize = True
@@ -161,25 +166,33 @@ if __name__ == "__main__":
             f.close()
         
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
-
-
-        chunck_size = int(np.ceil(len(instances)/cpu_count))
-        processes = [  md.Process(name=f"worker {p}", 
-                                        target=partial(record_stats,
-                                                        nodesels=nodesels_cpu,
-                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                        problem=problem))
-                        for p in range(cpu_count) ]
-
-
-        a = list(map(lambda p: p.start(), processes)) #run processes
-        record_stats(nodesels_gpu,
-                     instances,
-                     problem, 
-                     normalize=normalize, 
-                     device=device)
-        b = list(map(lambda p: p.join(), processes)) #join processes
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:5]
+        
+        
+        if cpu_count == 1:
+            record_stats(nodesels,
+                         instances,
+                         problem, 
+                         normalize=normalize, 
+                         device=device)
+        else:
+    
+            chunck_size = int(np.ceil(len(instances)/cpu_count))
+            processes = [  md.Process(name=f"worker {p}", 
+                                            target=partial(record_stats,
+                                                            nodesels=nodesels_cpu,
+                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                            problem=problem))
+                            for p in range(cpu_count) ]
+    
+    
+            a = list(map(lambda p: p.start(), processes)) #run processes
+            record_stats(nodesels_gpu,
+                         instances,
+                         problem, 
+                         normalize=normalize, 
+                         device=device)
+            b = list(map(lambda p: p.join(), processes)) #join processes
 
         print("SUMMARIES")
         display_stats(nodesels, problem)
