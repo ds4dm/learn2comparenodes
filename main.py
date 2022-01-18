@@ -144,7 +144,7 @@ if __name__ == "__main__":
             
     nodesels = nodesels_cpu + nodesels_gpu
     
-    print(f"Testing node selection methods {nodesels} on problems {problems}, {'with' if normalize else 'without'} feature normalization on {device}")
+    print(f"Testing with {cpu_count} CPUs node selection methods {nodesels} on problems {problems}, ML {'with' if normalize else 'without'} feature normalization on {device}")
     
     for problem in problems:
 
