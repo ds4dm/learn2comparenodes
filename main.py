@@ -126,7 +126,7 @@ def display_stats(nodesels, problem):
 if __name__ == "__main__":
     
     cpu_count = 1
-    nodesels_cpu = ['estimate', 'oracle']
+    nodesels_cpu = ['random', 'estimate', 'oracle']
     nodesels_gpu = ['oracle_estimator']
     problems = ["GISP"]
     normalize = True
@@ -168,7 +168,7 @@ if __name__ == "__main__":
             f.close()
         
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:5]
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
         
         
         if cpu_count == 1:
