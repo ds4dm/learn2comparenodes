@@ -222,15 +222,22 @@ if __name__ == "__main__":
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem))
                             for p in range(cpu_count) ]
+            checker = []
+            for p in range(cpu_count):
+                checker +=instances[ p*chunck_size : (p+1)*chunck_size]
+            print(f"len instances parralelixed : {len(checker)}")
     
     
             a = list(map(lambda p: p.start(), processes)) #run processes
+               
             record_stats(nodesels_gpu,
                          instances,
                          problem, 
                          normalize=normalize, 
                          device=device)
+            
             b = list(map(lambda p: p.join(), processes)) #join processes
+     
 
         print("SUMMARIES")
         display_stats(nodesels, problem)
