@@ -187,7 +187,7 @@ if __name__ == "__main__":
                                                             problem=problem))
                             for p in range(cpu_count) ]
             for p in processes:
-                print(p.target)
+                print(p)
     
     
             a = list(map(lambda p: p.start(), processes)) #run processes
