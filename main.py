@@ -186,8 +186,10 @@ if __name__ == "__main__":
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem))
                             for p in range(cpu_count) ]
-            for p in processes:
-                print(p)
+            checker = []
+            for p in range(cpu_count):
+                checker +=instances[ p*chunck_size : (p+1)*chunck_size]
+            print(f"len instances parralelixed : {len(checker})
     
     
             a = list(map(lambda p: p.start(), processes)) #run processes
