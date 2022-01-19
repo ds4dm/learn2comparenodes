@@ -186,6 +186,8 @@ if __name__ == "__main__":
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem))
                             for p in range(cpu_count) ]
+            for p in processes:
+                print(p.target)
     
     
             a = list(map(lambda p: p.start(), processes)) #run processes
