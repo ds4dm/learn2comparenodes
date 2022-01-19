@@ -4,16 +4,27 @@ from pyscipopt import  Nodesel
 
 
 class Random(Nodesel):
-    def __init__(self):
+    def __init__(self, record_fpath=None):
+        self.n = 0
+        self.record_fpath = record_fpath
         pass
     
     def nodeselect(self):
+        self.n += 1
         return {"selnode": self.model.getBestNode()}
     
     
     def nodecomp(self, node1,node2):
         import numpy as np
-        return -1 if np.random.rand() < 0.5 else 1
+        np.random.seed(self.n)
+        self.n += 1
+        decision = np.random.rand()
+        if self.record_fpath != None:
+            with open(f"{self.record_fpath}", "a+") as f:
+                f.write(f"{decision:0.3f},")
+                f.close()
+        
+        return -1 if decision < 0.5 else 1
 
 
 class Estimate(Nodesel):
