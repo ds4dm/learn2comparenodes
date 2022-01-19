@@ -168,7 +168,7 @@ if __name__ == "__main__":
             f.close()
         
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:100]
         
         
         if cpu_count == 1:
