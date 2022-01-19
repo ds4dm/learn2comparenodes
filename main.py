@@ -29,25 +29,39 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
     model = sp.Model()
     model.hideOutput()
     
-    oracle_estimator = None
+    oracle_estimator_trained = None
+    oracle_estimator_untrained = None
     oracle = None
     
-    if "oracle_estimator" in nodesels:
+    if "oracle_estimator_trained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
         comp_featurizer = CompFeaturizer(normalize=normalize)
-        oracle_estimator = OracleNodeSelectorEstimator(problem,
+        oracle_estimator_trained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
-                                                       record_fpath="decisions.csv")
-        model.includeNodesel(oracle_estimator, "oracle_estimator", 'testing',100, 100)
+                                                       record_fpath="decisions_gnn_trained.csv",
+                                                       use_trained_gnn=True)
+        model.includeNodesel(oracle_estimator_trained, "oracle_estimator_trained", 'testing',100, 100)
+    
+    if "oracle_estimator_untrained" in nodesels:
+        from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
+        from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
+        comp_featurizer = CompFeaturizer(normalize=normalize)
+        oracle_estimator_untrained= OracleNodeSelectorEstimator(problem,
+                                                       comp_featurizer,
+                                                       DEVICE=device,
+                                                       record_fpath="decisions_gnn_untrained.csv",
+                                                       use_trained_gnn=False)
+        model.includeNodesel(oracle_estimator_untrained, "oracle_estimator_untrained", 'testing',100, 100)
+        
     if "oracle" in nodesels:
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
         oracle = OracleNodeSelectorAbdel("optimal_plunger")
         model.includeNodesel(oracle, "oracle", 'testing',100, 100)
     if "random" in nodesels:
         from node_selection.node_selectors.classic_selectors import Random
-        random = Random()
+        random = Random(record_fpath='decisions_rand.csv')
         model.includeNodesel(random, "random", 'testing',100, 100)
         
     for instance in instances:
@@ -55,9 +69,10 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
         instance = str(instance)
         model.readProblem(instance)
         
-        if "oracle_estimator" in nodesels:
-            oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                                       model.getConss()))
+        for oracle_estimator in [oracle_estimator_trained, oracle_estimator_untrained]:
+            if oracle_estimator != None:
+                oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
+                                                                           model.getConss()))
         if "oracle" in nodesels:         
             optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             oracle.setOptsol(optsol)
@@ -115,21 +130,32 @@ def display_stats(nodesels, problem):
         print("--------------------------")
    from scipy.stats import entropy
    import matplotlib.pyplot as plt
-   decisions = np.genfromtxt("decisions.csv", delimiter=",")[:-1]
+   decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")[:-1]
+   decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")[:-1]
+   decisions_rand = np.genfromtxt("decisions_rand.csv", delimiter=",")[:-1]
    plt.figure()
-   plt.title("decisions")
-   plt.hist(decisions)
-   plt.savefig("decisions.png")
-   print(f"Entropy of decisions (oracle estimator ) : { entropy(decisions) }") 
+   plt.title("decisions gnn trained")
+   plt.hist(decisions_gnn_trained)
+   plt.savefig("decisions_gnn_trained.png")
+   plt.figure()
+   plt.title("decisions gnn untrained")
+   plt.hist(decisions_gnn_untrained)
+   plt.savefig("decisions_gnn_untrained.png")
+   plt.figure()
+   plt.title("decisions rand")
+   plt.hist(decisions_rand)
+   plt.savefig("decisions_rand.png")
+   print(f"Entropy of decisions (oracle estimator trained ) : { entropy(decisions_gnn_trained) }") 
    
 
 if __name__ == "__main__":
     
-    cpu_count = 1
-    nodesels_cpu = ['random', 'estimate', 'oracle']
-    nodesels_gpu = ['oracle_estimator']
+    cpu_count = 2
+    nodesels_cpu = ['estimate', 'random']
+    nodesels_gpu = ['oracle_estimator_trained', 'oracle_estimator_untrained']
     problems = ["GISP"]
     normalize = True
+    n_instance = 50
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
 
@@ -144,6 +170,8 @@ if __name__ == "__main__":
             problems = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-normalize':
             normalize = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-n_instance':
+            n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
             
@@ -163,12 +191,20 @@ if __name__ == "__main__":
                 f.close()
                 
         #clear decisions make by oracle
-        with open("decisions.csv", "w") as f:
+        with open("decisions_gnn_trained.csv", "w") as f:
             f.write("")
             f.close()
-        
+            #clear decisions make by oracle
+        with open("decisions_gnn_untrained.csv", "w") as f:
+            f.write("")
+            f.close()
+        #clear decisions make by random
+        with open("decisions_rand.csv", "w") as f:
+            f.write("")
+            f.close()
+     
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:50]
         
         
         if cpu_count == 1:

@@ -20,11 +20,15 @@ import time
 
 class OracleNodeSelectorEstimator(Nodesel):
     
-    def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None):
+    def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None, use_trained_gnn=True):
         
         policy = GNNPolicy()
-        
-        print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl"))) #run from main
+        if use_trained_gnn: 
+            print("using trained gnn")
+            print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl"))) #run from main
+        else:
+            print("using a randomly initialised gnn")
+            
         policy.to(DEVICE)
         self.policy = policy
         self.comp_featurizer = comp_featurizer
