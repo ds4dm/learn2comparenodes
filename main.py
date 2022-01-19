@@ -191,13 +191,15 @@ if __name__ == "__main__":
     
     
             a = list(map(lambda p: p.start(), processes)) #run processes
-            b = list(map(lambda p: p.join(), processes)) #join processes
-            
+               
             record_stats(nodesels_gpu,
                          instances,
                          problem, 
                          normalize=normalize, 
                          device=device)
+            
+            b = list(map(lambda p: p.join(), processes)) #join processes
+     
 
         print("SUMMARIES")
         display_stats(nodesels, problem)
