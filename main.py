@@ -155,10 +155,9 @@ if __name__ == "__main__":
     nodesels_gpu = ['oracle_estimator_trained', 'oracle_estimator_untrained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 50
+    n_instance = 100
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
@@ -204,7 +203,7 @@ if __name__ == "__main__":
             f.close()
      
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:50]
+        instances = list(Path(f"./problem_generation/data/{problem}/train").glob("*.lp"))[:n_instance]
         
         
         if cpu_count == 1:
