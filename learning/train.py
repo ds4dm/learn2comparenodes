@@ -188,10 +188,8 @@ def process(policy, data_loader, loss_fct, optimizer=None):
             accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss.item() * batch.num_graphs
-            print(loss.item())
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
-            print(n_samples_processed)
 
     mean_loss /= n_samples_processed + 1
     mean_acc /= n_samples_processed + 1
@@ -200,7 +198,7 @@ def process(policy, data_loader, loss_fct, optimizer=None):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.005
-NB_EPOCHS = 10
+NB_EPOCHS = 50
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -220,6 +218,8 @@ for problem in problems:
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
+    print(train_data)
+    print(valid_data)
     #inspect(train_data[:100])
     
 # TO DO : learn something from the data
