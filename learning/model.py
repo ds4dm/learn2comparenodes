@@ -81,8 +81,8 @@ class GNNPolicy(torch.nn.Module):
         self.convs = [ self.conv1, self.conv2, self.conv3]
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.LayerNorm(2*hidden_dim3),
-                                    torch.nn.Linear(2*hidden_dim3, final_mlp_hidden_dim, bias=False),
+                                    torch.nn.LayerNorm(2*hidden_dim3+2),
+                                    torch.nn.Linear(2*hidden_dim3+2, final_mlp_hidden_dim, bias=False),
                                     torch.nn.ReLU(),
                                     torch.nn.Linear(final_mlp_hidden_dim, 1, bias=False),
                                     torch.nn.Sigmoid()
@@ -145,6 +145,7 @@ class GNNPolicy(torch.nn.Module):
         #Assume edge indice var to cons, constraint_mask of shape [Nconvs]       
         
         
+        bbounds = constraint_features[-2:]
         variable_features = self.var_embedding(variable_features)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
@@ -158,9 +159,9 @@ class GNNPolicy(torch.nn.Module):
             
             #Var to cons
             constraint_features_next = conv((variable_features, constraint_features), 
-                                      edge_indices,
-                                      edge_weight=edge_features,
-                                      size=(variable_features.size(0), constraint_features.size(0)))
+                                              edge_indices,
+                                              edge_weight=edge_features,
+                                              size=(variable_features.size(0), constraint_features.size(0)))
             
             #cons to var 
             variable_features = conv((constraint_features, variable_features), 
@@ -188,8 +189,8 @@ class GNNPolicy(torch.nn.Module):
             constraint_avg = torch.mean(constraint_features, axis=0, keepdim=True)
             variable_avg = torch.mean(variable_features, axis=0, keepdim=True)
             
-
-        return torch.cat(( variable_avg, constraint_avg ), dim=1)
+ 
+        return torch.cat(( variable_avg, constraint_avg, torch.transpose(bbounds,1,0)), dim=1)
     
 
     

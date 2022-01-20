@@ -155,7 +155,7 @@ def inspect(geom_dataset):
 
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
-def process(policy, data_loader, loss_fct, optimizer=None):
+def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
     """
     This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
     """
@@ -178,16 +178,19 @@ def process(policy, data_loader, loss_fct, optimizer=None):
             
             
             # Compute the usual cross-entropy classification loss
-            loss = loss_fct(y_proba, y_true )
-            
+            l = loss_fct(y_proba, y_true )
+            loss_value = l.item()
             if optimizer is not None:
+                if balance:
+                    l += loss_fct(policy(batch, inv=True), -1*y_true+1)
                 optimizer.zero_grad()
-                loss.backward()
+                l.backward()
                 optimizer.step()
+                
           
             accuracy = (y_pred == y_true).float().mean().item()
 
-            mean_loss += loss.item() * batch.num_graphs
+            mean_loss += loss_value * batch.num_graphs
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
 
@@ -198,7 +201,7 @@ def process(policy, data_loader, loss_fct, optimizer=None):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.005
-NB_EPOCHS = 50
+NB_EPOCHS = 6
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -212,9 +215,9 @@ train_accs = []
 valid_accs = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:1000]
     
-    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
+    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ][:100]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
@@ -224,7 +227,7 @@ for problem in problems:
     
 # TO DO : learn something from the data
     train_loader = torch_geometric.loader.DataLoader(train_data, 
-                                                     batch_size=16, 
+                                                     batch_size=1, 
                                                      shuffle=True, 
                                                      follow_batch=['constraint_features_s', 
                                                                    'constraint_features_t',
@@ -232,7 +235,7 @@ for problem in problems:
                                                                    'variable_features_t'])
     
     valid_loader = torch_geometric.loader.DataLoader(valid_data, 
-                                                     batch_size=128, 
+                                                     batch_size=1, 
                                                      shuffle=False, 
                                                      follow_batch=['constraint_features_s',
                                                                    'constraint_features_t',
