@@ -212,7 +212,7 @@ train_accs = []
 valid_accs = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:16]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
     
     valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
