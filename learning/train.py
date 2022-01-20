@@ -95,9 +95,67 @@ def test1(data):
     
 
 
+def inspect(geom_dataset):
+    
+    sub_milps = {}
+    for data in geom_dataset:
+        graph0 = (data.constraint_features_s, 
+                  data.edge_index_s, 
+                  data.edge_attr_s, 
+                  data.variable_features_s)
+        
+        bounds0 = (int(graph0[0][-2].item()), int(graph0[0][-1].item())) 
+        
+        graph1 = (data.constraint_features_t,
+                  data.edge_index_t, 
+                  data.edge_attr_t,
+                  data.variable_features_t)
+        bounds1 = (int(graph1[0][-2].item()), int(graph1[0][-1].item()))
+        
+        if bounds0 not in sub_milps:
+            sub_milps[bounds0] = graph0
+        if bounds1 not in sub_milps:
+            sub_milps[bounds1] = graph1
+            
+    cs = []
+    lbs = []
+    ubs = []
+    coeffs= []
+    print(sub_milps.keys())
+    for m in sub_milps.values():
+        
+        cs += list( m[0].squeeze())
+        lbs += list( m[3][:,0].squeeze())
+        ubs += list( m[3][:,1].squeeze())
+        coeffs += list( m[3][:,2].squeeze())
+    print(coeffs)
+    
+    import matplotlib.pyplot as plt
+    plt.figure(0)
+    plt.hist(cs)
+    plt.title('constraint rhs histogramme')
+    
+    plt.figure(1)
+    plt.hist(lbs)
+    plt.title('variable lb histogramme')
+    
+    plt.figure(2)
+    plt.hist(ubs)
+    plt.title('variable ub histogramme')
+
+
+    plt.figure(3)
+    plt.hist(coeffs)
+    plt.title('objective coeff histogramme')
+    
+
+
+
+
+
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
-def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
+def process(policy, data_loader, loss_fct, optimizer=None):
     """
     This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
     """
@@ -113,7 +171,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
             #test1(batch)
             
-            y_true = 0.5*batch.y + 0.5*torch.abs(batch.y) #0,1 labels
+            y_true = 0.5*batch.y + 0.5 #0,1 labels
+
             y_proba = policy(batch)
             y_pred = torch.round(y_proba)
             
@@ -121,11 +180,6 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             # Compute the usual cross-entropy classification loss
             loss = loss_fct(y_proba, y_true )
             
-            if balance:
-                y_proba_inv = policy(batch, inv=True)
-                loss += loss_fct(y_proba_inv, -1*y_true + 1) #inverse label
-                loss /= 2
-                       
             if optimizer is not None:
                 optimizer.zero_grad()
                 loss.backward()
@@ -145,8 +199,8 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 
 problems = ["GISP"]
-LEARNING_RATE = 0.01
-NB_EPOCHS = 50
+LEARNING_RATE = 0.005
+NB_EPOCHS = 10
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -156,19 +210,17 @@ OPTIMIZER = torch.optim.Adam
 
 train_losses = []
 valid_losses = []
+train_accs = []
+valid_accs = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:16]
     
     valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
-    print(train_data)
-    print(valid_data)
-    print(train_data[0].variable_features_s[-1])
-    print(train_data[0].constraint_features_s[-2:])
-    print(train_data[0].constraint_features_t[-2:])
+    #inspect(train_data[:100])
     
 # TO DO : learn something from the data
     train_loader = torch_geometric.loader.DataLoader(train_data, 
@@ -196,10 +248,12 @@ for problem in problems:
         
         train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
         train_losses.append(train_loss)
+        train_accs.append(train_acc)
         print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
     
         valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
         valid_losses.append(valid_loss)
+        valid_accs.append(valid_acc)
         print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
@@ -210,15 +264,26 @@ decisions = [ policy(dvalid.to(DEVICE)).item() for dvalid in train_data ]
 import matplotlib.pyplot as plt
 plt.figure(0)
 plt.hist(decisions)
-plt.title('decisions histogramme')
+plt.title('decisions histogramme for training set')
 plt.savefig("./hist.png")
 
 plt.figure(1)
 plt.plot(train_losses, label='train')
 plt.plot(valid_losses, label='valid')
 plt.title('losses')
+plt.xlabel('epoch')
 plt.legend()
 plt.savefig("./losses.png")
+
+
+plt.figure(2)
+plt.plot(train_accs, label='train')
+plt.plot(valid_accs, label='valid')
+plt.title('accuracies')
+plt.xlabel('epoch')
+plt.legend()
+plt.savefig("./accuracies.png")
+
 
 
 

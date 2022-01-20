@@ -82,9 +82,9 @@ class GNNPolicy(torch.nn.Module):
         
         self.final_mlp = torch.nn.Sequential( 
                                     torch.nn.LayerNorm(2*hidden_dim3),
-                                    torch.nn.Linear(2*hidden_dim3, final_mlp_hidden_dim),
+                                    torch.nn.Linear(2*hidden_dim3, final_mlp_hidden_dim, bias=False),
                                     torch.nn.ReLU(),
-                                    torch.nn.Linear(final_mlp_hidden_dim, 1),
+                                    torch.nn.Linear(final_mlp_hidden_dim, 1, bias=False),
                                     torch.nn.Sigmoid()
                                     )
      
