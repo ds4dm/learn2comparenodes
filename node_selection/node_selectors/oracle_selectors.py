@@ -18,60 +18,6 @@ from model import GNNPolicy
 import time
 
 
-class OracleNodeSelectorEstimator(Nodesel):
-    
-    def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None, use_trained_gnn=True):
-        
-        policy = GNNPolicy()
-        if use_trained_gnn: 
-            print("using trained gnn")
-            print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl"))) #run from main
-        else:
-            print("using a randomly initialised gnn")
-            
-        policy.to(DEVICE)
-        self.policy = policy
-        self.comp_featurizer = comp_featurizer
-        self.DEVICE = DEVICE
-        self.record_fpath = record_fpath
-        self.inference_time = 0
-        self.fe_time = 0
-        
-        
-    def set_LP_feature_recorder(self, LP_feature_recorder):
-        self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
-        self.inference_time = 0
-        self.fe_time = 0
-
-    def nodeselect(self):
-        return {"selnode": self.model.getBestNode()}
-    
-    def nodecomp(self, node1,node2):
-        start = time.time()
-        batch = self.comp_featurizer.get_inference_features(self.model, 
-                                                            node1, 
-                                                            node2).to(self.DEVICE)
-        end = time.time()
-        
-        self.fe_time += (end - start)
-        
-        start = time.time()
-        decision = self.policy(batch).item() 
-        end = time.time()
-        
-        self.inference_time += (end - start)
-        
-        if self.record_fpath != None:
-            with open(f"{self.record_fpath}", "a+") as f:
-                f.write(f"{decision:0.3f},")
-                f.close()
-        
-        
-        return -1 if decision < 0.5 else 1
-    
-    
-    
-
 
 class OracleNodeSelectorAbdel(Nodesel):
     
@@ -213,7 +159,63 @@ class OracleNodeSelectorAbdel(Nodesel):
     
             
         
+   
+    
+class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
+    
+    def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None, use_trained_gnn=True):
+        super().__init__("optimal_plunger")
+        
+        policy = GNNPolicy()
+        if use_trained_gnn: 
+            print("using trained gnn")
+            print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=torch.device('cpu')))) #run from main
+        else:
+            print("using a randomly initialised gnn")
             
+        policy.to(DEVICE)
+        self.policy = policy
+        self.comp_featurizer = comp_featurizer
+        self.DEVICE = DEVICE
+        self.record_fpath = record_fpath
+        self.inference_time = 0
+        self.fe_time = 0
+        
+        
+    def set_LP_feature_recorder(self, LP_feature_recorder):
+        self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
+        self.inference_time = 0
+        self.fe_time = 0
+
+    def nodeselect(self):
+        return {"selnode": self.model.getBestNode()}
+    
+    def nodecomp(self, node1,node2):
+        start = time.time()
+        batch = self.comp_featurizer.get_inference_features(self.model, 
+                                                            node1, 
+                                                            node2).to(self.DEVICE)
+        end = time.time()
+        
+        self.fe_time += (end - start)
+        
+        start = time.time()
+        decision = self.policy(batch).item() 
+        oracle_decision = super().nodecomp(node1,node2)
+        end = time.time()
+        
+        self.inference_time += (end - start)
+        
+        if self.record_fpath != None:
+            with open(f"{self.record_fpath}", "a+") as f:
+                f.write(f"{decision:0.3f},{oracle_decision}\n")
+                f.close()
+        
+        return -1 if decision < 0.5 else 1
+    
+    
+    
+         
         
 
 #Maxime

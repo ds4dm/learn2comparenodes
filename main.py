@@ -73,6 +73,9 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
             if oracle_estimator != None:
                 oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
                                                                            model.getConss()))
+                optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+                oracle_estimator.setOptsol(optsol)
+    
         if "oracle" in nodesels:         
             optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             oracle.setOptsol(optsol)
@@ -130,32 +133,34 @@ def display_stats(nodesels, problem):
         print("--------------------------")
    from scipy.stats import entropy
    import matplotlib.pyplot as plt
-   decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")[:-1]
-   decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")[:-1]
+   decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")
+   decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
    decisions_rand = np.genfromtxt("decisions_rand.csv", delimiter=",")[:-1]
    plt.figure()
    plt.title("decisions gnn trained")
-   plt.hist(decisions_gnn_trained)
+   plt.hist(decisions_gnn_trained[:,0])
    plt.savefig("decisions_gnn_trained.png")
    plt.figure()
    plt.title("decisions gnn untrained")
-   plt.hist(decisions_gnn_untrained)
+   plt.hist(decisions_gnn_untrained[:,0])
    plt.savefig("decisions_gnn_untrained.png")
    plt.figure()
    plt.title("decisions rand")
    plt.hist(decisions_rand)
    plt.savefig("decisions_rand.png")
-   print(f"Entropy of decisions (oracle estimator trained ) : { entropy(decisions_gnn_trained) }") 
+   print(f"Entropy of decisions (oracle estimator trained ) : { entropy(decisions_gnn_trained[:,0]) }") 
    
+   print(f"Accuracy of prediction in trained GNN : {np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
+   print(f"Accuracy of prediction in untrained GNN : {np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
 
 if __name__ == "__main__":
     
     cpu_count = 2
-    nodesels_cpu = ['estimate', 'random']
+    nodesels_cpu = ['estimate']
     nodesels_gpu = ['oracle_estimator_trained', 'oracle_estimator_untrained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 100
+    n_instance = 10
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     for i in range(1, len(sys.argv), 2):
