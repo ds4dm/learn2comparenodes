@@ -193,6 +193,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             mean_loss += loss_value * batch.num_graphs
             mean_acc += accuracy * batch.num_graphs
             n_samples_processed += batch.num_graphs
+            print(y_pred, y_true)
 
     mean_loss /= n_samples_processed + 1
     mean_acc /= n_samples_processed + 1
