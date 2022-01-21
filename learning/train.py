@@ -201,7 +201,7 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
 
 problems = ["GISP"]
 LEARNING_RATE = 0.005
-NB_EPOCHS = 6
+NB_EPOCHS = 50
 PATIENCE = 10
 EARLY_STOPPING = 20
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -215,9 +215,9 @@ train_accs = []
 valid_accs = []
 for problem in problems:
 
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:1000]
+    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
     
-    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ][:100]
+    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
@@ -262,12 +262,12 @@ for problem in problems:
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
-decisions = [ policy(dvalid.to(DEVICE)).item() for dvalid in train_data ]
+decisions = [ policy(dvalid.to(DEVICE)).item() for dvalid in valid_data ]
 
 import matplotlib.pyplot as plt
 plt.figure(0)
 plt.hist(decisions)
-plt.title('decisions histogramme for training set')
+plt.title('decisions histogramme for valid set')
 plt.savefig("./hist.png")
 
 plt.figure(1)
