@@ -203,7 +203,7 @@ if __name__ == "__main__":
             f.close()
      
 
-        instances = list(Path(f"./problem_generation/data/{problem}/train").glob("*.lp"))[:n_instance]
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
         
         
         if cpu_count == 1:
