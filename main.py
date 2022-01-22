@@ -23,7 +23,7 @@ from functools import partial
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
+def record_stats(nodesels, instances, problem, normalize=False, device='cpu', verbose=False):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
@@ -79,9 +79,9 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
         if "oracle" in nodesels:         
             optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             oracle.setOptsol(optsol)
-            
-        print("----------------------------")
-        print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
+        if verbose:    
+            print("----------------------------")
+            print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
        #test nodesels
         for nodesel in nodesels:
             
@@ -96,14 +96,15 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu'):
             model.setNodeselPriority(nodesel, 536870911)
             
             model.optimize()
-            print(f"  Nodeselector : {nodesel}")
-            print(f"    # of processed nodes : {model.getNNodes()} \n")
-            print(f"    Time                 : {model.getSolvingTime()} \n")
+            if verbose:
+                print(f"  Nodeselector : {nodesel}")
+                print(f"    # of processed nodes : {model.getNNodes()} \n")
+                print(f"    Time                 : {model.getSolvingTime()} \n")
             if nodesel == "oracle_estimator":
-                print(f"fe time : {oracle_estimator.fe_time}")
-                print(f"inference time : {oracle_estimator.inference_time}")
+                if verbose:
+                    print(f"fe time : {oracle_estimator.fe_time}")
+                    print(f"inference time : {oracle_estimator.inference_time}")
             
-                
             with open(f"nnodes_{problem}_{nodesel}.csv", "a+") as f:
                 f.write(f"{model.getNNodes()},")
                 f.close()
