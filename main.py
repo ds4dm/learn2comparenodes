@@ -126,39 +126,44 @@ def display_stats(nodesels, problem):
         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         print(f"  {nodesel} ")
-        print(f"    Number of instances solved    : {len(nnodes)}")
+        #print(f"    Number of instances solved    : {len(nnodes)}")
         print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
-        print(f"    Mean solving time             : {np.mean(times):.2f}")
-        print(f"    Median number of node created : {np.median(nnodes):.2f}")
-        print(f"    Median solving time           : {np.median(times):.2f}")
+        #print(f"    Mean solving time             : {np.mean(times):.2f}")
+        #print(f"    Median number of node created : {np.median(nnodes):.2f}")
+        #print(f"    Median solving time           : {np.median(times):.2f}")
         print("--------------------------")
    from scipy.stats import entropy
    import matplotlib.pyplot as plt
-   decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")
-   decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
-   decisions_rand = np.genfromtxt("decisions_rand.csv", delimiter=",")[:-1]
-   plt.figure()
-   plt.title("decisions gnn trained")
-   plt.hist(decisions_gnn_trained[:,0])
-   plt.savefig("decisions_gnn_trained.png")
-   plt.figure()
-   plt.title("decisions gnn untrained")
-   plt.hist(decisions_gnn_untrained[:,0])
-   plt.savefig("decisions_gnn_untrained.png")
-   plt.figure()
-   plt.title("decisions rand")
-   plt.hist(decisions_rand)
-   plt.savefig("decisions_rand.png")
-   print(f"Entropy of decisions (oracle estimator trained ) : { entropy(decisions_gnn_trained[:,0]) }") 
    
-   print(f"Accuracy of prediction in trained GNN : {np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
-   print(f"Accuracy of prediction in untrained GNN : {np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
+   if 'oracle_estimator_trained' in nodesels:
+       decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")
+       plt.figure()
+       plt.title("decisions gnn trained")
+       plt.hist(decisions_gnn_trained[:,0])
+       plt.savefig("decisions_gnn_trained.png")
+       print(f"Accuracy of prediction in trained GNN : {np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
+       
+   if 'oracle_estimator_untrained' in nodesels:
+       decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
+       plt.figure()
+       plt.title("decisions gnn untrained")
+       plt.hist(decisions_gnn_untrained[:,0])
+       plt.savefig("decisions_gnn_untrained.png")
+       print(f"Accuracy of prediction in untrained GNN : {np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
 
+     
+   if 'random' in nodesels:
+       decisions_rand = np.genfromtxt("decisions_rand.csv", delimiter=",")[:-1]
+       plt.figure()
+       plt.title("decisions rand")
+       plt.hist(decisions_rand)
+       plt.savefig("decisions_rand.png")
+   
 if __name__ == "__main__":
     
-    cpu_count = 2
-    nodesels_cpu = ['estimate']
-    nodesels_gpu = ['oracle_estimator_trained', 'oracle_estimator_untrained']
+    cpu_count = 4
+    nodesels_cpu = ['random', 'estimate', 'oracle']
+    nodesels_gpu = []
     problems = ["GISP"]
     normalize = True
     n_instance = 10
