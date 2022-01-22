@@ -156,6 +156,9 @@ class OracleNodeSelectorAbdel(Nodesel):
             
     def setOptsol(self, optsol):
         self.optsol = optsol
+        
+    def dfs_compare(self, node1, node2):
+        return -node1.getDepth() + node2.getDepth()
     
             
         
