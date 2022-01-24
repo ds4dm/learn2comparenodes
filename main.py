@@ -206,7 +206,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_trial':
-            n_instance = int(sys.argv[i + 1])
+            n_trial = int(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
             
