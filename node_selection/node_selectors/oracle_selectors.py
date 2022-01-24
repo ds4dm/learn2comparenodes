@@ -21,10 +21,11 @@ import time
 
 class OracleNodeSelectorAbdel(Nodesel):
     
-    def __init__(self, oracle_type, optsol=0, prune_policy='estimate'):
+    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0.05):
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
+        self.inv_proba = inv_proba
     
     
     def nodeselect(self):
@@ -35,23 +36,30 @@ class OracleNodeSelectorAbdel(Nodesel):
     def nodecomp(self, node1,node2):
         
         if self.oracle_type == "optimal_plunger":
+            import numpy as np
+            
         
             d1 = self.is_sol_in_domaine(self.optsol, node1)
             d2 = self.is_sol_in_domaine(self.optsol, node2)
+            inv = np.random.rand() < self.inv_proba
             
             if d1 and d2:
-                return self.dfs_compare(node1, node2)
+                res = self.dfs_compare(node1, node2) 
             
             elif d1:
-                return -1
+                res = -1
             
             elif d2:
-                return 1
+                res = 1
             
             else:
                 if self.prune_policy == "estimate":
-                    return self.estimate_compare(node1, node2)
-                raise NotImplementedError
+                    res = self.estimate_compare(node1, node2)
+                else:
+                    raise NotImplementedError
+            
+            inv_res = -1 if res == 1 else 1
+            return res if not inv else inv_res
         else:
             raise NotImplementedError
     
@@ -156,6 +164,9 @@ class OracleNodeSelectorAbdel(Nodesel):
             
     def setOptsol(self, optsol):
         self.optsol = optsol
+        
+    def dfs_compare(self, node1, node2):
+        return -node1.getDepth() + node2.getDepth()
     
             
         
@@ -164,7 +175,7 @@ class OracleNodeSelectorAbdel(Nodesel):
 class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     
     def __init__(self, problem, comp_featurizer,  DEVICE, record_fpath=None, use_trained_gnn=True):
-        super().__init__("optimal_plunger")
+        super().__init__("optimal_plunger", inv_proba=0)
         
         policy = GNNPolicy()
         if use_trained_gnn: 
@@ -191,7 +202,8 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         return {"selnode": self.model.getBestNode()}
     
     def nodecomp(self, node1,node2):
-        start = time.time()
+        
+        start = time.time() #measure feature extraction time
         batch = self.comp_featurizer.get_inference_features(self.model, 
                                                             node1, 
                                                             node2).to(self.DEVICE)
@@ -199,7 +211,7 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         
         self.fe_time += (end - start)
         
-        start = time.time()
+        start = time.time() #measure inference time
         decision = self.policy(batch).item() 
         oracle_decision = super().nodecomp(node1,node2)
         end = time.time()
@@ -210,6 +222,13 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
             with open(f"{self.record_fpath}", "a+") as f:
                 f.write(f"{decision:0.3f},{oracle_decision}\n")
                 f.close()
+        
+        import numpy as np
+        if 2*np.round(decision) - 1 != oracle_decision:
+            # print("---------------UNMATCHING oracle -----")
+            # print(node1.getNumber(), node2.getNumber())
+            #decision = 1 - decision
+            pass
         
         return -1 if decision < 0.5 else 1
     

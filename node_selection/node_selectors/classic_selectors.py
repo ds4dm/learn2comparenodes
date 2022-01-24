@@ -58,6 +58,9 @@ class Estimate(Nodesel):
             return -1
         else:
             return 1
+    
+    def dfs_compare(self, node1, node2):
+        return -node1.getDepth() + node2.getDepth()
 
 class FiFo(Nodesel):
 
