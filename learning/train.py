@@ -209,6 +209,9 @@ if __name__ == "__main__":
     normalize = True
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
+    loss_fn = torch.nn.BCELoss()
+    optimizer_fn = torch.optim.Adam
+    
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-problems':
             problems = str(sys.argv[i + 1]).split(',')
@@ -224,9 +227,6 @@ if __name__ == "__main__":
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
-    
-    loss_fn = torch.nn.BCELoss()
-    optimizer_fn = torch.optim.Adam
     
     train_losses = []
     valid_losses = []
@@ -271,6 +271,8 @@ if __name__ == "__main__":
         print(f"Number of epochs:    {n_epoch}")
         print(f"Normalize:           {normalize}")
         print(f"Device:              {device}")
+        print(f"Loss fct:            {loss_fn}")
+        print(f"Optimizer:           {optimizer}")  
         print(f"GNN Architecture: \n {policy}")
         
         
