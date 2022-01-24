@@ -14,6 +14,7 @@ def load_src(name, fpath):
 load_src("recorders", "../node_selection/recorders.py" )
 
 import os
+import sys
 import torch
 import torch_geometric
 from pathlib import Path
@@ -155,7 +156,7 @@ def inspect(geom_dataset):
 
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
-def process(policy, data_loader, loss_fct, optimizer=None):
+def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=True):
     """
     This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
     """
@@ -166,16 +167,15 @@ def process(policy, data_loader, loss_fct, optimizer=None):
         for idx,batch in enumerate(data_loader):
             
             
-            batch = batch.to(DEVICE)
-            normalize_graph(batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s)
-            normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
-            #test1(batch)
+            batch = batch.to(device)
+            if normalize:
+                normalize_graph(batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s)
+                normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
+                #test1(batch)
             
-            y_true = 0.5*batch.y + 0.5 #0,1 labels
-
+            y_true = 0.5*batch.y + 0.5 #0,1 label
             y_proba = policy(batch)
             y_pred = torch.round(y_proba)
-            
             
             # Compute the usual cross-entropy classification loss
             l = loss_fct(y_proba, y_true )
@@ -184,8 +184,7 @@ def process(policy, data_loader, loss_fct, optimizer=None):
                 optimizer.zero_grad()
                 l.backward()
                 optimizer.step()
-                
-          
+            
             accuracy = (y_pred == y_true).float().mean().item()
 
             mean_loss += loss_value * batch.num_graphs
@@ -198,94 +197,135 @@ def process(policy, data_loader, loss_fct, optimizer=None):
     return mean_loss, mean_acc
 
 
-problems = ["GISP"]
-LEARNING_RATE = 0.005
-NB_EPOCHS = 5
-PATIENCE = 10
-EARLY_STOPPING = 20
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-LOSS = torch.nn.BCELoss()
-OPTIMIZER = torch.optim.Adam
 
 
-train_losses = []
-valid_losses = []
-train_accs = []
-valid_accs = []
-for problem in problems:
-
-    train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+if __name__ == "__main__":
     
-    valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
+    problems = ["GISP"]
+    lr = 0.005
+    n_epoch = 5
+    patience = 10
+    early_stopping = 20
+    normalize = True
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    train_data = GraphDataset(train_files)
-    valid_data = GraphDataset(valid_files)
-    print(train_data)
-    print(valid_data)
-    #inspect(train_data[:100])
+    for i in range(1, len(sys.argv), 2):
+        if sys.argv[i] == '-problems':
+            problems = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-lr':
+            lr = int(sys.argv[i + 1])
+        if sys.argv[i] == '-n_epoch':
+            n_epoch = int(sys.argv[i + 1])
+        if sys.argv[i] == '-patience':
+            patience = int(sys.argv[i + 1])
+        if sys.argv[i] == '-early_stopping':
+            early_stopping = int(sys.argv[i + 1])
+        if sys.argv[i] == '-normalize':
+            normalize = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-device':
+            device = str(sys.argv[i + 1])
     
-# TO DO : learn something from the data
-    train_loader = torch_geometric.loader.DataLoader(train_data, 
-                                                     batch_size=1, 
-                                                     shuffle=True, 
-                                                     follow_batch=['constraint_features_s', 
-                                                                   'constraint_features_t',
-                                                                   'variable_features_s',
-                                                                   'variable_features_t'])
+    loss_fn = torch.nn.BCELoss()
+    optimizer_fn = torch.optim.Adam
     
-    valid_loader = torch_geometric.loader.DataLoader(valid_data, 
-                                                     batch_size=1, 
-                                                     shuffle=False, 
-                                                     follow_batch=['constraint_features_s',
-                                                                   'constraint_features_t',
-                                                                   'variable_features_s',
-                                                                   'variable_features_t'])
+    train_losses = []
+    valid_losses = []
+    train_accs = []
+    valid_accs = []
+    for problem in problems:
     
-    policy = GNNPolicy().to(DEVICE)
-    optimizer = OPTIMIZER(policy.parameters(), lr=LEARNING_RATE) #ADAM is the best
-    
-    
-    for epoch in range(NB_EPOCHS):
-        print(f"Epoch {epoch + 1}")
+        train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
         
-        train_loss, train_acc = process(policy, train_loader, LOSS, optimizer)
-        train_losses.append(train_loss)
-        train_accs.append(train_acc)
-        print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
+        valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
+        
+        train_data = GraphDataset(train_files)
+        valid_data = GraphDataset(valid_files)
+        
+        #inspect(train_data[:100])
+        
+    # TO DO : learn something from the data
+        train_loader = torch_geometric.loader.DataLoader(train_data, 
+                                                         batch_size=1, 
+                                                         shuffle=True, 
+                                                         follow_batch=['constraint_features_s', 
+                                                                       'constraint_features_t',
+                                                                       'variable_features_s',
+                                                                       'variable_features_t'])
+        
+        valid_loader = torch_geometric.loader.DataLoader(valid_data, 
+                                                         batch_size=1, 
+                                                         shuffle=False, 
+                                                         follow_batch=['constraint_features_s',
+                                                                       'constraint_features_t',
+                                                                       'variable_features_s',
+                                                                       'variable_features_t'])
+        
+        policy = GNNPolicy().to(device)
+        optimizer = optimizer_fn(policy.parameters(), lr=lr) #ADAM is the best
+        
+        print("-------------------------")
+        print(f"GNN for problem {problem}")
+        print(f"Training on:         {len(train_data)} samples")
+        print(f"Validating on:       {len(valid_data)} samples")
+        print(f"Learning rate:       {lr} ")
+        print(f"Number of epochs:    {n_epoch}")
+        print(f"Normalize:           {normalize}")
+        print(f"Device:              {device}")
+        print(f"GNN Architecture: \n {policy}")
+        
+        
+        for epoch in range(n_epoch):
+            print(f"Epoch {epoch + 1}")
+            
+            train_loss, train_acc = process(policy, 
+                                            train_loader, 
+                                            loss_fn,
+                                            device,
+                                            optimizer=optimizer, 
+                                            normalize=normalize)
+            train_losses.append(train_loss)
+            train_accs.append(train_acc)
+            print(f"Train loss: {train_loss:0.3f}, accuracy {train_acc:0.3f}" )
+        
+            valid_loss, valid_acc = process(policy, 
+                                            valid_loader, 
+                                            loss_fn, 
+                                            device,
+                                            optimizer=None,
+                                            normalize=normalize)
+            valid_losses.append(valid_loss)
+            valid_accs.append(valid_acc)
+            
+            print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
+        
+        torch.save(policy.state_dict(),f'policy_{problem}.pkl')
     
-        valid_loss, valid_acc = process(policy, valid_loader, LOSS, None)
-        valid_losses.append(valid_loss)
-        valid_accs.append(valid_acc)
-        print(f"Valid loss: {valid_loss:0.3f}, accuracy {valid_acc:0.3f}" )
     
-    torch.save(policy.state_dict(),f'policy_{problem}.pkl')
-
-
-decisions = [ policy(dvalid.to(DEVICE)).item() for dvalid in valid_data ]
-
-import matplotlib.pyplot as plt
-plt.figure(0)
-plt.hist(decisions)
-plt.title('decisions histogramme for valid set')
-plt.savefig("./hist.png")
-
-plt.figure(1)
-plt.plot(train_losses, label='train')
-plt.plot(valid_losses, label='valid')
-plt.title('losses')
-plt.xlabel('epoch')
-plt.legend()
-plt.savefig("./losses.png")
-
-
-plt.figure(2)
-plt.plot(train_accs, label='train')
-plt.plot(valid_accs, label='valid')
-plt.title('accuracies')
-plt.xlabel('epoch')
-plt.legend()
-plt.savefig("./accuracies.png")
-
+    decisions = [ policy(dvalid.to(device)).item() for dvalid in valid_data ]
+    
+    import matplotlib.pyplot as plt
+    plt.figure(0)
+    plt.hist(decisions)
+    plt.title('decisions histogramme for valid set')
+    plt.savefig("./hist.png")
+    
+    plt.figure(1)
+    plt.plot(train_losses, label='train')
+    plt.plot(valid_losses, label='valid')
+    plt.title('losses')
+    plt.xlabel('epoch')
+    plt.legend()
+    plt.savefig("./losses.png")
+    
+    
+    plt.figure(2)
+    plt.plot(train_accs, label='train')
+    plt.plot(valid_accs, label='valid')
+    plt.title('accuracies')
+    plt.xlabel('epoch')
+    plt.legend()
+    plt.savefig("./accuracies.png")
+    
 
 
 
