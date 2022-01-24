@@ -163,6 +163,7 @@ def display_stats(nodesels, problem):
        plt.title("decisions gnn trained")
        plt.hist(decisions_gnn_trained[:,0])
        plt.savefig("decisions_gnn_trained.png")
+       print(" % Oracle 1's decision : { np.mean(decisions_gnn_trained[:,1] == 1) : 0.3f}")
        print(f"Error in trained GNN : {1-np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
        
    if 'gnn_untrained' in nodesels:
@@ -171,7 +172,8 @@ def display_stats(nodesels, problem):
        plt.title("decisions gnn untrained")
        plt.hist(decisions_gnn_untrained[:,0])
        plt.savefig("decisions_gnn_untrained.png")
-       print(f"Accuracy of prediction in untrained GNN : {np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
+       print(f" % Oracle 1's decision : { np.mean(decisions_gnn_untrained[:,1] == 1) : 0.3f}")
+       print(f"Error in untrained GNN : {1-np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
 
      
    if 'random' in nodesels:
@@ -185,7 +187,7 @@ if __name__ == "__main__":
     
     cpu_count = 4
     nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.05']
-    nodesels_gpu = ['gnn_trained']
+    nodesels_gpu = ['gnn_untrained']
     problems = ["GISP"]
     normalize = True
     n_instance = 5
