@@ -158,16 +158,16 @@ class GNNPolicy(torch.nn.Module):
         for conv in self.convs:
             
             #Var to cons
-            constraint_features_next = conv((variable_features, constraint_features), 
+            constraint_features_next = F.relu(conv((variable_features, constraint_features), 
                                               edge_indices,
                                               edge_weight=edge_features,
-                                              size=(variable_features.size(0), constraint_features.size(0)))
+                                              size=(variable_features.size(0), constraint_features.size(0))))
             
             #cons to var 
-            variable_features = conv((constraint_features, variable_features), 
+            variable_features = F.relu(conv((constraint_features, variable_features), 
                                       edge_indices_reversed,
                                       edge_weight=edge_features,
-                                      size=(constraint_features.size(0), variable_features.size(0)))
+                                      size=(constraint_features.size(0), variable_features.size(0))))
             
             constraint_features = constraint_features_next
             
