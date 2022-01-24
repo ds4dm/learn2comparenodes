@@ -213,7 +213,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-problems':
             problems = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-lr':
-            lr = int(sys.argv[i + 1])
+            lr = float(sys.argv[i + 1])
         if sys.argv[i] == '-n_epoch':
             n_epoch = int(sys.argv[i + 1])
         if sys.argv[i] == '-patience':
