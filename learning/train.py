@@ -272,7 +272,7 @@ if __name__ == "__main__":
         print(f"Normalize:           {normalize}")
         print(f"Device:              {device}")
         print(f"Loss fct:            {loss_fn}")
-        print(f"Optimizer:           {optimizer}")  
+        print(f"Optimizer:        \n {optimizer}")  
         print(f"GNN Architecture: \n {policy}")
         
         
