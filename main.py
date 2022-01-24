@@ -28,11 +28,21 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
     model.hideOutput()
+    model.setIntParam('randomization/permutationseed', 9)
+    model.setIntParam('randomization/randomseedshift',9)
     
     oracle_estimator_trained = None
     oracle_estimator_untrained = None
+    oracle_0 = None
     oracle = None
     
+    #creating random nodesel
+    if "random" in nodesels:
+        from node_selection.node_selectors.classic_selectors import Random
+        random = Random(record_fpath='decisions_rand.csv')
+        model.includeNodesel(random, "random", 'testing',100, 100)
+        
+    #creating oracle estimator nodesels
     if "oracle_estimator_trained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
@@ -55,30 +65,42 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
                                                        use_trained_gnn=False)
         model.includeNodesel(oracle_estimator_untrained, "oracle_estimator_untrained", 'testing',100, 100)
         
-    if "oracle" in nodesels:
+    #creating appropriate oracle 
+    if 'oracle 0' in nodesels:
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
-        oracle = OracleNodeSelectorAbdel("optimal_plunger")
-        model.includeNodesel(oracle, "oracle", 'testing',100, 100)
-    if "random" in nodesels:
-        from node_selection.node_selectors.classic_selectors import Random
-        random = Random(record_fpath='decisions_rand.csv')
-        model.includeNodesel(random, "random", 'testing',100, 100)
+        oracle_0 = OracleNodeSelectorAbdel("optimal_plunger", inv_proba=0)
+        model.includeNodesel(oracle_0, 'oracle 0', 'testing',100, 100)
         
+    def find_2d(matrix, elem):
+        for idx, array in enumerate(matrix):
+            if elem in array and float(array[1]) > 0:
+                return idx, array
+        return -1, ""
+    
+    oracle_idx, oracle_params = find_2d([ n.split(" ") for n in nodesels ], 'oracle')
+    if oracle_idx != -1:
+        from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
+        inv_proba = 0 if len(oracle_params) == 1 else float(oracle_params[1]) 
+        oracle = OracleNodeSelectorAbdel("optimal_plunger", inv_proba=inv_proba)
+        model.includeNodesel(oracle, nodesels[oracle_idx], 'testing',100, 100)
+        
+    
+    
+    
+    
     for instance in instances:
         
         instance = str(instance)
         model.readProblem(instance)
+        optsol = model.readSolFile(instance.replace(".lp", ".sol"))
         
-        for oracle_estimator in [oracle_estimator_trained, oracle_estimator_untrained]:
-            if oracle_estimator != None:
-                oracle_estimator.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                                           model.getConss()))
-                optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-                oracle_estimator.setOptsol(optsol)
+        for idx,o in enumerate([oracle_estimator_trained, oracle_estimator_untrained, oracle_0, oracle]):
+            if o != None:
+                if idx < 2 : #estimators
+                    o.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss()))
+                o.setOptsol(optsol)
     
-        if "oracle" in nodesels:         
-            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-            oracle.setOptsol(optsol)
+            
         if verbose:    
             print("----------------------------")
             print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
@@ -102,8 +124,8 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
                 print(f"    Time                 : {model.getSolvingTime()} \n")
             if nodesel == "oracle_estimator":
                 if verbose:
-                    print(f"fe time : {oracle_estimator.fe_time}")
-                    print(f"inference time : {oracle_estimator.inference_time}")
+                    print(f"fe time : {oracle_estimator_trained.fe_time}")
+                    print(f"inference time : {oracle_estimator_trained.inference_time}")
             
             with open(f"nnodes_{problem}_{nodesel}.csv", "a+") as f:
                 f.write(f"{model.getNNodes()},")
@@ -141,7 +163,7 @@ def display_stats(nodesels, problem):
        plt.title("decisions gnn trained")
        plt.hist(decisions_gnn_trained[:,0])
        plt.savefig("decisions_gnn_trained.png")
-       print(f"Accuracy of prediction in trained GNN : {np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
+       print(f"Error in trained GNN : {1-np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
        
    if 'oracle_estimator_untrained' in nodesels:
        decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
@@ -162,11 +184,12 @@ def display_stats(nodesels, problem):
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels_cpu = ['random', 'estimate', 'oracle']
-    nodesels_gpu = []
+    nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.05']
+    nodesels_gpu = ['oracle_estimator_trained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 10
+    n_instance = 5
+    n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     for i in range(1, len(sys.argv), 2):
@@ -181,6 +204,8 @@ if __name__ == "__main__":
         if sys.argv[i] == '-normalize':
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-n_instance':
+            n_instance = int(sys.argv[i + 1])
+        if sys.argv[i] == '-n_trial':
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
@@ -216,40 +241,41 @@ if __name__ == "__main__":
 
         instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
         
-        
-        if cpu_count == 1:
-            record_stats(nodesels,
-                         instances,
-                         problem, 
-                         normalize=normalize, 
-                         device=device)
-        else:
-    
-            chunck_size = int(np.ceil(len(instances)/cpu_count))
-            processes = [  md.Process(name=f"worker {p}", 
-                                            target=partial(record_stats,
-                                                            nodesels=nodesels_cpu,
-                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                            problem=problem))
-                            for p in range(cpu_count) ]
-            checker = []
-            for p in range(cpu_count):
-                checker +=instances[ p*chunck_size : (p+1)*chunck_size]
-            print(f"len instances parralelixed : {len(checker)}")
-    
-    
-            a = list(map(lambda p: p.start(), processes)) #run processes
-               
-            record_stats(nodesels_gpu,
-                         instances,
-                         problem, 
-                         normalize=normalize, 
-                         device=device)
+        for _ in range(n_trial):
             
-            b = list(map(lambda p: p.join(), processes)) #join processes
+            if cpu_count == 1:
+                record_stats(nodesels,
+                             instances,
+                             problem, 
+                             normalize=normalize, 
+                             device=device)
+            else:
+        
+                chunck_size = int(np.ceil(len(instances)/cpu_count))
+                processes = [  md.Process(name=f"worker {p}", 
+                                                target=partial(record_stats,
+                                                                nodesels=nodesels_cpu,
+                                                                instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                                problem=problem))
+                                for p in range(cpu_count) ]
+                checker = []
+                for p in range(cpu_count):
+                    checker +=instances[ p*chunck_size : (p+1)*chunck_size]
+                print(f"len instances parralelixed : {len(checker)}")
+        
+        
+                a = list(map(lambda p: p.start(), processes)) #run processes
+                   
+                record_stats(nodesels_gpu,
+                             instances,
+                             problem, 
+                             normalize=normalize, 
+                             device=device)
+                
+                b = list(map(lambda p: p.join(), processes)) #join processes
      
 
-        print("SUMMARIES")
+        print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
         display_stats(nodesels, problem)
 
 
