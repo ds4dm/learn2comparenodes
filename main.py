@@ -43,7 +43,7 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
         model.includeNodesel(random, "random", 'testing',100, 100)
         
     #creating oracle estimator nodesels
-    if "oracle_estimator_trained" in nodesels:
+    if "gnn_trained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
         comp_featurizer = CompFeaturizer(normalize=normalize)
@@ -52,18 +52,18 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
                                                        DEVICE=device,
                                                        record_fpath="decisions_gnn_trained.csv",
                                                        use_trained_gnn=True)
-        model.includeNodesel(oracle_estimator_trained, "oracle_estimator_trained", 'testing',100, 100)
+        model.includeNodesel(oracle_estimator_trained, "gnn_trained", 'testing',100, 100)
     
-    if "oracle_estimator_untrained" in nodesels:
+    if "gnn_untrained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
         comp_featurizer = CompFeaturizer(normalize=normalize)
-        oracle_estimator_untrained= OracleNodeSelectorEstimator(problem,
+        oracle_estimator_untrained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
                                                        record_fpath="decisions_gnn_untrained.csv",
                                                        use_trained_gnn=False)
-        model.includeNodesel(oracle_estimator_untrained, "oracle_estimator_untrained", 'testing',100, 100)
+        model.includeNodesel(oracle_estimator_untrained, "gnn_untrained", 'testing',100, 100)
         
     #creating appropriate oracle 
     if 'oracle 0' in nodesels:
@@ -122,7 +122,7 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
                 print(f"  Nodeselector : {nodesel}")
                 print(f"    # of processed nodes : {model.getNNodes()} \n")
                 print(f"    Time                 : {model.getSolvingTime()} \n")
-            if nodesel == "oracle_estimator":
+            if nodesel == "gnn_trained":
                 if verbose:
                     print(f"fe time : {oracle_estimator_trained.fe_time}")
                     print(f"inference time : {oracle_estimator_trained.inference_time}")
@@ -157,7 +157,7 @@ def display_stats(nodesels, problem):
    from scipy.stats import entropy
    import matplotlib.pyplot as plt
    
-   if 'oracle_estimator_trained' in nodesels:
+   if 'gnn_trained' in nodesels:
        decisions_gnn_trained = np.genfromtxt("decisions_gnn_trained.csv", delimiter=",")
        plt.figure()
        plt.title("decisions gnn trained")
@@ -165,7 +165,7 @@ def display_stats(nodesels, problem):
        plt.savefig("decisions_gnn_trained.png")
        print(f"Error in trained GNN : {1-np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
        
-   if 'oracle_estimator_untrained' in nodesels:
+   if 'gnn_untrained' in nodesels:
        decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
        plt.figure()
        plt.title("decisions gnn untrained")
@@ -185,7 +185,7 @@ if __name__ == "__main__":
     
     cpu_count = 4
     nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.05']
-    nodesels_gpu = ['oracle_estimator_trained']
+    nodesels_gpu = ['gnn_trained']
     problems = ["GISP"]
     normalize = True
     n_instance = 5
