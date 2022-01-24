@@ -81,10 +81,7 @@ class GNNPolicy(torch.nn.Module):
         self.convs = [ self.conv1, self.conv2, self.conv3]
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.LayerNorm(2*hidden_dim3+2),
-                                    torch.nn.Linear(2*hidden_dim3+2, final_mlp_hidden_dim, bias=False),
-                                    torch.nn.ReLU(),
-                                    torch.nn.Linear(final_mlp_hidden_dim, 1, bias=False),
+                                    torch.nn.Linear(2*hidden_dim3+2, 1, bias=False),
                                     torch.nn.Sigmoid()
                                     )
      
@@ -158,16 +155,16 @@ class GNNPolicy(torch.nn.Module):
         for conv in self.convs:
             
             #Var to cons
-            constraint_features_next = conv((variable_features, constraint_features), 
+            constraint_features_next = F.relu(conv((variable_features, constraint_features), 
                                               edge_indices,
                                               edge_weight=edge_features,
-                                              size=(variable_features.size(0), constraint_features.size(0)))
+                                              size=(variable_features.size(0), constraint_features.size(0))))
             
             #cons to var 
-            variable_features = conv((constraint_features, variable_features), 
+            variable_features = F.relu(conv((constraint_features, variable_features), 
                                       edge_indices_reversed,
                                       edge_weight=edge_features,
-                                      size=(constraint_features.size(0), variable_features.size(0)))
+                                      size=(constraint_features.size(0), variable_features.size(0))))
             
             constraint_features = constraint_features_next
             

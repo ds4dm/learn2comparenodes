@@ -155,7 +155,7 @@ def inspect(geom_dataset):
 
 #function definition
 # https://github.com/ds4dm/ecole/blob/master/examples/branching-imitation.ipynb
-def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
+def process(policy, data_loader, loss_fct, optimizer=None):
     """
     This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
     """
@@ -181,8 +181,6 @@ def process(policy, data_loader, loss_fct, optimizer=None, balance=True):
             l = loss_fct(y_proba, y_true )
             loss_value = l.item()
             if optimizer is not None:
-                if balance:
-                    l += loss_fct(policy(batch, inv=True), -1*y_true+1)
                 optimizer.zero_grad()
                 l.backward()
                 optimizer.step()
