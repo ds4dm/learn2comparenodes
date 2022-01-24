@@ -193,6 +193,7 @@ if __name__ == "__main__":
     n_instance = 5
     n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    verbose = False
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -211,6 +212,8 @@ if __name__ == "__main__":
             n_trial = int(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
+        if sys.argv[i] == '-verbose':
+            verbose = bool(int(sys.argv[i + 1]))
             
     nodesels = nodesels_cpu + nodesels_gpu
     
@@ -250,7 +253,8 @@ if __name__ == "__main__":
                              instances,
                              problem, 
                              normalize=normalize, 
-                             device=device)
+                             device=device,
+                             verbose=verbose)
             else:
         
                 chunck_size = int(np.ceil(len(instances)/cpu_count))
@@ -258,7 +262,8 @@ if __name__ == "__main__":
                                                 target=partial(record_stats,
                                                                 nodesels=nodesels_cpu,
                                                                 instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                                problem=problem))
+                                                                problem=problem,
+                                                                verbose=verbose))
                                 for p in range(cpu_count) ]
                 checker = []
                 for p in range(cpu_count):
@@ -272,7 +277,8 @@ if __name__ == "__main__":
                              instances,
                              problem, 
                              normalize=normalize, 
-                             device=device)
+                             device=device,
+                             verbose=verbose)
                 
                 b = list(map(lambda p: p.join(), processes)) #join processes
      
