@@ -186,11 +186,11 @@ def display_stats(nodesels, problem):
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.05']
-    nodesels_gpu = ['gnn_untrained']
+    nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.15']
+    nodesels_gpu = []
     problems = ["GISP"]
     normalize = True
-    n_instance = 5
+    n_instance = 3
     n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
