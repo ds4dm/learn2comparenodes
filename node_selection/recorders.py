@@ -138,13 +138,9 @@ class CompFeaturizer():
         edge_features = g_data[3]
         y = g_data[4]
 
-        g1 = variable_features[0], constraint_features[0], edge_indices[0], edge_features[0]
-        g2 = variable_features[1], constraint_features[1], edge_indices[1], edge_features[1]
-        
-        if self.normalize:
-            normalize_graph(*g1)
-            normalize_graph(*g2)
-            
+        g1 = variable_features[0], constraint_features[0], edge_indices[0], edge_features[0], torch.transpose(constraint_features[0][-2:],1,0)
+        g2 = variable_features[1], constraint_features[1], edge_indices[1], edge_features[1], torch.transpose(constraint_features[1][-2:],1,0)
+
         return BipartiteGraphPairData(*g1, *g2, y)
         
         
@@ -374,17 +370,17 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation, s is graph0, t is graph1 
     """
-    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, 
-                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, 
-                 y=None):
+    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, bounds_s=None, 
+                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, bounds_t = None,
+                 y=None): 
         
         super().__init__()
         
-        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s  =  (
-            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s)
+        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s, self.bounds_s  =  (
+            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s, bounds_s)
         
-        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t  = (
-            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t)
+        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t, self.bounds_t  = (
+            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t, bounds_t)
         
         self.y = y
         

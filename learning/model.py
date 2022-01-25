@@ -39,8 +39,6 @@ class GNNPolicy(torch.nn.Module):
         hidden_dim2 = 32
         hidden_dim3 = 16
         
-        final_mlp_hidden_dim = 256
-        
         # static data
         cons_nfeats = 1 
         edge_nfeats = 1
@@ -102,6 +100,7 @@ class GNNPolicy(torch.nn.Module):
                       batch.edge_index_s, 
                       batch.edge_attr_s, 
                       batch.variable_features_s, 
+                      batch.bounds_s,
                       batch.constraint_features_s_batch,
                       batch.variable_features_s_batch)
             
@@ -110,6 +109,7 @@ class GNNPolicy(torch.nn.Module):
                       batch.edge_index_t, 
                       batch.edge_attr_t,
                       batch.variable_features_t,
+                      batch.bounds_t,
                       batch.constraint_features_t_batch,
                       batch.variable_features_t_batch)
                 
@@ -117,35 +117,37 @@ class GNNPolicy(torch.nn.Module):
             graph0 = (batch.constraint_features_s, 
                       batch.edge_index_s, 
                       batch.edge_attr_s, 
-                      batch.variable_features_s)
+                      batch.variable_features_s,
+                      batch.bounds_s)
             
         
             graph1 = (batch.constraint_features_t,
                       batch.edge_index_t, 
                       batch.edge_attr_t,
-                      batch.variable_features_t)
+                      batch.variable_features_t,
+                      batch.bounds_t)
         
         if inv:
             graph0, graph1 = graph1, graph0
         
         score0 = self.forward_graph(*graph0) #concatenation of averages variable/constraint features after conv 
         score1 = self.forward_graph(*graph1)
-
+        
         return self.final_mlp(-score0 + score1).squeeze(1)
         
         
        
     def forward_graph(self, constraint_features, edge_indices, edge_features, 
-                       variable_features, constraint_batch=None, variable_batch=None):
+                       variable_features, bbounds, constraint_batch=None, variable_batch=None):
 
         
         #Assume edge indice var to cons, constraint_mask of shape [Nconvs]       
         
         
-        bbounds = constraint_features[-2:]
         variable_features = self.var_embedding(variable_features)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
+        
         
         
         edge_indices_reversed = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
@@ -185,9 +187,8 @@ class GNNPolicy(torch.nn.Module):
         else:
             constraint_avg = torch.mean(constraint_features, axis=0, keepdim=True)
             variable_avg = torch.mean(variable_features, axis=0, keepdim=True)
-            
- 
-        return torch.cat(( variable_avg, constraint_avg, torch.transpose(bbounds,1,0)), dim=1)
+
+        return torch.cat((variable_avg, constraint_avg, bbounds), dim=1)
     
 
     
