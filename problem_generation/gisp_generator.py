@@ -107,17 +107,17 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 
 if __name__ == "__main__":
     instance = None
-    n_cpu = None
-    exp_dir = ""
-    min_n = 60
-    max_n = 50
+    n_cpu = 4
+    exp_dir = "data/GISP/train"
+    min_n = 80
+    max_n = 100
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
     alphaE2 = 0.5
     timelimit = 7200.0
-    solveInstance = False
-    n_instance = 10000
+    solveInstance = True
+    n_instance = 10
     seed = 0
     
 
