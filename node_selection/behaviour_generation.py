@@ -138,6 +138,8 @@ if __name__ == "__main__":
     
     instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
     
+    print(f"Geneating {data_partition} samples from {len(instances)} instance using oracle {oracle}")
+    
     if cpu_count == 1:
         run_episodes(oracle, instances, save_dir)
     else:
