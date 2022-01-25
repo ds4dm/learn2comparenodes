@@ -26,63 +26,28 @@ osp = os.path
 def normalize_graph(constraint_features, 
                     edge_index,
                     edge_attr,
-                    variable_features):
+                    variable_features,
+                    bounds,
+                    bound_normalizor = 1000):
     
-    # variable_normalizer = torch.max(torch.abs(variable_features[:,:2]))
-    # variable_features[:,:2] /= variable_normalizer
-    # variable_features[:,2] /= torch.max(torch.abs(variable_features[:,2]))
-    
-    # constraint_features /= variable_normalizer
-    
-    
-    # def normalize_cons(c):
-    #     associated_edges =  torch.where(edge_index[1] == c)[0]
-    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
-    #                      torch.abs(constraint_features[c]))
-    #     #normalize associated edges
-    #     edge_attr[associated_edges] /= normalizer
-        
-    #     #normalize right hand side
-    #     constraint_features[c] /= normalizer
-    
-    # vars_to_normalize = torch.where( torch.max(torch.abs(variable_features[:, :2]), axis=1)[0] > 1)[0]
 
-    # coeffs = torch.max(torch.abs(variable_features[vars_to_normalize, :2]) , axis=1)[0]
     
-    # for v, cf in zip(vars_to_normalize, coeffs):
-     
-    #   #normaize feature bound
-    #   variable_features[ v, :2] = variable_features[ v, :2]/cf
-     
-    #   #update obj coeff and associated edges
-    #   variable_features[ v, 2 ] = variable_features[ v, 2 ]*cf 
-     
-    #   associated_edges = torch.where(edge_index[0] == v)[0]
-    #   edge_attr[associated_edges] = edge_attr[associated_edges]*cf
+    #normalize objective
+    obj_norm = torch.max(torch.abs(variable_features[:,2]), axis=0)[0].item()
+   
+    var_max_bounds = torch.max(torch.abs(variable_features[:,:2]), axis=1, keepdim=True)[0] 
+    var_max_bounds += var_max_bounds == 0 #remove division by 0
+    var_normalizor = var_max_bounds[edge_index[0]]
+    cons_normalizor = constraint_features[edge_index[1]]
+    normalizor = var_normalizor / cons_normalizor
+
+    variable_features[:,2]/= obj_norm
+    variable_features[:,:2] /= var_max_bounds
+    constraint_features /= constraint_features
+    edge_attr *= normalizor
+    bounds/= bound_normalizor
     
-        
-    # #Normalize constraints 
-    # for c in range(constraint_features.shape[0]):
-        
-    #     associated_edges =  torch.where(edge_index[1] == c)[0]
-    #     normalizer = max(torch.max(torch.abs(edge_attr[associated_edges]), axis=0)[0], 
-    #                       torch.abs(constraint_features[c]))
-        
-    #     #normalize associated edges
-    #     edge_attr[associated_edges] = edge_attr[associated_edges] / normalizer
-        
-    #     #normalize right hand side
-    #     constraint_features[c] = constraint_features[c] / normalizer
-    
-    # #normalize objective
-    # normalizer = torch.max(torch.abs(variable_features[:,2]), axis=0)[0]
-    # variable_features[:,2] = variable_features[:,2] / normalizer
-    
-    constraint_features /= 300.0
-    variable_features[:3] /= 300.0
-    edge_attr /= 300.0
-    
-    return (constraint_features, edge_index, edge_attr, variable_features)
+    return (constraint_features, edge_index, edge_attr, variable_features, bounds)
 
 #main
 def test1(data):
@@ -92,9 +57,6 @@ def test1(data):
                 and torch.allclose(data.edge_attr_s, data.edge_attr_t))))
     assert( torch.max(data.variable_features_s) <= 1 and torch.min(data.variable_features_s) >= -1 )
     assert( torch.max(data.constraint_features_s) <= 1 and torch.min(data.constraint_features_s) >= -1 )
-    assert( torch.max(data.edge_attr_s) <= 1 and torch.min(data.edge_attr_s) >= -1 )
-    
-
 
 def inspect(geom_dataset):
     
@@ -169,10 +131,20 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
             
             batch = batch.to(device)
             if normalize:
-                normalize_graph(batch.constraint_features_s, batch.edge_index_s, batch.edge_attr_s, batch.variable_features_s)
-                normalize_graph(batch.constraint_features_t, batch.edge_index_t, batch.edge_attr_t, batch.variable_features_t)
+                #IN place operations
+                normalize_graph(batch.constraint_features_s, 
+                                batch.edge_index_s, 
+                                batch.edge_attr_s,
+                                batch.variable_features_s,
+                                batch.bounds_s)
+                
+                normalize_graph(batch.constraint_features_t, 
+                                batch.edge_index_t,
+                                batch.edge_attr_t,
+                                batch.variable_features_t,
+                                batch.bounds_t)
                 #test1(batch)
-            
+        
             y_true = 0.5*batch.y + 0.5 #0,1 label
             y_proba = policy(batch)
             y_pred = torch.round(y_proba)
@@ -202,12 +174,14 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
 if __name__ == "__main__":
     
     problems = ["GISP"]
-    lr = 0.005
+    lr = 0.01
     n_epoch = 5
     patience = 10
     early_stopping = 20
     normalize = True
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    batch_train = 16
+    batch_valid  = 256
     
     loss_fn = torch.nn.BCELoss()
     optimizer_fn = torch.optim.Adam
@@ -227,6 +201,12 @@ if __name__ == "__main__":
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
+        if sys.argv[i] == '-batch_train':
+            batch_train = int(sys.argv[i + 1])
+        if sys.argv[i] == '-batch_valid':
+            batch_valid = int(sys.argv[i + 1])
+            
+  
     
     train_losses = []
     valid_losses = []
@@ -234,7 +214,7 @@ if __name__ == "__main__":
     valid_accs = []
     for problem in problems:
     
-        train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+        train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ][:40]
         
         valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
         
@@ -245,7 +225,7 @@ if __name__ == "__main__":
         
     # TO DO : learn something from the data
         train_loader = torch_geometric.loader.DataLoader(train_data, 
-                                                         batch_size=1, 
+                                                         batch_size=batch_train, 
                                                          shuffle=True, 
                                                          follow_batch=['constraint_features_s', 
                                                                        'constraint_features_t',
@@ -253,7 +233,7 @@ if __name__ == "__main__":
                                                                        'variable_features_t'])
         
         valid_loader = torch_geometric.loader.DataLoader(valid_data, 
-                                                         batch_size=1, 
+                                                         batch_size=batch_valid, 
                                                          shuffle=False, 
                                                          follow_batch=['constraint_features_s',
                                                                        'constraint_features_t',
@@ -271,8 +251,10 @@ if __name__ == "__main__":
         print(f"Number of epochs:    {n_epoch}")
         print(f"Normalize:           {normalize}")
         print(f"Device:              {device}")
+        print(f"Batch Size Train:    {batch_train}")
+        print(f"Batch Size Valid     {batch_valid}")
         print(f"Loss fct:            {loss_fn}")
-        print(f"Optimizer:        \n {optimizer}")  
+        print(f"Optimizer:           {optimizer_fn}")  
         print(f"GNN Architecture: \n {policy}")
         
         
