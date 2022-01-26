@@ -46,7 +46,8 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
     if "gnn_trained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer(normalize=normalize)
+        from learning.train import normalize_graph
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
         oracle_estimator_trained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
@@ -57,7 +58,8 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
     if "gnn_untrained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer(normalize=normalize)
+        from learning.train import normalize_graph
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
         oracle_estimator_untrained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
@@ -66,10 +68,10 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
         model.includeNodesel(oracle_estimator_untrained, "gnn_untrained", 'testing',100, 100)
         
     #creating appropriate oracle 
-    if 'oracle 0' in nodesels:
+    if 'oracle_0' in nodesels:
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
         oracle_0 = OracleNodeSelectorAbdel("optimal_plunger", inv_proba=0)
-        model.includeNodesel(oracle_0, 'oracle 0', 'testing',100, 100)
+        model.includeNodesel(oracle_0, 'oracle_0', 'testing',100, 100)
         
     def find_2d(matrix, elem):
         for idx, array in enumerate(matrix):
@@ -77,7 +79,7 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
                 return idx, array
         return -1, ""
     
-    oracle_idx, oracle_params = find_2d([ n.split(" ") for n in nodesels ], 'oracle')
+    oracle_idx, oracle_params = find_2d([ n.split("_") for n in nodesels ], 'oracle')
     if oracle_idx != -1:
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorAbdel
         inv_proba = 0 if len(oracle_params) == 1 else float(oracle_params[1]) 
@@ -217,7 +219,14 @@ if __name__ == "__main__":
             
     nodesels = nodesels_cpu + nodesels_gpu
     
-    print(f"Testing {n_instance} instances with {cpu_count} CPUs node selection methods {nodesels} on problems {problems}, ML {'with' if normalize else 'without'} feature normalization on {device}")
+    print("Evaluation")
+    print(f"  Problem:                    {','.join(problems)}")
+    print(f"  n_instance/problem:         {n_instance}")
+    print(f"  n_trial/instance:           {n_trial}")
+    print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
+    print(f"  Device for GNN inference:   {device}")
+    print(f"  Normalize features:         {normalize}")
+    
     
     for problem in problems:
 
@@ -268,7 +277,7 @@ if __name__ == "__main__":
                 checker = []
                 for p in range(cpu_count):
                     checker +=instances[ p*chunck_size : (p+1)*chunck_size]
-                print(f"len instances parralelixed : {len(checker)}")
+                #print(f"len instances parralelixed : {len(checker)}")
         
         
                 a = list(map(lambda p: p.start(), processes)) #run processes
