@@ -46,7 +46,8 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
     if "gnn_trained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer(normalize=normalize)
+        from learning.train import normalize_graph
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
         oracle_estimator_trained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
@@ -57,7 +58,8 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
     if "gnn_untrained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
-        comp_featurizer = CompFeaturizer(normalize=normalize)
+        from learning.train import normalize_graph
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
         oracle_estimator_untrained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,

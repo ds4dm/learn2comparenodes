@@ -17,10 +17,10 @@ import os.path as osp
 
 class CompFeaturizer():
     
-    def __init__(self, save_dir=None, instance_name=None, normalize=False):
+    def __init__(self, save_dir=None, instance_name=None, normalizor=None):
         self.instance_name = instance_name
         self.save_dir = save_dir
-        self.normalize = normalize
+        self.normalizor = normalizor
     
     def set_save_dir(self, save_dir):
         self.save_dir = save_dir
@@ -77,9 +77,12 @@ class CompFeaturizer():
         edge_features = g_data[3]
         y = g_data[4]
 
-        g1 = variable_features[0], constraint_features[0], edge_indices[0], edge_features[0], torch.transpose(constraint_features[0][-2:],1,0)
-        g2 = variable_features[1], constraint_features[1], edge_indices[1], edge_features[1], torch.transpose(constraint_features[1][-2:],1,0)
+        g1 = constraint_features[0], edge_indices[0], edge_features[0], variable_features[0], torch.transpose(constraint_features[0][-2:],1,0)
+        g2 = constraint_features[1], edge_indices[1], edge_features[1], variable_features[1], torch.transpose(constraint_features[1][-2:],1,0)
 
+        if self.normalizor != None:
+            self.normalizor(*g1)
+            self.normalizor(*g2)
         return BipartiteGraphPairData(*g1, *g2, y)
         
         
@@ -309,8 +312,8 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation, s is graph0, t is graph1 
     """
-    def __init__(self, variable_features_s=None, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, bounds_s=None, 
-                 variable_features_t=None, constraint_features_t=None, edge_indices_t=None, edge_features_t=None, bounds_t = None,
+    def __init__(self, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, variable_features_s=None, bounds_s=None, 
+                 constraint_features_t=None, edge_indices_t=None, edge_features_t=None, variable_features_t=None,  bounds_t = None,
                  y=None): 
         
         super().__init__()
