@@ -169,8 +169,7 @@ def display_stats(nodesels, problem, alternative_stdout=None):
        plt.title("decisions gnn trained")
        plt.hist(decisions_gnn_trained[:,0])
        plt.savefig("decisions_gnn_trained.png")
-       print(" % Oracle 1's decision : { np.mean(decisions_gnn_trained[:,1] == 1) : 0.3f}")
-       print(f"Error in trained GNN : {1-np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
+       print(f"Accuracy in trained GNN : {np.mean( np.round(decisions_gnn_trained[:,0]) == 0.5*decisions_gnn_trained[:,1] + 0.5 ):0.3f}"  )
        
    if 'gnn_untrained' in nodesels:
        decisions_gnn_untrained = np.genfromtxt("decisions_gnn_untrained.csv", delimiter=",")
@@ -178,8 +177,7 @@ def display_stats(nodesels, problem, alternative_stdout=None):
        plt.title("decisions gnn untrained")
        plt.hist(decisions_gnn_untrained[:,0])
        plt.savefig("decisions_gnn_untrained.png")
-       print(f" % Oracle 1's decision : { np.mean(decisions_gnn_untrained[:,1] == 1) : 0.3f}")
-       print(f"Error in untrained GNN : {1-np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
+       print(f"Accuracy in untrained GNN : {np.mean( np.round(decisions_gnn_untrained[:,0]) == 0.5*decisions_gnn_untrained[:,1]+0.5  ):0.3f}"  )
 
      
    if 'random' in nodesels:
@@ -198,11 +196,11 @@ def display_stats(nodesels, problem, alternative_stdout=None):
        
 if __name__ == "__main__":
     
-    cpu_count = 1
+    cpu_count = 4
     nodesels = [ 'random', 'estimate', 'oracle_0', 'gnn_trained', 'gnn_untrained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 10
+    n_instance = 40
     n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     verbose = False
