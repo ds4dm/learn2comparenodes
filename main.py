@@ -47,24 +47,28 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
         from learning.train import normalize_graph
-        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
+        
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph if normalize else None)
         oracle_estimator_trained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
                                                        record_fpath="decisions_gnn_trained.csv",
                                                        use_trained_gnn=True)
+        
         model.includeNodesel(oracle_estimator_trained, "gnn_trained", 'testing',100, 100)
     
     if "gnn_untrained" in nodesels:
         from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
         from node_selection.node_selectors.oracle_selectors import OracleNodeSelectorEstimator
         from learning.train import normalize_graph
-        comp_featurizer = CompFeaturizer(normalizor=normalize_graph)
+        
+        comp_featurizer = CompFeaturizer(normalizor=normalize_graph if normalize else None)
         oracle_estimator_untrained = OracleNodeSelectorEstimator(problem,
                                                        comp_featurizer,
                                                        DEVICE=device,
                                                        record_fpath="decisions_gnn_untrained.csv",
                                                        use_trained_gnn=False)
+        
         model.includeNodesel(oracle_estimator_untrained, "gnn_untrained", 'testing',100, 100)
         
     #creating appropriate oracle 
@@ -150,9 +154,9 @@ def display_stats(nodesels, problem, alternative_stdout=None):
         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:-1]
         print(f"  {nodesel} ")
-        #print(f"    Number of instances solved    : {len(nnodes)}")
+        print(f"    Number of instances solved    : {len(nnodes)}")
         print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
-        #print(f"    Mean solving time             : {np.mean(times):.2f}")
+        print(f"    Mean solving time             : {np.mean(times):.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}")
         print("--------------------------")
@@ -266,27 +270,37 @@ if __name__ == "__main__":
         
         for _ in range(n_trial):
             
+            if cpu_count == 1:
+                record_stats(nodesels, 
+                             instances, 
+                             problem,
+                             verbose=verbose,
+                             device=device,
+                             normalize=normalize)
+                continue
+                
+            
             chunck_size = int(np.ceil(len(instances)/cpu_count))
             processes = [  md.Process(name=f"worker {p}", 
                                             target=partial(record_stats,
                                                             nodesels=nodesels,
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem,
-                                                            verbose=verbose))
+                                                            verbose=verbose,
+                                                            device=device,
+                                                            normalize=normalize))
                             for p in range(cpu_count) ]
             checker = []
             for p in range(cpu_count):
                 checker +=instances[ p*chunck_size : (p+1)*chunck_size]
             print(f"Join n_instances parralelixed : {len(checker)}")
-    
-    
             a = list(map(lambda p: p.start(), processes)) #run processes
-        
             b = list(map(lambda p: p.join(), processes)) #join processes
      
         print("==================================")
         print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
         display_stats(nodesels, problem, alternative_stdout=consol_out)
+        sys.stdout = consol_out
 
 
 
