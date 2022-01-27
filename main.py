@@ -23,7 +23,7 @@ from functools import partial
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def record_stats(nodesels, instances, problem, normalize=False, device='cpu', verbose=False):
+def record_stats(nodesels, instances, problem, normalize=True, device='cpu', verbose=False):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
