@@ -142,7 +142,7 @@ def record_stats(nodesels, instances, problem, normalize=False, device='cpu', ve
 
 
 
-def display_stats(nodesels, problem):
+def display_stats(nodesels, problem, alternative_stdout=None):
    
    print("========================")
    print(f'{problem}') 
@@ -184,15 +184,21 @@ def display_stats(nodesels, problem):
        plt.title("decisions rand")
        plt.hist(decisions_rand)
        plt.savefig("decisions_rand.png")
-   
+
+
+   if alternative_stdout != None:
+       sys.stdout = alternative_stdout
+       display_stats(nodesels, problem, alternative_stdout=None)
+       
+       
+       
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels_cpu = ['random', 'estimate', 'oracle 0', 'oracle 0.15']
-    nodesels_gpu = []
+    nodesels = [ 'random', 'oracle_0', 'gnn_trained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 3
+    n_instance = 4
     n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     verbose = False
@@ -200,10 +206,8 @@ if __name__ == "__main__":
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
-        if sys.argv[i] == '-nodesels_cpu':
+        if sys.argv[i] == '-nodesels':
             nodesels_cpu = str(sys.argv[i + 1]).split(',')
-        if sys.argv[i] == '-nodesels_gpu':
-            nodesels_gpu = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-problems':
             problems = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-normalize':
@@ -216,18 +220,23 @@ if __name__ == "__main__":
             device = str(sys.argv[i + 1])
         if sys.argv[i] == '-verbose':
             verbose = bool(int(sys.argv[i + 1]))
-            
-    nodesels = nodesels_cpu + nodesels_gpu
     
-    print("Evaluation")
-    print(f"  Problem:                    {','.join(problems)}")
-    print(f"  n_instance/problem:         {n_instance}")
-    print(f"  n_trial/instance:           {n_trial}")
-    print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
-    print(f"  Device for GNN inference:   {device}")
-    print(f"  Normalize features:         {normalize}")
+    consol_out = sys.stdout
     
+    for i in range(2):
+        if i == 0:
+            sys.stdout = consol_out
+        else:
+            sys.stdout = open("evaluation.log", "w")
     
+        print("Evaluation")
+        print(f"  Problem:                    {','.join(problems)}")
+        print(f"  n_instance/problem:         {n_instance}")
+        print(f"  n_trial/instance:           {n_trial}")
+        print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
+        print(f"  Device for GNN inference:   {device}")
+        print(f"  Normalize features:         {normalize}")
+
     for problem in problems:
 
         #clear records
@@ -257,43 +266,27 @@ if __name__ == "__main__":
         
         for _ in range(n_trial):
             
-            if cpu_count == 1:
-                record_stats(nodesels,
-                             instances,
-                             problem, 
-                             normalize=normalize, 
-                             device=device,
-                             verbose=verbose)
-            else:
+            chunck_size = int(np.ceil(len(instances)/cpu_count))
+            processes = [  md.Process(name=f"worker {p}", 
+                                            target=partial(record_stats,
+                                                            nodesels=nodesels,
+                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                            problem=problem,
+                                                            verbose=verbose))
+                            for p in range(cpu_count) ]
+            checker = []
+            for p in range(cpu_count):
+                checker +=instances[ p*chunck_size : (p+1)*chunck_size]
+            print(f"Join n_instances parralelixed : {len(checker)}")
+    
+    
+            a = list(map(lambda p: p.start(), processes)) #run processes
         
-                chunck_size = int(np.ceil(len(instances)/cpu_count))
-                processes = [  md.Process(name=f"worker {p}", 
-                                                target=partial(record_stats,
-                                                                nodesels=nodesels_cpu,
-                                                                instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                                problem=problem,
-                                                                verbose=verbose))
-                                for p in range(cpu_count) ]
-                checker = []
-                for p in range(cpu_count):
-                    checker +=instances[ p*chunck_size : (p+1)*chunck_size]
-                #print(f"len instances parralelixed : {len(checker)}")
-        
-        
-                a = list(map(lambda p: p.start(), processes)) #run processes
-                   
-                record_stats(nodesels_gpu,
-                             instances,
-                             problem, 
-                             normalize=normalize, 
-                             device=device,
-                             verbose=verbose)
-                
-                b = list(map(lambda p: p.join(), processes)) #join processes
+            b = list(map(lambda p: p.join(), processes)) #join processes
      
-
+        print("==================================")
         print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
-        display_stats(nodesels, problem)
+        display_stats(nodesels, problem, alternative_stdout=consol_out)
 
 
 
