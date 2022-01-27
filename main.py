@@ -209,7 +209,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
         if sys.argv[i] == '-nodesels':
-            nodesels_cpu = str(sys.argv[i + 1]).split(',')
+            nodesels = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-problems':
             problems = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-normalize':
