@@ -76,9 +76,9 @@ class CompFeaturizer():
         edge_indices = g_data[2]
         edge_features = g_data[3]
         y = g_data[4]
-
-        g1 = constraint_features[0], edge_indices[0], edge_features[0], variable_features[0], torch.transpose(constraint_features[0][-2:],1,0)
-        g2 = constraint_features[1], edge_indices[1], edge_features[1], variable_features[1], torch.transpose(constraint_features[1][-2:],1,0)
+        
+        g1 = constraint_features[0], edge_indices[0], edge_features[0], variable_features[0], torch.clone(torch.transpose(constraint_features[0][-2:],1,0))
+        g2 = constraint_features[1], edge_indices[1], edge_features[1], variable_features[1], torch.clone(torch.transpose(constraint_features[1][-2:],1,0))
 
         if self.normalizor != None:
             self.normalizor(*g1)
