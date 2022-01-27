@@ -1,0 +1,62 @@
+Evaluation
+  Problem:                    GISP
+  n_instance/problem:         100
+  n_trial/instance:           1
+  Nodeselectors evaluated:    random,estimate,oracle_0,gnn_trained,gnn_untrained
+  Device for GNN inference:   cpu
+  Normalize features:         True
+Join n_instances parralelixed : 100
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+using trained gnn
+<All keys matched successfully>
+using a randomly initialised gnn
+==================================
+SUMMARIES for 1 trials with 100 instances
+========================
+GISP
+  random 
+    Number of instances solved    : 93
+    Mean number of node created   : 205.97
+    Mean solving time             : 5.63
+--------------------------
+  estimate 
+    Number of instances solved    : 93
+    Mean number of node created   : 202.97
+    Mean solving time             : 3.23
+--------------------------
+  oracle_0 
+    Number of instances solved    : 93
+    Mean number of node created   : 132.39
+    Mean solving time             : 3.13
+--------------------------
+  gnn_trained 
+    Number of instances solved    : 93
+    Mean number of node created   : 252.06
+    Mean solving time             : 78.08
+--------------------------
+  gnn_untrained 
+    Number of instances solved    : 93
+    Mean number of node created   : 282.26
+    Mean solving time             : 70.85
+--------------------------
+ % Oracle 1's decision : { np.mean(decisions_gnn_trained[:,1] == 1) : 0.3f}
+Error in trained GNN : 0.023
+ % Oracle 1's decision :  0.625
+Error in untrained GNN : 0.276
