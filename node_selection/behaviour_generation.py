@@ -17,7 +17,7 @@ Created on Tue Oct 12 12:54:57 2021
 
 import os
 import sys
-from node_selectors.oracle_selectors import OracleNodeSelectorAbdel
+from node_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompFeaturizer
 from pathlib import Path 
 import pyscipopt.scip as sp
@@ -38,15 +38,16 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
         
     def nodecomp(self, node1, node2):
-        comp_res = super().nodecomp(node1, node2)
+        comp_res, comp_type = super().nodecomp(node1, node2, return_type=True)
         
-        self.comp_behaviour_saver.save_comp(self.model, node1, 
-                                            node2,
-                                            comp_res,
-                                            self.counter)
-        
-        print("saved comp # " + str(self.counter))
-        self.counter += 1
+        if comp_type == 1 or comp_type == -1:
+            self.comp_behaviour_saver.save_comp(self.model, node1, 
+                                                node2,
+                                                comp_res,
+                                                self.counter) 
+            print("saved comp # " + str(self.counter))
+            self.counter += 1
+            
         return comp_res
 
 
@@ -103,7 +104,7 @@ if __name__ == "__main__":
     
     oracle = 'optimal_plunger'
     problem = 'GISP'
-    data_partition = 'train'
+    data_partitions = ['train', 'valid']
     cpu_count = 1
     
     with open("nnodes.csv", "w") as f:
@@ -120,42 +121,42 @@ if __name__ == "__main__":
             oracle = str(sys.argv[i + 1])
         if sys.argv[i] == '-problem':
             problem = str(sys.argv[i + 1])
-        if sys.argv[i] == '-data_partition':
-            data_partition = str(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             cpu_count = int(sys.argv[i + 1])
    
   
+    for data_partition in data_partitions:
         
-       
-    save_dir = f"./data/{problem}/{data_partition}"
-
-    try:
-        os.makedirs(save_dir)
-    except FileExistsError:
-        ""
+        save_dir = f"./data/{problem}/{data_partition}"
     
-    
-    instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
-    
-    print(f"Geneating {data_partition} samples from {len(instances)} instance using oracle {oracle}")
-    
-    if cpu_count == 1:
-        run_episodes(oracle, instances, save_dir)
-    else:
-        chunck_size = int(np.ceil(len(instances)/cpu_count))
-        processes = [  md.Process(name=f"worker {p}", 
-                                        target=partial(run_episodes,
-                                                        oracle_type=oracle,
-                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                        save_dir=save_dir))
-                        for p in range(cpu_count) ]
+        try:
+            os.makedirs(save_dir)
+        except FileExistsError:
+            ""
+        
+        
+        instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
+        
+        print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
+        
+        if cpu_count == 1:
+            run_episodes(oracle, instances, save_dir)
+        else:
+            chunck_size = int(np.ceil(len(instances)/cpu_count))
+            processes = [  md.Process(name=f"worker {p}", 
+                                            target=partial(run_episodes,
+                                                            oracle_type=oracle,
+                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                            save_dir=save_dir))
+                            for p in range(cpu_count) ]
+                
+            a = list(map(lambda p: p.start(), processes)) #run processes
+            b = list(map(lambda p: p.join(), processes)) #join processes
             
-        a = list(map(lambda p: p.start(), processes)) #run processes
-        b = list(map(lambda p: p.join(), processes)) #join processes
-        
+            
     nnodes = np.genfromtxt("nnodes.csv", delimiter=",")[:-1]
     times = np.genfromtxt("times.csv", delimiter=",")[:-1]
+        
     print(f"Mean number of node created  {np.mean(nnodes)}")
     print(f"Mean solving time  {np.mean(times)}")
     print(f"Median number of node created  {np.median(nnodes)}")

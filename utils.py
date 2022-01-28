@@ -29,6 +29,10 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
         from node_selection.node_selectors.classic_selectors import Random
         random = Random(record_fpath='decisions_rand.csv')
         model.includeNodesel(random, "random", 'testing',100, 100)
+    if "estimate_custom" in nodesels:
+        from node_selection.node_selectors.classic_selectors import EstimateComp
+        comp = EstimateComp()
+        model.includeNodesel(comp, "estimate_custom", 'testing',100, 100)
         
     #creating oracle estimator nodesels
     if "gnn_trained" in nodesels:

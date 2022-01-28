@@ -50,21 +50,14 @@ if __name__ == "__main__":
         if sys.argv[i] == '-verbose':
             verbose = bool(int(sys.argv[i + 1]))
     
-    consol_out = sys.stdout
-    
-    for i in range(2):
-        if i == 0:
-            sys.stdout = consol_out
-        else:
-            sys.stdout = open("evaluation.log", "w")
-    
-        print("Evaluation")
-        print(f"  Problem:                    {','.join(problems)}")
-        print(f"  n_instance/problem:         {n_instance}")
-        print(f"  n_trial/instance:           {n_trial}")
-        print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
-        print(f"  Device for GNN inference:   {device}")
-        print(f"  Normalize features:         {normalize}")
+
+    print("Evaluation")
+    print(f"  Problem:                    {','.join(problems)}")
+    print(f"  n_instance/problem:         {n_instance}")
+    print(f"  n_trial/instance:           {n_trial}")
+    print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
+    print(f"  Device for GNN inference:   {device}")
+    print(f"  Normalize features:         {normalize}")
 
     for problem in problems:
 
@@ -116,8 +109,7 @@ if __name__ == "__main__":
      
         print("==================================")
         print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
-        display_stats(nodesels, problem, alternative_stdout=consol_out)
-        sys.stdout = consol_out
+        display_stats(nodesels, problem)
 
 
 
