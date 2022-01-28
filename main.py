@@ -83,7 +83,7 @@ if __name__ == "__main__":
                     f.close()
 
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[4:n_instance+4]
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
         
         for _ in range(n_trial):
             
