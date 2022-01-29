@@ -36,7 +36,7 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
     
     oracles = []
     for nodesel in nodesels :
-        
+        comp = None
         if re.match('custom_*', nodesel):
             name = nodesel.split("_")[-1]
             comp = CustomNodeSelector(name)
@@ -59,13 +59,8 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
             comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
             oracles.append(comp)
         
-        try:
+        if comp != None:
             model.includeNodesel(comp, nodesel, 'testing', 100, 100)
-        except:
-            '' #tying to include a nodesel already present
-        
-    
-    
     
     
     for instance in instances:
