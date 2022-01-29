@@ -12,7 +12,6 @@ Created on Tue Oct 19 19:24:33 2021
 
 
 from pathlib import Path 
-import pyscipopt.scip as sp
 import numpy as np
 import torch
 import sys
@@ -23,8 +22,8 @@ from utils import record_stats, display_stats
        
 if __name__ == "__main__":
     
-    cpu_count = 1
-    nodesels = [ 'gnn_trained', 'gnn_untrained','oracle_0', 'estimate', 'random']
+    cpu_count = 4
+    nodesels = [ 'oracle', 'gnn_trained','estimate', 'gnn_untrained', 'custom_estimate']
     problems = ["GISP"]
     normalize = True
     n_instance = 10
@@ -76,7 +75,7 @@ if __name__ == "__main__":
                     f.close()
 
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
+        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[4:n_instance+4]
         
         for _ in range(n_trial):
             
@@ -110,32 +109,5 @@ if __name__ == "__main__":
         print("==================================")
         print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
         display_stats(nodesels, problem)
-
-
-
-
-
-
-"""
-GISP
-{'oracle': [(21980, 536.88903),
-  (8485, 172.335328),
-  (4880, 106.475179),
-  (3868, 75.894912),
-  (3107, 52.380571),
-  (6803, 100.78423)],
- 'estimate': [(29442, 481.002816),
-  (9990, 154.707946),
-  (8920, 131.88883),
-  (6870, 82.019173),
-  (5031, 62.321967),
-  (8453, 117.592189)],
- 'dfs': [(25974, 383.803651),
-  (16747, 188.050372),
-  (7569, 92.087239),
-  (7759, 73.404249),
-  (6688, 59.423487),
-  (9597, 103.478273)]}
-"""
    
 
