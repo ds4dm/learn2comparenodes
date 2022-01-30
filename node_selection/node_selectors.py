@@ -370,10 +370,10 @@ class CustomNodeSelector(Nodesel):
         
      
      #random
-     def random_nodeselect(self):
-          return {"selnode": self.model.getBestNode()}
-     def random_nodecomp(self, node1,node2):
-          return -1 if np.random.rand() < 0.5 else 1
+    def random_nodeselect(self):
+        return {"selnode": self.model.getBestNode()}
+    def random_nodecomp(self, node1,node2):
+        return -1 if np.random.rand() < 0.5 else 1
 
     
 
