@@ -16,6 +16,7 @@ import torch
 from pyscipopt import Nodesel
 from model import GNNPolicy
 import time
+import numpy as np
 
 
 
@@ -285,11 +286,10 @@ class CustomNodeSelector(Nodesel):
         return res
     
     
-    
+    #Estimate 
     def estimate_nodeselect(self):
         return {"selnode": self.model.getBestNode()}
     
-    #Estimate 
     def estimate_nodecomp(self, node1,node2):
         
         #estimate 
@@ -368,7 +368,12 @@ class CustomNodeSelector(Nodesel):
         #less deep node => better
         return d1 - d2
         
-        
+     
+     #random
+     def random_nodeselect(self):
+          return {"selnode": self.model.getBestNode()}
+     def random_nodecomp(self, node1,node2):
+          return -1 if np.random.rand() < 0.5 else 1
 
     
 
