@@ -14,11 +14,11 @@ from learning.train import normalize_graph
 import re
 
 
-def setup_oracles(model, optsol, oracles):
+def setup_oracles(model, optsol, oracles, device):
     for o in oracles:
         o.setOptsol(optsol)
         try:
-            o.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss()))
+            o.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
         except AttributeError: #oracle Abdel has no lp feature recorder
             ''
         
@@ -26,7 +26,7 @@ def setup_oracles(model, optsol, oracles):
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def record_stats(nodesels, instances, problem, normalize=True, device='cpu', verbose=False):
+def record_stats(nodesels, instances, problem, device, normalize, verbose=False):
     
     nodesels_record = dict((nodesel, []) for nodesel in nodesels)
     model = sp.Model()
@@ -35,6 +35,7 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
     model.setIntParam('randomization/randomseedshift',9)
     
     oracles = []
+    
     for nodesel in nodesels :
         comp = None
         if re.match('custom_*', nodesel):
@@ -43,11 +44,12 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
             
         elif nodesel in ['gnn_trained', 'gnn_untrained']:
             trained = nodesel.split('_')[-1] == "trained"            
-            comp_featurizer = CompFeaturizer(normalizor=normalize_graph if normalize else None)
+            comp_featurizer = CompFeaturizer()
+            feature_normalizor = normalize_graph if normalize else lambda x: x
             comp = OracleNodeSelectorEstimator(problem,
                                                comp_featurizer,
-                                               DEVICE=device,
-                                               record_fpath=f"decisions_{nodesel}.csv",
+                                               device,
+                                               feature_normalizor,
                                                use_trained_gnn=trained)
             oracles.append(comp)
         
@@ -71,7 +73,7 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
         
         
         #setup oracles
-        setup_oracles(model, optsol, oracles)
+        setup_oracles(model, optsol, oracles, device)
             
         if verbose:    
             print("----------------------------")

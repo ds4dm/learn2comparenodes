@@ -83,9 +83,9 @@ if __name__ == "__main__":
                 record_stats(nodesels, 
                              instances, 
                              problem,
-                             verbose=verbose,
-                             device=device,
-                             normalize=normalize)
+                             device,
+                             normalize,
+                             verbose=verbose)
                 continue
                 
             
@@ -95,9 +95,9 @@ if __name__ == "__main__":
                                                             nodesels=nodesels,
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem,
-                                                            verbose=verbose,
                                                             device=device,
-                                                            normalize=normalize))
+                                                            normalize=normalize,
+                                                            verbose=verbose))
                             for p in range(cpu_count) ]
             checker = []
             for p in range(cpu_count):
