@@ -41,14 +41,14 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     def nodecomp(self, node1, node2):
         comp_res, comp_type = super().nodecomp(node1, node2, return_type=True)
         
-  
-        self.comp_behaviour_saver.save_comp(self.model, node1, 
-                                            node2,
-                                            comp_res,
-                                            self.counter) 
+        if comp_type in [-1,1]:
+            self.comp_behaviour_saver.save_comp(self.model, node1, 
+                                                node2,
+                                                comp_res,
+                                                self.counter) 
         
-        print("saved comp # " + str(self.counter))
-        self.counter += 1
+            print("saved comp # " + str(self.counter))
+            self.counter += 1
         
         if comp_type in [-1,1]:
             comp_res = -1 if comp_res == 1 else 1
