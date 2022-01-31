@@ -218,7 +218,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
     
 class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     
-    def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
+    def __init__(self, problem, comp_featurizer, device, feature_normalizor, record_fpath=None, use_trained_gnn=True):
         super().__init__("optimal_plunger", inv_proba=0)
         
         policy = GNNPolicy()
@@ -231,16 +231,21 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         self.comp_featurizer = comp_featurizer
         self.device = device
         self.feature_normalizor = feature_normalizor
+        self.record_fpath = record_fpath
         
         self.fe_time = 0
         self.fn_time = 0
         self.inference_time = 0
+        self.counter = 0
         
         
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
-        self.inference_time = 0
+        
         self.fe_time = 0
+        self.fn_time = 0
+        self.inference_time = 0
+        self.counter = 0
     
     def nodecomp(self, node1,node2):
         
@@ -267,8 +272,16 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         start = time.time()
         
         decision = self.policy(batch).item() 
+        oracle_decision = super().nodecomp(node1, node2)
         
         end = time.time()
         self.inference_time += (end - start)
+        
+        self.counter += 1
+        
+        if self.record_fpath != None:
+            with open(f"{self.record_fpath}", "a+") as f:
+                f.write(f"{decision:0.3f},{oracle_decision}\n")
+                f.close()
         
         return -1 if decision < 0.5 else 1

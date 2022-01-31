@@ -17,16 +17,16 @@ import torch
 import sys
 import multiprocessing as md
 from functools import partial
-from utils import record_stats, display_stats
+from utils import record_stats, display_stats, clear_records
 
        
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = [ 'oracle', 'gnn_trained','estimate', 'gnn_untrained', 'custom_estimate']
+    nodesels = [ 'gnn_untrained', 'gnn_trained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 10
+    n_instance = 5
     n_trial = 1
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     verbose = False
@@ -61,19 +61,7 @@ if __name__ == "__main__":
     for problem in problems:
 
         #clear records
-        for nodesel in nodesels:
-            with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
-                f.write("")
-                f.close()
-            with open(f"times_{problem}_{nodesel}.csv", "w") as f:
-                f.write("")
-                f.close()
-            if nodesel == "gnn_trained" or nodesel == "gnn_untrained" or nodesel == "random":
-                #clear decisions make by oracle
-                with open(f"decisions_{nodesel}.csv", "w") as f:
-                    f.write("")
-                    f.close()
-
+        clear_records(problem, nodesels)
 
         instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
         

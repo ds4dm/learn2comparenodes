@@ -12,8 +12,27 @@ from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
 from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
 from learning.train import normalize_graph
 import re
+import numpy as np
+import matplotlib.pyplot as plt
 
 
+
+def clear_records(problem, nodesels):    
+    
+    for nodesel in nodesels:
+        with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
+            f.write("")
+            f.close()
+        with open(f"times_{problem}_{nodesel}.csv", "w") as f:
+            f.write("")
+            f.close()
+        with open(f"ncomp_{problem}_{nodesel}.csv", "w") as f:
+            f.write("")
+            f.close()
+
+            
+            
+            
 def setup_oracles(model, optsol, oracles, device):
     for o in oracles:
         o.setOptsol(optsol)
@@ -43,13 +62,14 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
             comp = CustomNodeSelector(name)
             
         elif nodesel in ['gnn_trained', 'gnn_untrained']:
-            trained = nodesel.split('_')[-1] == "trained"            
+            trained = nodesel.split('_')[-1] == "trained"  
             comp_featurizer = CompFeaturizer()
             feature_normalizor = normalize_graph if normalize else lambda x: x
             comp = OracleNodeSelectorEstimator(problem,
                                                comp_featurizer,
                                                device,
                                                feature_normalizor,
+                                               record_fpath=f"decisions_{nodesel}.csv",
                                                use_trained_gnn=trained)
             oracles.append(comp)
         
@@ -106,11 +126,11 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
 
 
 def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
-    import matplotlib.pyplot as plt
-    import numpy as np
-        
+    
     print("========================")
     print(f'{problem}') 
+
+    
     for nodesel in nodesels:
          nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
          times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
@@ -120,10 +140,20 @@ def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
          print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
          print(f"    Mean solving time             : {np.mean(times):.2f}")
          #print(f"    Median number of node created : {np.median(nnodes):.2f}")
-         #print(f"    Median solving time           : {np.median(times):.2f}")
+         #print(f"    Median solving time           : {np.median(times):.2f}""
 
-    
-    if alternative_stdout != None:
-        sys.stdout = alternative_stdout
-        display_stats(nodesels, problem, alternative_stdout=None)
+
         
+    if nodesel in ['gnn_trained', 'gnn_untrained']:
+        decisions = np.genfromtxt(f'decisions_{nodesel}.csv', delimiter=',')
+        plt.figure()
+        plt.title(f'decisions {nodesel}')
+        plt.hist(decisions[:,0])
+        plt.savefig(f'decisions_{nodesel}.png')
+        print(f'    Number of comparaison         : {len(decisions)}')
+        print(f'    Accuracy                      : {np.mean( np.round(decisions[:,0]) == 0.5*decisions[:,1]+0.5  ):0.3f}' )
+        
+
+    print("--------------------------")
+     
+    
