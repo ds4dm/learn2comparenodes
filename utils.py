@@ -29,6 +29,12 @@ def clear_records(problem, nodesels):
         with open(f"ncomp_{problem}_{nodesel}.csv", "w") as f:
             f.write("")
             f.close()
+            
+        if nodesel in ['gnn_trained', 'gnn_untrained']:
+            with open(f"decisions_{problem}_{nodesel}.csv", "w") as f:
+                f.write("")
+                f.close()
+                
 
             
             
@@ -69,7 +75,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
                                                comp_featurizer,
                                                device,
                                                feature_normalizor,
-                                               record_fpath=f"decisions_{nodesel}.csv",
+                                               record_fpath=f"decisions_{problem}_{nodesel}.csv",
                                                use_trained_gnn=trained)
             oracles.append(comp)
         
@@ -118,6 +124,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
             with open(f"times_{problem}_{nodesel}.csv", "a+") as f:
                 f.write(f"{model.getSolvingTime()},")
                 f.close()
+                
             
 
     return nodesels_record, [4]
