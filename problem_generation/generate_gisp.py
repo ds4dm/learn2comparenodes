@@ -92,7 +92,7 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
         # Generate the set of removable edges
         E2 = generateE2(g, alphaE2)
         # Create IP, write it to file, and solve it with CPLEX
-        print(lpname)
+        #print(lpname)
         # ip = createIP(g, E2, lp_dir + "/" + lpname)
         createIP(g, E2, lp_dir + "/" + lpname + ".lp")
         if solve:
@@ -108,7 +108,8 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 if __name__ == "__main__":
     instance = None
     n_cpu = 4
-    exp_dir = "data/GISP/test"
+    exp_dir = "data/GISP/"
+    data_partition = None
     min_n = 60
     max_n = 70
     er_prob = 0.6
@@ -125,8 +126,8 @@ if __name__ == "__main__":
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-instance':
             instance = sys.argv[i + 1]
-        if sys.argv[i] == '-exp_dir':
-            exp_dir = sys.argv[i + 1]
+        if sys.argv[i] == '-data_partition':
+            data_partition = sys.argv[i + 1]
         if sys.argv[i] == '-min_n':
             min_n = int(sys.argv[i + 1])
         if sys.argv[i] == '-max_n':
@@ -154,13 +155,22 @@ if __name__ == "__main__":
     if instance is None:
         assert min_n is not None
         assert max_n is not None
-
+    
+    exp_dir = exp_dir + data_partition
     lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
     try:
         os.makedirs(lp_dir)
     except FileExistsError:
         ""
-            
+    
+    print("Summary for GISP generation")
+    print(f"n_instance    :     {n_instance}")
+    print(f"size interval :     {min_n, max_n}")
+    print(f"n_cpu         :     {n_cpu} ")
+    print(f"solve         :     {solveInstance}")
+    print(f"saving dir    :     {lp_dir}")
+    
+        
             
     cpu_count = md.cpu_count()//2 if n_cpu == None else n_cpu
     chunk_size = int(np.ceil(n_instance/cpu_count))
