@@ -103,15 +103,15 @@ def record_stats(nodesels, instances, problem, normalize=True, device='cpu', ver
 
 
 
-def display_stats(nodesels, problem, alternative_stdout=None):
+def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
     import matplotlib.pyplot as plt
     import numpy as np
         
     print("========================")
     print(f'{problem}') 
     for nodesel in nodesels:
-         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:-1]
-         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:-1]
+         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
+         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
 
          print(f"  {nodesel} ")
          print(f"    Number of instances solved    : {len(nnodes)}")
