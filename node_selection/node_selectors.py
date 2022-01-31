@@ -223,10 +223,7 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         
         policy = GNNPolicy()
         if use_trained_gnn: 
-            print("using trained gnn")
-            print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=torch.device('cpu')))) #run from main
-        else:
-            print("using a randomly initialised gnn")
+            policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device)) #run from main
 
         policy.to(device)
         
