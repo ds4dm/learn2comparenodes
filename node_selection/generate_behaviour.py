@@ -35,18 +35,25 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_behaviour_saver.set_LP_feature_recorder(LP_feature_recorder)
+        self.counter = 0
         
         
     def nodecomp(self, node1, node2):
         comp_res, comp_type = super().nodecomp(node1, node2, return_type=True)
         
-        if comp_type == 1 or comp_type == -1:
-            self.comp_behaviour_saver.save_comp(self.model, node1, 
-                                                node2,
-                                                comp_res,
-                                                self.counter) 
-            print("saved comp # " + str(self.counter))
-            self.counter += 1
+  
+        self.comp_behaviour_saver.save_comp(self.model, node1, 
+                                            node2,
+                                            comp_res,
+                                            self.counter) 
+        
+        print("saved comp # " + str(self.counter))
+        self.counter += 1
+        
+        if comp_type in [-1,1]:
+            comp_res = -1 if comp_res == 1 else 1
+        else:
+            comp_res = 0
             
         return comp_res
 
@@ -67,7 +74,8 @@ def run_episode(oracle_type, instance,  save_dir):
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
     oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                        model.getConss()))
+                                                        model.getConss(),
+                                                        'cpu'))
     
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing",
                          536870911,  536870911)
