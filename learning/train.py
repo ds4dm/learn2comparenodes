@@ -214,9 +214,11 @@ if __name__ == "__main__":
     valid_accs = []
     for problem in problems:
     
-        train_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/train").glob("*.pt") ]
+        train_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
+                                                                f"../node_selection/data/{problem}/train")).glob("*.pt") ]
         
-        valid_files = [ str(path) for path in Path(f"../node_selection/data/{problem}/valid").glob("*.pt") ]
+        valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
+                                                                f"../node_selection/data/{problem}/valid")).glob("*.pt") ]
         
         train_data = GraphDataset(train_files)
         valid_data = GraphDataset(valid_files)

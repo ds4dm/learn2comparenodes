@@ -108,9 +108,9 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
 if __name__ == "__main__":
     instance = None
     n_cpu = 4
-    exp_dir = "data/GISP/train"
-    min_n = 80
-    max_n = 100
+    exp_dir = "data/GISP/test"
+    min_n = 60
+    max_n = 70
     er_prob = 0.6
     whichSet = 'SET2'
     setParam = 100.0
@@ -155,7 +155,7 @@ if __name__ == "__main__":
         assert min_n is not None
         assert max_n is not None
 
-    lp_dir= exp_dir
+    lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
     try:
         os.makedirs(lp_dir)
     except FileExistsError:

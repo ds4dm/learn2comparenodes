@@ -18,12 +18,13 @@ import sys
 import multiprocessing as md
 from functools import partial
 from utils import record_stats, display_stats, clear_records
+import os
 
        
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = [ 'gnn_untrained', 'gnn_trained']
+    nodesels = [ 'gnn_untrained', 'gnn_trained', 'estimate']
     problems = ["GISP"]
     normalize = True
     n_instance = 5
@@ -63,8 +64,8 @@ if __name__ == "__main__":
         #clear records
         clear_records(problem, nodesels)
 
-        instances = list(Path(f"./problem_generation/data/{problem}/test").glob("*.lp"))[:n_instance]
-        
+        instances = list(Path(os.path.join(os.path.dirname(__file__), 
+                                           f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance]
         for _ in range(n_trial):
             
             if cpu_count == 1:

@@ -135,7 +135,7 @@ if __name__ == "__main__":
   
     for data_partition in data_partitions:
         
-        save_dir = f"./data/{problem}/{data_partition}"
+        save_dir = lp_dir= os.path.join(os.path.dirname(__file__), f"./data/{problem}/{data_partition}")
     
         try:
             os.makedirs(save_dir)
@@ -143,7 +143,8 @@ if __name__ == "__main__":
             ""
         
         
-        instances = list(Path(f"../problem_generation/data/{problem}/{data_partition}").glob("*.lp"))
+        instances = list(Path(os.path.join(os.path.dirname(__file__), 
+                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))
         
         print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
