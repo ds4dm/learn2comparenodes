@@ -58,6 +58,7 @@ if __name__ == "__main__":
     print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
     print(f"  Device for GNN inference:   {device}")
     print(f"  Normalize features:         {normalize}")
+    print("----------------")
 
     for problem in problems:
 
