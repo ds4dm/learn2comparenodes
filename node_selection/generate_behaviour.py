@@ -51,6 +51,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
             print("saved comp # " + str(self.counter))
             self.counter += 1
         
+        #make it shit to generate more data !
         if comp_type in [-1,1]:
             comp_res = -1 if comp_res == 1 else 1
         else:
