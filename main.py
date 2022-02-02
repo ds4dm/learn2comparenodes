@@ -19,18 +19,20 @@ import multiprocessing as md
 from functools import partial
 from utils import record_stats, display_stats, clear_records
 import os
+import re
 
        
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = [ 'gnn_untrained', 'gnn_trained', 'estimate']
+    nodesels = ['gnn_trained']
     problems = ["GISP"]
     normalize = True
-    n_instance = 5
+    n_instance = 4
     n_trial = 1
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = False
+    on_log = False
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -66,7 +68,10 @@ if __name__ == "__main__":
     else:
         nodesels_gpu = []
         nodesels_cpu = nodesels
-
+        
+    if on_log:
+        sys.stdout = open(os.path.dirname(__file__), 'evaluation.log', 'w')
+        
 
     for problem in problems:
 
