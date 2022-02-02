@@ -164,8 +164,8 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
             n_samples_processed += batch.num_graphs
             #print(y_proba.item(), y_true.item())
 
-    mean_loss /= n_samples_processed + 1
-    mean_acc /= n_samples_processed + 1
+    mean_loss /= (n_samples_processed + ( n_samples_processed == 0))
+    mean_acc /= (n_samples_processed  + ( n_samples_processed == 0))
     return mean_loss, mean_acc
 
 
