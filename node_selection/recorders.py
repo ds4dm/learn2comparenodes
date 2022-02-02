@@ -77,7 +77,7 @@ class CompFeaturizer():
                                            all_conss_blocks_features, 
                                            comp_res)
         
-        return self._to_triplet_tensors(g_data, node1.getDepth(), node2.getDepth(), device=self.LP_feature_recorder.device)
+        return self._to_triplet_tensors(g_data, node1.getDepth(), node2.getDepth(), self.LP_feature_recorder.device)
     
        
     
@@ -104,7 +104,7 @@ class CompFeaturizer():
         return var_attributes, cons_attributes, edge_idxs, edge_features, comp_res
    
     
-    def _to_triplet_tensors(self, g_data, depth0, depth1, device='cpu'):
+    def _to_triplet_tensors(self, g_data, depth0, depth1, device):
         
         variable_features = g_data[0]
         constraint_features = g_data[1]

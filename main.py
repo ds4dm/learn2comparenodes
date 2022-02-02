@@ -59,6 +59,14 @@ if __name__ == "__main__":
     print(f"  Device for GNN inference:   {device}")
     print(f"  Normalize features:         {normalize}")
     print("----------------")
+    
+    if device == 'cuda':
+        nodesels_gpu = [ nodesel for nodesel in nodesels if re.match('gnn*', nodesel) ] 
+        nodesels_cpu = [ nodesel for nodesel in nodesels if not re.match('gnn*', nodesel) ] 
+    else:
+        nodesels_gpu = []
+        nodesels_cpu = nodesels
+
 
     for problem in problems:
 
@@ -69,31 +77,24 @@ if __name__ == "__main__":
                                            f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance]
         for _ in range(n_trial):
             
-            if cpu_count == 1:
-                record_stats(nodesels, 
-                             instances, 
-                             problem,
-                             device,
-                             normalize,
-                             verbose=verbose)
-                continue
-                
-            
             chunck_size = int(np.ceil(len(instances)/cpu_count))
             processes = [  md.Process(name=f"worker {p}", 
                                             target=partial(record_stats,
-                                                            nodesels=nodesels,
+                                                            nodesels=nodesels_cpu,
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem,
-                                                            device=device,
+                                                            device=torch.device('cpu'),
                                                             normalize=normalize,
                                                             verbose=verbose))
                             for p in range(cpu_count) ]
-            checker = []
-            for p in range(cpu_count):
-                checker +=instances[ p*chunck_size : (p+1)*chunck_size]
-            print(f"Join n_instances parralelixed : {len(checker)}")
+            
+            
+            
             a = list(map(lambda p: p.start(), processes)) #run processes
+            
+            record_stats(nodesels_gpu, instances, problem, torch.device('cuda'), normalize, verbose)
+            
+            
             b = list(map(lambda p: p.join(), processes)) #join processes
      
         print("==================================")
