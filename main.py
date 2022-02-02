@@ -52,7 +52,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-verbose':
             verbose = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-on_log':
-            verbose = bool(int(sys.argv[i + 1]))    
+            on_log = bool(int(sys.argv[i + 1]))    
 
     print("Evaluation")
     print(f"  Problem:                    {','.join(problems)}")
