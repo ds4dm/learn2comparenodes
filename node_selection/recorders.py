@@ -104,7 +104,7 @@ class CompFeaturizer():
         return var_attributes, cons_attributes, edge_idxs, edge_features, comp_res
    
     
-    def _to_triplet_tensors(self, g_data):
+    def _to_triplet_tensors(self, g_data, depth0, depth1, device='cpu'):
         
         variable_features = g_data[0]
         constraint_features = g_data[1]
@@ -112,8 +112,22 @@ class CompFeaturizer():
         edge_features = g_data[3]
         y = g_data[4]
         
-        g1 = constraint_features[0], edge_indices[0], edge_features[0], variable_features[0], torch.clone(torch.transpose(constraint_features[0][-2:],1,0))
-        g2 = constraint_features[1], edge_indices[1], edge_features[1], variable_features[1], torch.clone(torch.transpose(constraint_features[1][-2:],1,0))
+        g1 = (constraint_features[0],
+              edge_indices[0], 
+              edge_features[0], 
+              variable_features[0], 
+              torch.clone(torch.transpose(constraint_features[0][-2:],1,0)),
+              torch.FloatTensor([depth0], device=device)
+              )
+        g2 = (constraint_features[1], 
+              edge_indices[1], 
+              edge_features[1], 
+              variable_features[1], 
+              torch.clone(torch.transpose(constraint_features[1][-2:],1,0)),
+              torch.FloatTensor([depth1], device=device)
+              )
+        
+        
         
         return (g1,g2,y)
     
