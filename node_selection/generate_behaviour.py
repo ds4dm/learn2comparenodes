@@ -42,7 +42,8 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         comp_res, comp_type = super().nodecomp(node1, node2, return_type=True)
         
         if comp_type in [-1,1]:
-            self.comp_behaviour_saver.save_comp(self.model, node1, 
+            self.comp_behaviour_saver.save_comp(self.model, 
+                                                node1, 
                                                 node2,
                                                 comp_res,
                                                 self.counter) 
