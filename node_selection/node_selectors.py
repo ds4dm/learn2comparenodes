@@ -261,7 +261,7 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         #measure feature normalization + graph creation time
         start = time.time()
         
-        g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
+        self.feature_normalizor(*g1), self.feature_normalizor(*g2)
         batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
         
         end = time.time()
