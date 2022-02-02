@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 def clear_records(problem, nodesels):    
     
-    for nodesel in nodesels:
+    for nodesel in nodesels + ['default']:
         with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
             f.write("")
             f.close()
@@ -41,27 +41,16 @@ def clear_records(problem, nodesels):
             
 def setup_oracles(model, optsol, oracles, device):
     for o in oracles:
-        o.setOptsol(optsol)
         try:
+            o.setOptsol(optsol)
             o.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
-        except AttributeError: #oracle Abdel has no lp feature recorder
+        except AttributeError: 
             ''
-        
-
-
-#take a list of nodeselectors to evaluate, a list of instance to test on, and the 
-#problem type for printing purposes
-def record_stats(nodesels, instances, problem, device, normalize, verbose=False):
+def put_missing_nodesels(model, nodesels, problem, normalize, device,):
     
-    nodesels_record = dict((nodesel, []) for nodesel in nodesels)
-    model = sp.Model()
-    model.hideOutput()
-    model.setIntParam('randomization/permutationseed', 9)
-    model.setIntParam('randomization/randomseedshift',9)
+    putted = []
     
-    oracles = []
-    
-    for nodesel in nodesels :
+    for nodesel in nodesels:
         comp = None
         if re.match('custom_*', nodesel):
             name = nodesel.split("_")[-1]
@@ -77,7 +66,6 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
                                                feature_normalizor,
                                                record_fpath=f"decisions_{problem}_{nodesel}.csv",
                                                use_trained_gnn=trained)
-            oracles.append(comp)
         
         elif re.match('oracle*', nodesel) :
             try:
@@ -85,21 +73,54 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
             except:
                 inv_proba = 0
             comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
-            oracles.append(comp)
-        
-        if comp != None:
+            
+            
+        if comp != None: #dont include something already included
+            putted.append(comp)
             model.includeNodesel(comp, nodesel, 'testing', 100, 100)
+        
+        
+            
+    return putted
+
+
+def activate_nodesel(model, nodesel_to_activate, all_nodesels):
     
+    #canceL all nodesels, WORKS
+    for nodesel in all_nodesels:
+        model.setNodeselPriority(nodesel, 100)
+                
+    #activate this nodesel, WORKS
+    model.setNodeselPriority(nodesel_to_activate, 536870911)
+    
+
+
+#take a list of nodeselectors to evaluate, a list of instance to test on, and the 
+#problem type for printing purposes
+def record_stats(nodesels, instances, problem, device, normalize, verbose=False):
+    
+    default_model = sp.Model()
+    model = sp.Model()
+    
+    default_model.hideOutput()
+    model.hideOutput()
+    
+    default_model.setIntParam('randomization/permutationseed',9) 
+    model.setIntParam('randomization/permutationseed', 9)
+    
+    default_model.setIntParam('randomization/randomseedshift',9)
+    model.setIntParam('randomization/randomseedshift',9)
+    
+    putted = put_missing_nodesels(model,nodesels, problem, normalize, device)
     
     for instance in instances:
         
         instance = str(instance)
+        default_model.readProblem(instance)
         model.readProblem(instance)
-        optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-        
         
         #setup oracles
-        setup_oracles(model, optsol, oracles, device)
+        setup_oracles(model, model.readSolFile(instance.replace(".lp", ".sol")), putted, device)
             
         if verbose:    
             print("----------------------------")
@@ -108,14 +129,9 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
         for nodesel in nodesels:
             
             model.freeTransform()
-            model.readProblem(instance)
-            #canceL all otheer nodesels, WORKS
-            for other in nodesels:
-                    model.setNodeselPriority(other, 100)
-                    
-            #activate this nodesel, WORKS
-            model.setNodeselPriority(nodesel, 536870911)
             
+            activate_nodesel(model, nodesel, nodesels)       
+
             model.optimize()
             
             with open(f"nnodes_{problem}_{nodesel}.csv", "a+") as f:
@@ -124,10 +140,15 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
             with open(f"times_{problem}_{nodesel}.csv", "a+") as f:
                 f.write(f"{model.getSolvingTime()},")
                 f.close()
-                
-            
-
-    return nodesels_record, [4]
+        
+        default_model.optimize()
+        with open(f"nnodes_{problem}_default.csv", "a+") as f:
+            f.write(f"{default_model.getNNodes()},")
+            f.close()
+        with open(f"times_{problem}_default.csv", "a+") as f:
+            f.write(f"{default_model.getSolvingTime()},")
+            f.close()
+        
 
 
 
@@ -137,8 +158,7 @@ def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
     print("========================")
     print(f'{problem}') 
 
-    
-    for nodesel in nodesels:
+    for nodesel in ['default'] + nodesels:
         nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
         times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
     
@@ -152,7 +172,7 @@ def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
     
                 
         if nodesel in ['gnn_trained', 'gnn_untrained']:
-            decisions = np.genfromtxt(f'decisions_{nodesel}.csv', delimiter=',')
+            decisions = np.genfromtxt(f'decisions_{problem}_{nodesel}.csv', delimiter=',')
             plt.figure()
             plt.title(f'decisions {nodesel}')
             plt.hist(decisions[:,0])
