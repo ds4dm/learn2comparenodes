@@ -77,7 +77,7 @@ class CompFeaturizer():
                                            all_conss_blocks_features, 
                                            comp_res)
         
-        return self._to_triplet_tensors(g_data)
+        return self._to_triplet_tensors(g_data, node1.getDepth(), node2.getDepth(), device=self.LP_feature_recorder.device)
     
        
     
