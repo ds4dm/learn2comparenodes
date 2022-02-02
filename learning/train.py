@@ -28,6 +28,7 @@ def normalize_graph(constraint_features,
                     edge_attr,
                     variable_features,
                     bounds,
+                    depth,
                     bound_normalizor = 1000):
     
 
@@ -47,7 +48,7 @@ def normalize_graph(constraint_features,
     edge_attr *= normalizor
     bounds/= bound_normalizor
     
-    return (constraint_features, edge_index, edge_attr, variable_features, bounds)
+    return (constraint_features, edge_index, edge_attr, variable_features, bounds, depth)
 
 #main
 def test1(data):
@@ -132,17 +133,22 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
             batch = batch.to(device)
             if normalize:
                 #IN place operations
-                normalize_graph(batch.constraint_features_s, 
-                                batch.edge_index_s, 
-                                batch.edge_attr_s,
-                                batch.variable_features_s,
-                                batch.bounds_s)
+                (batch.constraint_features_s,
+                 batch.edge_index_s, 
+                 batch.edge_attr_s,
+                 batch.variable_features_s,
+                 batch.bounds_s,
+                 batch.depth_s)  =  normalize_graph(batch.constraint_features_s,  batch.edge_index_s, batch.edge_attr_s,
+                                                    batch.variable_features_s, batch.bounds_s,  batch.depth_s)
                 
-                normalize_graph(batch.constraint_features_t, 
-                                batch.edge_index_t,
-                                batch.edge_attr_t,
-                                batch.variable_features_t,
-                                batch.bounds_t)
+                (batch.constraint_features_t,
+                 batch.edge_index_t, 
+                 batch.edge_attr_t,
+                 batch.variable_features_t,
+                 batch.bounds_t,
+                 batch.depth_t)  =  normalize_graph(batch.constraint_features_t,  batch.edge_index_t, batch.edge_attr_t,
+                                                    batch.variable_features_t, batch.bounds_t,  batch.depth_t)
+                
                 #test1(batch)
         
             y_true = 0.5*batch.y + 0.5 #0,1 label
