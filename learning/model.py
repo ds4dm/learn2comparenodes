@@ -17,17 +17,17 @@ class BipartiteGraphPairData(torch_geometric.data.Data):
     """
     This class encode a pair of node bipartite graphs observation, s is graph0, t is graph1 
     """
-    def __init__(self, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, variable_features_s=None, bounds_s=None, 
-                 constraint_features_t=None, edge_indices_t=None, edge_features_t=None, variable_features_t=None,  bounds_t = None,
+    def __init__(self, constraint_features_s=None, edge_indices_s=None, edge_features_s=None, variable_features_s=None, bounds_s=None, depth_s=None, 
+                 constraint_features_t=None, edge_indices_t=None, edge_features_t=None, variable_features_t=None,  bounds_t=None, depth_t=None,
                  y=None): 
         
         super().__init__()
         
-        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s, self.bounds_s  =  (
-            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s, bounds_s)
+        self.variable_features_s, self.constraint_features_s, self.edge_index_s, self.edge_attr_s, self.bounds_s, self.depth_s =  (
+            variable_features_s, constraint_features_s, edge_indices_s, edge_features_s, bounds_s, depth_s)
         
-        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t, self.bounds_t  = (
-            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t, bounds_t)
+        self.variable_features_t, self.constraint_features_t, self.edge_index_t, self.edge_attr_t, self.bounds_t, self.depth_t  = (
+            variable_features_t, constraint_features_t, edge_indices_t, edge_features_t, bounds_t, depth_t)
         
         self.y = y
         
