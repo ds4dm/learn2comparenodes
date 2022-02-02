@@ -150,7 +150,10 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
             y_pred = torch.round(y_proba)
             
             # Compute the usual cross-entropy classification loss
-            l = loss_fct(y_proba, y_true )
+            loss_fct.weight = torch.exp((1+torch.abs(batch.depth_s - batch.depth_t)) / 
+                                        (torch.min(torch.vstack((batch.depth_s,  batch.depth_t)), axis=0)[0]))
+
+            l = loss_fct(y_proba, y_true)
             loss_value = l.item()
             if optimizer is not None:
                 optimizer.zero_grad()
@@ -257,7 +260,7 @@ if __name__ == "__main__":
         print(f"Device:              {device}")
         print(f"Loss fct:            {loss_fn}")
         print(f"Optimizer:           {optimizer_fn}")  
-        print(f"GNN Architecture: \n {policy}")
+        print("-------------------------")
         
         
         for epoch in range(n_epoch):
