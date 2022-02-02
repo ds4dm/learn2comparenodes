@@ -158,7 +158,7 @@ class CustomNodeSelector(Nodesel):
 
 class OracleNodeSelectorAbdel(CustomNodeSelector):
     
-    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0.05):
+    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0):
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
@@ -223,7 +223,7 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         
         policy = GNNPolicy()
         if use_trained_gnn: 
-            policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device)) #run from main
+            print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main
 
         policy.to(device)
         
