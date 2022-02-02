@@ -114,7 +114,7 @@ if __name__ == "__main__":
     oracle = 'optimal_plunger'
     problem = 'GISP'
     data_partitions = ['train', 'valid']
-    cpu_count = 1
+    n_cpu = 1
     
     with open("nnodes.csv", "w") as f:
         f.write("")
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         if sys.argv[i] == '-problem':
             problem = str(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
-            cpu_count = int(sys.argv[i + 1])
+            n_cpu = int(sys.argv[i + 1])
    
   
     for data_partition in data_partitions:
@@ -149,20 +149,18 @@ if __name__ == "__main__":
         
         print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
-        if cpu_count == 1:
-            run_episodes(oracle, instances, save_dir)
-        else:
-            chunck_size = int(np.ceil(len(instances)/cpu_count))
-            processes = [  md.Process(name=f"worker {p}", 
-                                            target=partial(run_episodes,
-                                                            oracle_type=oracle,
-                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                            save_dir=save_dir))
-                            for p in range(cpu_count) ]
-                
-            a = list(map(lambda p: p.start(), processes)) #run processes
-            b = list(map(lambda p: p.join(), processes)) #join processes
+
+        chunck_size = int(np.ceil(len(instances)/n_cpu))
+        processes = [  md.Process(name=f"worker {p}", 
+                                        target=partial(run_episodes,
+                                                        oracle_type=oracle,
+                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        save_dir=save_dir))
+                        for p in range(n_cpu) ]
             
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        b = list(map(lambda p: p.join(), processes)) #join processes
+        
             
     nnodes = np.genfromtxt("nnodes.csv", delimiter=",")[:-1]
     times = np.genfromtxt("times.csv", delimiter=",")[:-1]
