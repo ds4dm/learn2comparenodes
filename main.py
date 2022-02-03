@@ -24,14 +24,13 @@ import re
        
 if __name__ == "__main__":
     
-    cpu_count = 4
+    cpu_count = 3
     nodesels = ['breadthfirst', 
                 'dfs', 
                 'bfs',
                 'estimate',
                 'oracle', 
-                'gnn_trained',
-                'gnn_untrained']
+                'gnn_trained']
     
     problems = ["GISP"]
     normalize = True
