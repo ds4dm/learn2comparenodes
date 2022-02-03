@@ -40,6 +40,7 @@ def normalize_graph(constraint_features,
     var_max_bounds += var_max_bounds == 0 #remove division by 0
     var_normalizor = var_max_bounds[edge_index[0]]
     cons_normalizor = constraint_features[edge_index[1]]
+    print(var_normalizor.device) 
     normalizor = var_normalizor / cons_normalizor
 
     variable_features[:,2]/= obj_norm
