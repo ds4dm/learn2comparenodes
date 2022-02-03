@@ -39,6 +39,7 @@ if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = True
     on_log = False
+    default = True
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -59,7 +60,9 @@ if __name__ == "__main__":
             verbose = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-on_log':
             on_log = bool(int(sys.argv[i + 1]))    
-
+        if sys.argv[i] == '-default':
+            default = bool(int(sys.argv[i + 1]))    
+            
     print("Evaluation")
     print(f"  Problem:                    {','.join(problems)}")
     print(f"  n_instance/problem:         {n_instance}")
@@ -95,7 +98,8 @@ if __name__ == "__main__":
                                                             problem=problem,
                                                             device=torch.device('cpu'),
                                                             normalize=normalize,
-                                                            verbose=verbose))
+                                                            verbose=verbose,
+                                                            default=default))
                             for p in range(cpu_count+1) ]  
             
             a = list(map(lambda p: p.start(), processes)) #run processes
