@@ -38,7 +38,7 @@ class CustomNodeSelector(Nodesel):
             res = self.bfs_nodeselect()
         elif policy == 'random':
             res = self.random_nodeselect()
-        elif policy == None:
+        else:
             res = {"selnode": self.model.getBestNode()}
             
         return res
@@ -57,7 +57,7 @@ class CustomNodeSelector(Nodesel):
             res = self.bfs_nodecomp(node1, node2)
         elif policy == 'random':
             res = self.random_nodecomp(node1, node2)
-        elif policy == None:
+        else:
             res = 0
             
         return res
