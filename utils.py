@@ -13,29 +13,8 @@ from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorE
 from learning.train import normalize_graph
 import re
 import numpy as np
-import matplotlib.pyplot as plt
 import os
-from pathlib import Path 
 
-
-    
-def clear_records(problem, nodesels):
-
-    for nodesel in nodesels + ['default']:
-        save_dir = os.path.join(os.path.dirname(__file__), 
-                                           f'stats/{problem}/{nodesel}/')
-        try:
-            os.makedirs(save_dir)
-        except FileExistsError:
-            ""
-            
-        records = list(Path(save_dir).glob("*.csv"))
-        for record in records:
-            os.remove(record)
-    
-                
-            
-            
 def setup_oracles(model, optsol, name2nodeselector, device):
     
     for nodesel in name2nodeselector:
@@ -95,6 +74,12 @@ def activate_nodesel(model, nodesel_to_activate, all_nodesels):
 
 def get_record_file(problem, nodesel, instance):
     save_dir = os.path.join(os.path.dirname(__file__),  f'stats/{problem}/{nodesel}/')
+    
+    try:
+        os.makedirs(save_dir)
+    except FileExistsError:
+        ""
+        
     instance = str(instance).split('/')[-1]
     file = os.path.join(save_dir, instance.replace('.lp', '.csv'))
     return file
@@ -148,25 +133,35 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
         #setup oracles
         setup_oracles(model, model.readSolFile(instance.replace(".lp", ".sol")), name2nodeselector, device)
             
-        if verbose:    
-            print("----------------------------")
-            print(f" {problem}  {instance.split('/')[-1].split('.lp')[0] } ")
        #test nodesels
         for nodesel in nodesels:
             
             model.freeTransform()
             
-            activate_nodesel(model, nodesel, nodesels)       
-
-            model.optimize()
+            activate_nodesel(model, nodesel, nodesels)     
             
-            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
+            if not os.path.isfile(get_record_file(problem, nodesel, instance)):
+                if verbose:
+                    print("----------------------------")
+                    print(f"----Solving:  {problem}")
+                    print(f"----Instance: {instance}")
+                    print(f"----Nodesel:  {nodesel}")
+                
+                model.optimize()
+                
+                record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
 
-        if default:        
-            default_model.optimize()        
-            record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
+        if default:
+            if not os.path.isfile(get_record_file(problem, 'default', instance)):
+                if verbose:
+                    print("----------------------------")
+                    print(f"----Solving:  {problem}")
+                    print(f"----Instance: {instance}")
+                    print("----Nodesel:   default")
+                default_model.optimize()        
+                record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
+                
             
-        
 
 
 def get_mean(problem, nodesel, instances, stat_type):
@@ -202,9 +197,9 @@ def display_stats(problem, nodesels, instances):
             fe_mean = get_mean(problem, nodesel, instances, 'fe')
             fn_mean = get_mean(problem, nodesel, instances, 'fn')
             inf_mean = get_mean(problem, nodesel, instances, 'inf')
-            print(f"        Feature Extraction  Mean Time:      {fe_mean:.2f}")
-            print(f"        Feature Normalization Mean Time:    {fn_mean:.2f}")
-            print(f"        Inference Mean Time:                {inf_mean:.2f}")
+            print(f"     |---   Feature Extraction  Mean Time:      {fe_mean:.2f}")
+            print(f"     |---   Feature Normalization Mean Time:    {fn_mean:.2f}")
+            print(f"     |---   Inference Mean Time:                {inf_mean:.2f}")
             
         
      

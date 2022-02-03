@@ -17,7 +17,7 @@ import torch
 import sys
 import multiprocessing as md
 from functools import partial
-from utils import record_stats, display_stats, clear_records
+from utils import record_stats, display_stats
 import os
 import re
 
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     n_instance = 4
     n_trial = 1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    verbose = False
+    verbose = True
     on_log = False
     
     for i in range(1, len(sys.argv), 2):
@@ -76,9 +76,6 @@ if __name__ == "__main__":
         
 
     for problem in problems:
-
-        #clear records
-        clear_records(problem, nodesels)
 
         instances = sorted(list(Path(os.path.join(os.path.dirname(__file__), 
                                            f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance])
