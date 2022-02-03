@@ -327,7 +327,7 @@ class BipartiteGraphStatic0():
     
     def copy(self):
         
-        copy = BipartiteGraphStatic0(self.n0, allocate=False)
+        copy = BipartiteGraphStatic0(self.n0, self.device, allocate=False)
         
         copy.var_attributes = self.var_attributes.clone()
         copy.cons_block_idxs = self.cons_block_idxs[:-1] #dont add estimate/dual constraints
