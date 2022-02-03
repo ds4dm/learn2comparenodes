@@ -29,9 +29,6 @@ if __name__ == "__main__":
                 'dfs', 
                 'bfs',
                 'estimate',
-                'custom_0', 
-                'custom_dfs',
-                'custom_breadthfirst',
                 'oracle', 
                 'gnn_trained']
     
