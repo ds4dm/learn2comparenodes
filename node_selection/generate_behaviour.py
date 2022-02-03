@@ -151,13 +151,13 @@ if __name__ == "__main__":
         print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
 
-        chunck_size = int(np.ceil(len(instances)/n_cpu))
+        chunck_size = int(np.floor(len(instances)/n_cpu))
         processes = [  md.Process(name=f"worker {p}", 
                                         target=partial(run_episodes,
                                                         oracle_type=oracle,
                                                         instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                         save_dir=save_dir))
-                        for p in range(n_cpu) ]
+                        for p in range(n_cpu+1) ]
             
         a = list(map(lambda p: p.start(), processes)) #run processes
         b = list(map(lambda p: p.join(), processes)) #join processes

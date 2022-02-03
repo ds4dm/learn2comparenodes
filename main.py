@@ -88,7 +88,7 @@ if __name__ == "__main__":
                                            f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance]
         for _ in range(n_trial):
             
-            chunck_size = int(np.ceil(len(instances)/cpu_count))
+            chunck_size = int(np.floor(len(instances)/cpu_count))
             processes = [  md.Process(name=f"worker {p}", 
                                             target=partial(record_stats,
                                                             nodesels=nodesels_cpu,
@@ -97,9 +97,7 @@ if __name__ == "__main__":
                                                             device=torch.device('cpu'),
                                                             normalize=normalize,
                                                             verbose=verbose))
-                            for p in range(cpu_count) ]
-            
-            
+                            for p in range(cpu_count+1) ]  
             
             a = list(map(lambda p: p.start(), processes)) #run processes
             
