@@ -99,22 +99,34 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj=None):
     np.savetxt(file, np.array([nnode, time, fe_time, fn_time, inference_time]), delimiter=',')
     
  
+
     
+def print_infos(problem, nodesel, instance):
+    print("------------------------------------------")
+    print(f"   |----Solving:  {problem}")
+    print(f"   |----Instance: {instance}")
+    print(f"   |----Nodesel: {nodesel}")
+
     
+
+def solve_default(problem, instance, verbose):
+    default_model = sp.Model()
+    default_model.hideOutput()
+    default_model.setIntParam('randomization/permutationseed',9) 
+    default_model.setIntParam('randomization/randomseedshift',9)
+    default_model.readProblem(instance)
+    if verbose:
+        print_infos(problem, 'default', instance)
     
-    
+    default_model.optimize()        
+    record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
+
     
 
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
 def record_stats(nodesels, instances, problem, device, normalize, verbose=False, default=True):
-    
-    if default:  
-        default_model = sp.Model()
-        default_model.hideOutput()
-        default_model.setIntParam('randomization/permutationseed',9) 
-        default_model.setIntParam('randomization/randomseedshift',9)
         
     model = sp.Model()
     model.hideOutput()
@@ -126,8 +138,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
     for instance in instances:
         
         instance = str(instance)
-        if default:
-            default_model.readProblem(instance)
+        
         model.readProblem(instance)
         
         #setup oracles
@@ -135,32 +146,21 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
             
        #test nodesels
         for nodesel in nodesels:
+            if os.path.isfile(get_record_file(problem, nodesel, instance)): #no need to resolve 
+                continue
             
             model.freeTransform()
-            
             activate_nodesel(model, nodesel, nodesels)     
-            if not os.path.isfile(get_record_file(problem, nodesel, instance)):
-                if verbose:
-                    print("------------------------------------------")
-                    print(f"   |----Solving:  {problem}")
-                    print(f"   |----Instance: {instance}")
-                    print(f"   |----Nodesel: {nodesel}")
-                
-                model.optimize()
-                
-                record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
-
-        if default:
-            if not os.path.isfile(get_record_file(problem, 'default', instance)):
-                if verbose:
-                    print("------------------------------------------")
-                    print(f"   |----Solving:  {problem}")
-                    print(f"   |----Instance: {instance}")
-                    print("    |----Nodesel:   default")
-                default_model.optimize()        
-                record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
-                
             
+            if verbose:
+                print_infos(problem, nodesel, instance)
+            model.optimize()
+            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
+
+        if default and not os.path.isfile(get_record_file(problem,'default', instance)):
+            solve_default(problem, instance, verbose)
+           
+
 
 
 def get_mean(problem, nodesel, instances, stat_type):
