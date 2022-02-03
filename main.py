@@ -30,7 +30,8 @@ if __name__ == "__main__":
                 'bfs',
                 'estimate',
                 'oracle', 
-                'gnn_trained']
+                'gnn_trained',
+                'gnn_untrained']
     
     problems = ["GISP"]
     normalize = True
