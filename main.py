@@ -71,7 +71,8 @@ if __name__ == "__main__":
         nodesels_cpu = nodesels
         
     if on_log:
-        sys.stdout = open(os.path.dirname(__file__), 'evaluation.log', 'w')
+        sys.stdout = open(os.path.join(os.path.dirname(__file__), 
+                                       'evaluation.log'), 'w')
         
 
     for problem in problems:
