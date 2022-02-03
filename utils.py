@@ -139,13 +139,12 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
             model.freeTransform()
             
             activate_nodesel(model, nodesel, nodesels)     
-            
             if not os.path.isfile(get_record_file(problem, nodesel, instance)):
                 if verbose:
-                    print("----------------------------")
-                    print(f"----Solving:  {problem}")
-                    print(f"----Instance: {instance}")
-                    print(f"----Nodesel:  {nodesel}")
+                    print("------------------------------------------")
+                    print(f"   |----Solving:  {problem}")
+                    print(f"   |----Instance: {instance}")
+                    print(f"   |----Nodesel: {nodesel}")
                 
                 model.optimize()
                 
@@ -154,10 +153,10 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
         if default:
             if not os.path.isfile(get_record_file(problem, 'default', instance)):
                 if verbose:
-                    print("----------------------------")
-                    print(f"----Solving:  {problem}")
-                    print(f"----Instance: {instance}")
-                    print("----Nodesel:   default")
+                    print("------------------------------------------")
+                    print(f"   |----Solving:  {problem}")
+                    print(f"   |----Instance: {instance}")
+                    print("    |----Nodesel:   default")
                 default_model.optimize()        
                 record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
                 
@@ -176,18 +175,18 @@ def get_mean(problem, nodesel, instances, stat_type):
 
 def display_stats(problem, nodesels, instances):
     
-    print("========================")
+    print("======================================================")
     print(f'Statistics on {problem} over {len(instances)} instances') 
 
     for nodesel in ['default'] + nodesels:
-        print("--------------------------")
+        print("-------------------------------------------------")
         nnode_mean = get_mean(problem, nodesel, instances, 'nnode')
         time_mean =  get_mean(problem, nodesel, instances, 'time')
         
     
         print(f"  {nodesel} ")
-        print(f"    Mean number of node created   : {nnode_mean:.2f}")
-        print(f"    Mean solving time             : {time_mean:.2f}")
+        print(f"    Mean NNode Created   : {nnode_mean:.2f}")
+        print(f"    Mean Solving Time    : {time_mean:.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
     

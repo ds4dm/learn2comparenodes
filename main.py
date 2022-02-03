@@ -25,10 +25,19 @@ import re
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = ['breadthfirst', 'dfs', 'bfs', 'estimate','oracle', 'gnn_trained']
+    nodesels = ['breadthfirst', 
+                'dfs', 
+                'bfs',
+                'estimate',
+                'custom_0', 
+                'custom_dfs',
+                'custom_breadthfirst',
+                'oracle', 
+                'gnn_trained']
+    
     problems = ["GISP"]
     normalize = True
-    n_instance = 4
+    n_instance = 20
     n_trial = 1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = True

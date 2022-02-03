@@ -113,7 +113,6 @@ class CustomNodeSelector(Nodesel):
             if selnode == None: #if no sibling, just get a leaf
                 selnode = self.model.getBestLeaf()
                 
-
         return {"selnode": selnode}
     
     def dfs_nodecomp(self, node1, node2):
@@ -122,7 +121,7 @@ class CustomNodeSelector(Nodesel):
     
     
     # Breath first search
-    def breathfirst_nodeselect(self):
+    def breadthfirst_nodeselect(self):
         
         selnode = self.model.getPrioSibling()
         if selnode == None: #no siblings to be visited (all have been LP-solved), since breath first, 
@@ -134,7 +133,7 @@ class CustomNodeSelector(Nodesel):
         
         return {"selnode": selnode}
     
-    def breathfirst_nodecomp(self, node1, node2): 
+    def breadthfirst_nodecomp(self, node1, node2): 
         
         d1, d2 = node1.getDepth(), node2.getDepth()
         
