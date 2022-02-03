@@ -201,7 +201,7 @@ class LPFeatureRecorder():
     
     def get_root_graph(self, model):
         
-        graph = BipartiteGraphStatic0(self.n0)
+        graph = BipartiteGraphStatic0(self.n0, self.device)
         
         self._add_vars_to_graph(graph, model)
         self._add_conss_to_graph(graph, model, self.original_conss)
@@ -312,12 +312,13 @@ class LPFeatureRecorder():
 class BipartiteGraphStatic0():
     
     #Defines the structure of the problem solved. Invariant toward problems
-    def __init__(self, n0, d0=6, d1=1, allocate=True):
+    def __init__(self, n0, device, d0=6, d1=1, allocate=True):
         
         self.n0, self.d0, self.d1 = n0, d0, d1
+        self.device = device
         
         if allocate:
-            self.var_attributes = torch.zeros(n0,d0)
+            self.var_attributes = torch.zeros(n0,d0, device=self.device)
             self.cons_block_idxs = []
         else:
             self.var_attributes = None
