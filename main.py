@@ -25,7 +25,7 @@ import re
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = ['breadthfirst', 'dfs', 'bfs', 'estimate','oracle']
+    nodesels = ['breadthfirst', 'dfs', 'bfs', 'estimate','oracle', 'gnn_trained']
     problems = ["GISP"]
     normalize = True
     n_instance = 4
@@ -104,8 +104,6 @@ if __name__ == "__main__":
             
             b = list(map(lambda p: p.join(), processes)) #join processes
      
-        print("==================================")
-        print(f"SUMMARIES for {n_trial} trials with {n_instance} instances")
-        display_stats(nodesels, problem)
+        display_stats(problem, nodesels, instances)
    
 

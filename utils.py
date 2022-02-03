@@ -14,41 +14,40 @@ from learning.train import normalize_graph
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+import os
+from pathlib import Path 
 
 
-
-def clear_records(problem, nodesels):    
     
-    for nodesel in nodesels + ['default']:
-        with open(f"nnodes_{problem}_{nodesel}.csv", "w") as f:
-            f.write("")
-            f.close()
-        with open(f"times_{problem}_{nodesel}.csv", "w") as f:
-            f.write("")
-            f.close()
-        with open(f"ncomp_{problem}_{nodesel}.csv", "w") as f:
-            f.write("")
-            f.close()
-            
-        if nodesel in ['gnn_trained', 'gnn_untrained']:
-            with open(f"decisions_{problem}_{nodesel}.csv", "w") as f:
-                f.write("")
-                f.close()
-                
+def clear_records(problem, nodesels):
 
-            
-            
-            
-def setup_oracles(model, optsol, oracles, device):
-    for o in oracles:
+    for nodesel in nodesels + ['default']:
+        save_dir = os.path.join(os.path.dirname(__file__), 
+                                           f'stats/{problem}/{nodesel}/')
         try:
-            o.setOptsol(optsol)
-            o.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
-        except AttributeError: 
-            ''
+            os.makedirs(save_dir)
+        except FileExistsError:
+            ""
+            
+        records = list(Path(save_dir).glob("*.csv"))
+        for record in records:
+            os.remove(record)
+    
+                
+            
+            
+def setup_oracles(model, optsol, name2nodeselector, device):
+    
+    for nodesel in name2nodeselector:
+        if re.match('oracle*', nodesel):
+            name2nodeselector[nodesel].setOptsol(optsol)
+            
+        elif re.match('gnn*', nodesel):
+            name2nodeselector[nodesel].set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
+            
 def put_missing_nodesels(model, nodesels, problem, normalize, device,):
     
-    putted = []
+    putted = dict()
     
     for nodesel in nodesels:
         comp = None
@@ -75,8 +74,8 @@ def put_missing_nodesels(model, nodesels, problem, normalize, device,):
             comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
             
             
+        putted[nodesel] = comp 
         if comp != None: #dont include something already included
-            putted.append(comp)
             model.includeNodesel(comp, nodesel, 'testing', 100, 100)
         
         
@@ -92,6 +91,33 @@ def activate_nodesel(model, nodesel_to_activate, all_nodesels):
                 
     #activate this nodesel, WORKS
     model.setNodeselPriority(nodesel_to_activate, 536870911)
+    
+
+def get_record_file(problem, nodesel, instance):
+    save_dir = os.path.join(os.path.dirname(__file__),  f'stats/{problem}/{nodesel}/')
+    instance = str(instance).split('/')[-1]
+    file = os.path.join(save_dir, instance.replace('.lp', '.csv'))
+    return file
+
+def record_stats_instance(problem, nodesel, model, instance, nodesel_obj=None):
+    nnode = model.getNNodes()
+    time = model.getSolvingTime()
+    
+    if re.match('gnn*', nodesel):
+        fe_time = nodesel_obj.fe_time
+        fn_time = nodesel_obj.fn_time
+        inference_time = nodesel_obj.inference_time
+    else:
+        fe_time, fn_time, inference_time = -1, -1, -1
+    
+    file = get_record_file(problem, nodesel, instance)
+    np.savetxt(file, np.array([nnode, time, fe_time, fn_time, inference_time]), delimiter=',')
+    
+ 
+    
+    
+    
+    
     
 
 
@@ -110,7 +136,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
     model.setIntParam('randomization/permutationseed', 9)
     model.setIntParam('randomization/randomseedshift',9)
     
-    putted = put_missing_nodesels(model,nodesels, problem, normalize, device)
+    name2nodeselector = put_missing_nodesels(model,nodesels, problem, normalize, device)
     
     for instance in instances:
         
@@ -120,7 +146,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
         model.readProblem(instance)
         
         #setup oracles
-        setup_oracles(model, model.readSolFile(instance.replace(".lp", ".sol")), putted, device)
+        setup_oracles(model, model.readSolFile(instance.replace(".lp", ".sol")), name2nodeselector, device)
             
         if verbose:    
             print("----------------------------")
@@ -134,54 +160,52 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 
             model.optimize()
             
-            with open(f"nnodes_{problem}_{nodesel}.csv", "a+") as f:
-                f.write(f"{model.getNNodes()},")
-                f.close()
-            with open(f"times_{problem}_{nodesel}.csv", "a+") as f:
-                f.write(f"{model.getSolvingTime()},")
-                f.close()
-                
-        if default:
-            default_model.optimize()
-            with open(f"nnodes_{problem}_default.csv", "a+") as f:
-                f.write(f"{default_model.getNNodes()},")
-                f.close()
-            with open(f"times_{problem}_default.csv", "a+") as f:
-                f.write(f"{default_model.getSolvingTime()},")
-                f.close()
+            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
+
+        if default:        
+            default_model.optimize()        
+            record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
             
+        
 
 
+def get_mean(problem, nodesel, instances, stat_type):
+    res = 0
+    stat_idx = ['nnode', 'time', 'fe', 'fn', 'inf'].index(stat_type)
+    for instance in instances:
+        file = get_record_file(problem, nodesel, instance)
+        res += np.genfromtxt(file)[stat_idx]
+        
+    return res/(len(instances) + (len(instances)==0))
+        
 
-
-def display_stats(nodesels, problem, n_instance=-1, alternative_stdout=None):
+def display_stats(problem, nodesels, instances):
     
     print("========================")
-    print(f'{problem}') 
+    print(f'Statistics on {problem} over {len(instances)} instances') 
 
     for nodesel in ['default'] + nodesels:
-        nnodes = np.genfromtxt(f"nnodes_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
-        times = np.genfromtxt(f"times_{problem}_{nodesel}.csv", delimiter=",")[:n_instance]
+        print("--------------------------")
+        nnode_mean = get_mean(problem, nodesel, instances, 'nnode')
+        time_mean =  get_mean(problem, nodesel, instances, 'time')
+        
     
         print(f"  {nodesel} ")
-        print(f"    Number of instances solved    : {len(nnodes)}")
-        print(f"    Mean number of node created   : {np.mean(nnodes):.2f}")
-        print(f"    Mean solving time             : {np.mean(times):.2f}")
+        print(f"    Mean number of node created   : {nnode_mean:.2f}")
+        print(f"    Mean solving time             : {time_mean:.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
     
     
                 
-        if nodesel in ['gnn_trained', 'gnn_untrained']:
-            decisions = np.genfromtxt(f'decisions_{problem}_{nodesel}.csv', delimiter=',')
-            plt.figure()
-            plt.title(f'decisions {nodesel}')
-            plt.hist(decisions[:,0])
-            plt.savefig(f'decisions_{nodesel}.png')
-            print(f'    Number of comparaison         : {len(decisions)}')
-            print(f'    Accuracy                      : {np.mean( np.round(decisions[:,0]) == 0.5*decisions[:,1]+0.5  ):0.3f}' )
+        if re.match('gnn*', nodesel):
+            fe_mean = get_mean(problem, nodesel, instances, 'fe')
+            fn_mean = get_mean(problem, nodesel, instances, 'fn')
+            inf_mean = get_mean(problem, nodesel, instances, 'inf')
+            print(f"        Feature Extraction  Mean Time:      {fe_mean:.2f}")
+            print(f"        Feature Normalization Mean Time:    {fn_mean:.2f}")
+            print(f"        Inference Mean Time:                {inf_mean:.2f}")
             
-    
-        print("--------------------------")
+        
      
     

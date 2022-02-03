@@ -273,16 +273,10 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         start = time.time()
         
         decision = self.policy(batch).item() 
-        oracle_decision = super().nodecomp(node1, node2)
         
         end = time.time()
         self.inference_time += (end - start)
         
         self.counter += 1
-        
-        if self.record_fpath != None:
-            with open(f"{self.record_fpath}", "a+") as f:
-                f.write(f"{decision:0.3f},{oracle_decision}\n")
-                f.close()
         
         return -1 if decision < 0.5 else 1
