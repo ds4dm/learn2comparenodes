@@ -275,7 +275,7 @@ class LPFeatureRecorder():
     
     def _get_feature_cons(self, model, cons):
         rhs = model.getRhs(cons)
-        return torch.FloatTensor([ rhs ], device=self.device)
+        return torch.tensor([ rhs ], device=self.device).float()
     
     def _get_feature_var(self, model, var):
         
