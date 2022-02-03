@@ -83,8 +83,8 @@ if __name__ == "__main__":
 
     for problem in problems:
 
-        instances = sorted(list(Path(os.path.join(os.path.dirname(__file__), 
-                                           f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance])
+        instances = list(Path(os.path.join(os.path.dirname(__file__), 
+                                           f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance]
         for _ in range(n_trial):
             
             chunck_size = int(np.ceil(len(instances)/cpu_count))
