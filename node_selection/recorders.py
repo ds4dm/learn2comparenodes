@@ -117,14 +117,14 @@ class CompFeaturizer():
               edge_features[0], 
               variable_features[0], 
               torch.clone(torch.transpose(constraint_features[0][-2:],1,0)),
-              torch.FloatTensor([depth0], device=device)
+              torch.tensor([depth0], device=device).float()
               )
         g2 = (constraint_features[1], 
               edge_indices[1], 
               edge_features[1], 
               variable_features[1], 
               torch.clone(torch.transpose(constraint_features[1][-2:],1,0)),
-              torch.FloatTensor([depth1], device=device)
+              torch.tensor([depth1], device=device).float()
               )
         
         
