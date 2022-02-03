@@ -97,18 +97,17 @@ def activate_nodesel(model, nodesel_to_activate, all_nodesels):
 
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
-def record_stats(nodesels, instances, problem, device, normalize, verbose=False):
+def record_stats(nodesels, instances, problem, device, normalize, verbose=False, default=True):
     
-    default_model = sp.Model()
+    if default:  
+        default_model = sp.Model()
+        default_model.hideOutput()
+        default_model.setIntParam('randomization/permutationseed',9) 
+        default_model.setIntParam('randomization/randomseedshift',9)
+        
     model = sp.Model()
-    
-    default_model.hideOutput()
     model.hideOutput()
-    
-    default_model.setIntParam('randomization/permutationseed',9) 
     model.setIntParam('randomization/permutationseed', 9)
-    
-    default_model.setIntParam('randomization/randomseedshift',9)
     model.setIntParam('randomization/randomseedshift',9)
     
     putted = put_missing_nodesels(model,nodesels, problem, normalize, device)
@@ -116,7 +115,8 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
     for instance in instances:
         
         instance = str(instance)
-        default_model.readProblem(instance)
+        if default:
+            default_model.readProblem(instance)
         model.readProblem(instance)
         
         #setup oracles
@@ -140,15 +140,16 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False)
             with open(f"times_{problem}_{nodesel}.csv", "a+") as f:
                 f.write(f"{model.getSolvingTime()},")
                 f.close()
-        
-        default_model.optimize()
-        with open(f"nnodes_{problem}_default.csv", "a+") as f:
-            f.write(f"{default_model.getNNodes()},")
-            f.close()
-        with open(f"times_{problem}_default.csv", "a+") as f:
-            f.write(f"{default_model.getSolvingTime()},")
-            f.close()
-        
+                
+        if default:
+            default_model.optimize()
+            with open(f"nnodes_{problem}_default.csv", "a+") as f:
+                f.write(f"{default_model.getNNodes()},")
+                f.close()
+            with open(f"times_{problem}_default.csv", "a+") as f:
+                f.write(f"{default_model.getSolvingTime()},")
+                f.close()
+            
 
 
 

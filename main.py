@@ -25,7 +25,7 @@ import re
 if __name__ == "__main__":
     
     cpu_count = 4
-    nodesels = ['gnn_trained']
+    nodesels = ['breadthfirst', 'dfs', 'bfs', 'estimate','oracle']
     problems = ["GISP"]
     normalize = True
     n_instance = 4
@@ -99,7 +99,7 @@ if __name__ == "__main__":
             
             a = list(map(lambda p: p.start(), processes)) #run processes
             
-            record_stats(nodesels_gpu, instances, problem, torch.device('cuda'), normalize, verbose)
+            record_stats(nodesels_gpu, instances, problem, torch.device('cuda'), normalize, verbose, default=False)
             
             
             b = list(map(lambda p: p.join(), processes)) #join processes
