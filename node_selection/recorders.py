@@ -219,7 +219,7 @@ class LPFeatureRecorder():
     
     def _add_conss_to_graph(self, graph, model, conss):
 
-        cons_attributes = torch.FloatTensor(len(conss), graph.d1, device=self.device)
+        cons_attributes = torch.tensor(len(conss), graph.d1, device=self.device).float()
         var_idxs = []
         cons_idxs = []
         weigths = []
