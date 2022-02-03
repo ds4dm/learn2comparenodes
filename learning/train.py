@@ -35,8 +35,8 @@ def normalize_graph(constraint_features,
     
     #normalize objective
     obj_norm = torch.max(torch.abs(variable_features[:,2]), axis=0)[0].item()
-   
-    var_max_bounds = torch.max(torch.abs(variable_features[:,:2]), axis=1, keepdim=True)[0] 
+    print(var_features.device) 
+    var_max_bounds = torch.max(torch.abs(variable_features[:,:2]), axis=1, keepdim=True)[0]  
     var_max_bounds += var_max_bounds == 0 #remove division by 0
     var_normalizor = var_max_bounds[edge_index[0]]
     cons_normalizor = constraint_features[edge_index[1]]
