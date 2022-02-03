@@ -258,7 +258,7 @@ class LPFeatureRecorder():
     
     def _add_scip_obj_cons(self, model, sub_milp, graph):
         adjacency_matrix = self._get_obj_adjacency(model)
-        cons_feature = torch.FloatTensor([[ sub_milp.getEstimate() ], [ -sub_milp.getLowerbound() ]], device=self.device)
+        cons_feature = torch.tensor([[ sub_milp.getEstimate() ], [ -sub_milp.getLowerbound() ]], device=self.device).float()
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
         self.all_conss_blocks_features.append(cons_feature)
         self.all_conss_blocks.append(adjacency_matrix)
@@ -291,7 +291,7 @@ class LPFeatureRecorder():
         binary, integer, continuous = self._one_hot_type(var)
     
         
-        return torch.FloatTensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=self.device)
+        return torch.tensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=self.device).float()
     
     
     def _one_hot_type(self, var):
