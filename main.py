@@ -34,7 +34,6 @@ if __name__ == "__main__":
     problems = ["GISP"]
     normalize = True
     n_instance = 20
-    n_trial = 1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = True
     on_log = False
@@ -51,8 +50,6 @@ if __name__ == "__main__":
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
-        if sys.argv[i] == '-n_trial':
-            n_trial = int(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
         if sys.argv[i] == '-verbose':
@@ -65,7 +62,6 @@ if __name__ == "__main__":
     print("Evaluation")
     print(f"  Problem:                    {','.join(problems)}")
     print(f"  n_instance/problem:         {n_instance}")
-    print(f"  n_trial/instance:           {n_trial}")
     print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
     print(f"  Device for GNN inference:   {device}")
     print(f"  Normalize features:         {normalize}")
@@ -78,31 +74,33 @@ if __name__ == "__main__":
         
 
     for problem in problems:
-
+        
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
-                                           f"./problem_generation/data/{problem}/test")).glob("*.lp"))[:n_instance]
-        for _ in range(n_trial):
-            
-            chunck_size = int(np.floor(len(instances)/cpu_count))
-            processes = [  Process(name=f"worker {p}", 
-                                            target=partial(record_stats,
-                                                            nodesels=nodesels,
-                                                            instances=instances[ p*chunck_size : (p+1)*chunck_size], 
-                                                            problem=problem,
-                                                            device=torch.device(device),
-                                                            normalize=normalize,
-                                                            verbose=verbose,
-                                                            default=default))
-                            for p in range(cpu_count+1) ]  
-            
-            
-            try:
-                set_start_method('spawn')
-            except RuntimeError:
-                ''
+                                           f"./problem_generation/data/{problem}/test")).glob("*.lp"))
+        if n_instance > 0 :
+            instances = instances[:n_instance]
+    
+        
+        chunck_size = int(np.floor(len(instances)/cpu_count))
+        processes = [  Process(name=f"worker {p}", 
+                                        target=partial(record_stats,
+                                                        nodesels=nodesels,
+                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        problem=problem,
+                                                        device=torch.device(device),
+                                                        normalize=normalize,
+                                                        verbose=verbose,
+                                                        default=default))
+                        for p in range(cpu_count+1) ]  
+        
+        
+        try:
+            set_start_method('spawn')
+        except RuntimeError:
+            ''
 
-            a = list(map(lambda p: p.start(), processes)) #run processes
-            b = list(map(lambda p: p.join(), processes)) #join processes
+        a = list(map(lambda p: p.start(), processes)) #run processes
+        b = list(map(lambda p: p.join(), processes)) #join processes
             
         min_n = (str(min(instances)).split('er_n=')[-1].split('_m')[0])
         max_n = (str(max(instances)).split('er_n=')[-1].split('_m')[0])
