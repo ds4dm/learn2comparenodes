@@ -17,13 +17,13 @@ Created on Tue Oct 12 12:54:57 2021
 
 import os
 import sys
+import numpy as np
+import pyscipopt.scip as sp
+import multiprocessing as md
+from pathlib import Path 
+from functools import partial
 from node_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompFeaturizer
-from pathlib import Path 
-import pyscipopt.scip as sp
-import numpy as np
-import multiprocessing as md
-from functools import partial
 
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
@@ -150,7 +150,6 @@ if __name__ == "__main__":
         
         print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
-
         chunck_size = int(np.floor(len(instances)/n_cpu))
         processes = [  md.Process(name=f"worker {p}", 
                                         target=partial(run_episodes,

@@ -5,15 +5,15 @@ Created on Fri Jan 28 12:36:43 2022
 
 @author: aglabassi
 """
-
-import pyscipopt.scip as sp
-import sys
-from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
-from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
-from learning.train import normalize_graph
+import os
 import re
 import numpy as np
-import os
+import pyscipopt.scip as sp
+from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
+from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
+from learning.utils import normalize_graph
+
+
 
 def setup_oracles(model, optsol, name2nodeselector, device):
     
@@ -24,7 +24,7 @@ def setup_oracles(model, optsol, name2nodeselector, device):
         elif re.match('gnn*', nodesel):
             name2nodeselector[nodesel].set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
             
-def put_missing_nodesels(model, nodesels, problem, normalize, device,):
+def put_missing_nodesels(model, nodesels, problem, normalize, device):
     
     putted = dict()
     
@@ -42,7 +42,6 @@ def put_missing_nodesels(model, nodesels, problem, normalize, device,):
                                                comp_featurizer,
                                                device,
                                                feature_normalizor,
-                                               record_fpath=f"decisions_{problem}_{nodesel}.csv",
                                                use_trained_gnn=trained)
         
         elif re.match('oracle*', nodesel) :

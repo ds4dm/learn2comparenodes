@@ -10,15 +10,16 @@ Contains utilities to save and load comparaison behavioural data
 
 """
 
+import os
+import imp
+import torch
+
 def load_src(name, fpath):
-     import os, imp
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
-load_src("model", "../learning/model.py" )
+load_src("data_type", "../learning/data_type.py" )
 
-import torch
-import os.path as osp
-from model import BipartiteGraphPairData
+from data_type import BipartiteGraphPairData
 
 
 
@@ -41,7 +42,7 @@ class CompFeaturizer():
     def save_comp(self, model, node1, node2, comp_res, comp_id):
         
         torch_geometric_data = self.get_torch_geometric_data(model, node1, node2, comp_res)
-        file_path = osp.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
+        file_path = os.path.join(self.save_dir, f"{self.instance_name}_{comp_id}.pt")
         torch.save(torch_geometric_data, file_path, _use_new_zipfile_serialization=False)
         
         return self

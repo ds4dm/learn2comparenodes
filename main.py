@@ -9,17 +9,16 @@ Created on Tue Oct 19 19:24:33 2021
 
 #Test different nodesels under different problems
 
-
-
-from pathlib import Path 
+import sys
+import os
+import re
 import numpy as np
 import torch
-import sys
 import multiprocessing as md
 from functools import partial
 from utils import record_stats, display_stats
-import os
-import re
+from pathlib import Path 
+
 
        
 if __name__ == "__main__":

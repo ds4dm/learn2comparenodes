@@ -217,7 +217,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
     
 class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     
-    def __init__(self, problem, comp_featurizer, device, feature_normalizor, record_fpath=None, use_trained_gnn=True):
+    def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
         super().__init__("optimal_plunger", inv_proba=0)
         
         policy = GNNPolicy()
@@ -231,7 +231,6 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         self.comp_featurizer = comp_featurizer
         self.device = device
         self.feature_normalizor = feature_normalizor
-        self.record_fpath = record_fpath
         
         self.fe_time = 0
         self.fn_time = 0
