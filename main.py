@@ -109,6 +109,6 @@ if __name__ == "__main__":
             
             b = list(map(lambda p: p.join(), processes)) #join processes
      
-        display_stats(problem, nodesels, instances)
+        display_stats(problem, nodesels, instances, default=default)
    
 

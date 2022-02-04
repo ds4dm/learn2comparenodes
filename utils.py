@@ -173,12 +173,12 @@ def get_mean(problem, nodesel, instances, stat_type):
     return res/(len(instances) + (len(instances)==0))
         
 
-def display_stats(problem, nodesels, instances):
+def display_stats(problem, nodesels, instances, default=False):
     
     print("======================================================")
     print(f'Statistics on {problem} over {len(instances)} instances') 
 
-    for nodesel in ['default'] + nodesels:
+    for nodesel in (['default'] if default else []) + nodesels:
         print("-------------------------------------------------")
         nnode_mean = get_mean(problem, nodesel, instances, 'nnode')
         time_mean =  get_mean(problem, nodesel, instances, 'time')
