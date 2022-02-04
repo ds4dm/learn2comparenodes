@@ -10,14 +10,15 @@ def load_src(name, fpath):
      import os, imp
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
 
+load_src("data_type", "../learning/data_type.py" )
 load_src("model", "../learning/model.py" )
 
 import torch
-from model import BipartiteGraphPairData
-from pyscipopt import Nodesel
-from model import GNNPolicy
 import time
 import numpy as np
+from pyscipopt import Nodesel
+from data_type import BipartiteGraphPairData
+from model import GNNPolicy
 
 
 class CustomNodeSelector(Nodesel):
