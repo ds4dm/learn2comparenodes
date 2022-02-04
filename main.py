@@ -108,7 +108,10 @@ if __name__ == "__main__":
             
             
             b = list(map(lambda p: p.join(), processes)) #join processes
+            
+        min_n = (str(min(instances)).split('er_n=')[-1].split('_m')[0])
+        max_n = (str(max(instances)).split('er_n=')[-1].split('_m')[0])
      
-        display_stats(problem, nodesels, instances, default=default)
+        display_stats(problem, nodesels, instances, min_n, max_n, default=default)
    
 

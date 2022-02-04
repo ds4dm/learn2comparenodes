@@ -173,13 +173,14 @@ def get_mean(problem, nodesel, instances, stat_type):
     return res/(len(instances) + (len(instances)==0))
         
 
-def display_stats(problem, nodesels, instances, default=False):
+def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
     print("======================================================")
-    print(f'Statistics on {problem} over {len(instances)} instances') 
-
+    print(f'Statistics on {problem} over {len(instances)} instances for n in [{min_n}, {max_n}]') 
+    print("======================================================")
+    
     for nodesel in (['default'] if default else []) + nodesels:
-        print("-------------------------------------------------")
+        
         nnode_mean = get_mean(problem, nodesel, instances, 'nnode')
         time_mean =  get_mean(problem, nodesel, instances, 'time')
         
@@ -199,6 +200,8 @@ def display_stats(problem, nodesels, instances, default=False):
             print(f"     |---   Feature Extraction  Mean Time:      {fe_mean:.2f}")
             print(f"     |---   Feature Normalization Mean Time:    {fn_mean:.2f}")
             print(f"     |---   Inference Mean Time:                {inf_mean:.2f}")
+            
+        print("-------------------------------------------------")
             
         
      
