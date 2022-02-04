@@ -14,7 +14,7 @@ import os
 import re
 import numpy as np
 import torch
-import multiprocessing as md
+from torch.multiprocessing import Process, set_start_method
 from functools import partial
 from utils import record_stats, display_stats
 from pathlib import Path 
@@ -71,13 +71,7 @@ if __name__ == "__main__":
     print(f"  Normalize features:         {normalize}")
     print("----------------")
     
-    if device == 'cuda':
-        nodesels_gpu = [ nodesel for nodesel in nodesels if re.match('gnn*', nodesel) ] 
-        nodesels_cpu = [ nodesel for nodesel in nodesels if not re.match('gnn*', nodesel) ] 
-    else:
-        nodesels_gpu = []
-        nodesels_cpu = nodesels
-        
+    
     if on_log:
         sys.stdout = open(os.path.join(os.path.dirname(__file__), 
                                        'evaluation.log'), 'w')
@@ -90,22 +84,24 @@ if __name__ == "__main__":
         for _ in range(n_trial):
             
             chunck_size = int(np.floor(len(instances)/cpu_count))
-            processes = [  md.Process(name=f"worker {p}", 
+            processes = [  Process(name=f"worker {p}", 
                                             target=partial(record_stats,
-                                                            nodesels=nodesels_cpu,
+                                                            nodesels=nodesels,
                                                             instances=instances[ p*chunck_size : (p+1)*chunck_size], 
                                                             problem=problem,
-                                                            device=torch.device('cpu'),
+                                                            device=torch.device(device),
                                                             normalize=normalize,
                                                             verbose=verbose,
                                                             default=default))
                             for p in range(cpu_count+1) ]  
             
+            
+            try:
+                set_start_method('spawn')
+            except RuntimeError:
+                ''
+
             a = list(map(lambda p: p.start(), processes)) #run processes
-            
-            record_stats(nodesels_gpu, instances, problem, torch.device('cuda'), normalize, verbose, default=False)
-            
-            
             b = list(map(lambda p: p.join(), processes)) #join processes
             
         min_n = (str(min(instances)).split('er_n=')[-1].split('_m')[0])
