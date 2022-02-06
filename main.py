@@ -33,7 +33,7 @@ if __name__ == "__main__":
     
     problems = ["GISP"]
     normalize = True
-    n_instance = 20
+    n_instance = -1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = True
     on_log = False
