@@ -20,20 +20,30 @@ from utils import record_stats, display_stats
 from pathlib import Path 
 
 
+
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
+
        
 if __name__ == "__main__":
     
-    cpu_count = 3
-    nodesels = ['breadthfirst', 
-                'dfs', 
-                'bfs',
-                'estimate',
-                'oracle', 
+    n_cpu = 4
+    nodesels = ['gnn_untrained',
                 'gnn_trained']
     
     problems = ["GISP"]
     normalize = True
-    n_instance = 20
+    n_instance = -1
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = True
     on_log = False
@@ -41,7 +51,7 @@ if __name__ == "__main__":
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
-            cpu_count = int(sys.argv[i + 1])
+            n_cpu = int(sys.argv[i + 1])
         if sys.argv[i] == '-nodesels':
             nodesels = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-problems':
@@ -77,21 +87,22 @@ if __name__ == "__main__":
         
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
                                            f"./problem_generation/data/{problem}/test")).glob("*.lp"))
-        if n_instance > 0 :
-            instances = instances[:n_instance]
-    
+        if n_instance == -1 :
+            n_instance = len(instances)
         
-        chunck_size = int(np.floor(len(instances)/cpu_count))
+        instances = instances[:n_instance]
+    
+    
         processes = [  Process(name=f"worker {p}", 
                                         target=partial(record_stats,
                                                         nodesels=nodesels,
-                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        instances=instances[p1:p2], 
                                                         problem=problem,
                                                         device=torch.device(device),
                                                         normalize=normalize,
                                                         verbose=verbose,
                                                         default=default))
-                        for p in range(cpu_count+1) ]  
+                        for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]  
         
         
         try:

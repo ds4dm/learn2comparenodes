@@ -102,6 +102,18 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
             model.optimize()
             model.writeBestSol(lp_dir +"/" + lpname + ".sol")
 
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
         
 
 
@@ -117,9 +129,10 @@ if __name__ == "__main__":
     setParam = 100.0
     alphaE2 = 0.5
     timelimit = 7200.0
-    solveInstance = True
-    n_instance = 10
+    solveInstance = False
+    n_instance = 100
     seed = 0
+    data_partition = 'test'
     
 
     # seed = 0
@@ -173,12 +186,12 @@ if __name__ == "__main__":
         
             
     cpu_count = md.cpu_count()//2 if n_cpu == None else n_cpu
-    chunk_size = int(np.floor(n_instance/cpu_count))
+    
 
     
     processes = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
-                                                                  seed + p*chunk_size, 
-                                                                  seed + (p+1)*chunk_size, 
+                                                                  seed + p1, 
+                                                                  seed + p2, 
                                                                   whichSet, 
                                                                   setParam, 
                                                                   alphaE2, 
@@ -188,11 +201,12 @@ if __name__ == "__main__":
                                                                   instance, 
                                                                   lp_dir, 
                                                                   solveInstance))
-                 for p in range(cpu_count+1) ]
+                 for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
     
  
     a = list(map(lambda p: p.start(), processes)) #run processes
     b = list(map(lambda p: p.join(), processes)) #join processes
+    print('Generated')
  
     
             

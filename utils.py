@@ -15,10 +15,11 @@ from learning.utils import normalize_graph
 
 
 
-def setup_oracles(model, optsol, name2nodeselector, device):
+def setup_oracles(model, instance, name2nodeselector, device):
     
     for nodesel in name2nodeselector:
         if re.match('oracle*', nodesel):
+            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             name2nodeselector[nodesel].setOptsol(optsol)
             
         elif re.match('gnn*', nodesel):
@@ -141,7 +142,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
         model.readProblem(instance)
         
         #setup oracles
-        setup_oracles(model, model.readSolFile(instance.replace(".lp", ".sol")), name2nodeselector, device)
+        setup_oracles(model, instance, name2nodeselector, device)
             
        #test nodesels
         for nodesel in nodesels:

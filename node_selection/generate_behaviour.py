@@ -107,6 +107,19 @@ def run_episodes(oracle_type, instances, save_dir):
         
     return 1
     
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
+
 
 if __name__ == "__main__":
     
@@ -147,16 +160,19 @@ if __name__ == "__main__":
         
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
                                            f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))
+        n_instance = len(instances)
         
-        print(f"Geneating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
+        print(f"Geneating {data_partition} samples from {n_instance} instances using oracle {oracle}")
         
         chunck_size = int(np.floor(len(instances)/n_cpu))
         processes = [  md.Process(name=f"worker {p}", 
                                         target=partial(run_episodes,
                                                         oracle_type=oracle,
-                                                        instances=instances[ p*chunck_size : (p+1)*chunck_size], 
+                                                        instances=instances[ p1 : p2], 
                                                         save_dir=save_dir))
-                        for p in range(n_cpu+1) ]
+                        for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu))]
+        
+        
             
         a = list(map(lambda p: p.start(), processes)) #run processes
         b = list(map(lambda p: p.join(), processes)) #join processes
