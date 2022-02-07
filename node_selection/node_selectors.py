@@ -251,27 +251,21 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     def nodecomp(self, node1,node2):
         
         #measure feature extraction time
-        lp = LineProfiler()
-        lp.add_function(self.comp_featurizer.LP_feature_recorder.record_sub_milp_graph)
+
     
         start = time.time() 
-        lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
-        g1,g2, _ =lp_wrap(self.model, 
-                                                               node1, 
-                                                               node2)
+
+        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
         
-        lp.print_stats()
         end = time.time()
         self.fe_time += (end - start)
         
         #measure feature normalization + graph creation time
         start = time.time()
+
         
-        lp = LineProfiler()
-        lp_wrap = lp(self.feature_normalizor)
+        g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
         
-        g1, g2 = lp_wrap(*g1), lp_wrap(*g2)
-        lp.print_stats()
         batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
         
         end = time.time()
