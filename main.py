@@ -47,7 +47,7 @@ if __name__ == "__main__":
     verbose = True
     on_log = False
     default = True
-    delete = True
+    delete = False
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
