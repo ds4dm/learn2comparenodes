@@ -48,6 +48,7 @@ if __name__ == "__main__":
     verbose = True
     on_log = False
     default = True
+    delete = True
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
@@ -67,7 +68,13 @@ if __name__ == "__main__":
         if sys.argv[i] == '-on_log':
             on_log = bool(int(sys.argv[i + 1]))    
         if sys.argv[i] == '-default':
-            default = bool(int(sys.argv[i + 1]))    
+            default = bool(int(sys.argv[i + 1]))  
+        if sys.argv[i] == '-delete':
+            delete = bool(int(sys.argv[i + 1]))  
+    if delete:
+        import shutil
+        shutil.rmtree(os.path.join(os.path.dirname(__file__), 
+                                       'stats'))
             
     print("Evaluation")
     print(f"  Problem:                    {','.join(problems)}")
