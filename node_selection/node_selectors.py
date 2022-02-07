@@ -19,6 +19,7 @@ import numpy as np
 from pyscipopt import Nodesel
 from data_type import BipartiteGraphPairData
 from model import GNNPolicy
+from line_profiler import LineProfiler
 
 
 class CustomNodeSelector(Nodesel):
@@ -250,18 +251,27 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     def nodecomp(self, node1,node2):
         
         #measure feature extraction time
+        lp = LineProfiler()
+        lp.add_function(self.comp_featurizer.LP_feature_recorder.record_sub_milp_graph)
+    
         start = time.time() 
-        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, 
+        lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
+        g1,g2, _ =lp_wrap(self.model, 
                                                                node1, 
                                                                node2)
         
+        lp.print_stats()
         end = time.time()
         self.fe_time += (end - start)
         
         #measure feature normalization + graph creation time
         start = time.time()
         
-        g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
+        lp = LineProfiler()
+        lp_wrap = lp(self.feature_normalizor)
+        
+        g1, g2 = lp_wrap(*g1), lp_wrap(*g2)
+        lp.print_stats()
         batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
         
         end = time.time()
