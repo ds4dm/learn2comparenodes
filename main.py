@@ -38,8 +38,7 @@ def distribute(n_instance, n_cpu):
 if __name__ == "__main__":
     
     n_cpu = 4
-    nodesels = ['gnn_untrained',
-                'gnn_trained']
+    nodesels = ['gnn_trained']
     
     problems = ["GISP"]
     normalize = True
