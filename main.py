@@ -71,14 +71,17 @@ if __name__ == "__main__":
         if sys.argv[i] == '-delete':
             delete = bool(int(sys.argv[i + 1]))  
     if delete:
-        import shutil
-        shutil.rmtree(os.path.join(os.path.dirname(__file__), 
-                                       'stats'))
+        try:
+            import shutil
+            shutil.rmtree(os.path.join(os.path.dirname(__file__), 
+                                           'stats'))
+        except:
+            ''
             
     print("Evaluation")
     print(f"  Problem:                    {','.join(problems)}")
     print(f"  n_instance/problem:         {n_instance}")
-    print(f"  Nodeselectors evaluated:    {','.join(nodesels)}")
+    print(f"  Nodeselectors evaluated:    {','.join(nodesels + ['default' if default else '' ])}")
     print(f"  Device for GNN inference:   {device}")
     print(f"  Normalize features:         {normalize}")
     print("----------------")
