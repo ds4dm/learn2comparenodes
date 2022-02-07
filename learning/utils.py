@@ -23,17 +23,17 @@ def normalize_graph(constraint_features,
     obj_norm = torch.max(torch.abs(variable_features[:,2]), axis=0)[0].item()
     var_max_bounds = torch.max(torch.abs(variable_features[:,:2]), axis=1, keepdim=True)[0]  
     
-    var_max_bounds = var_max_bounds.add_(var_max_bounds == 0)
+    var_max_bounds +=(var_max_bounds == 0)
     
     var_normalizor = var_max_bounds[edge_index[0]]
     cons_normalizor = constraint_features[edge_index[1]]
-    normalizor = var_normalizor.div_(cons_normalizor)
+    normalizor = var_normalizor/(cons_normalizor)
 
-    variable_features[:,2] = variable_features[:,2].div_(obj_norm)
-    variable_features[:,:2] = variable_features[:,:2].div_(var_max_bounds)
-    constraint_features = constraint_features.div_(constraint_features)
-    edge_attr = edge_attr.mul_(normalizor)
-    bounds = bounds.div_( bound_normalizor)
+    variable_features[:,2] /= (obj_norm)
+    variable_features[:,:2]/= (var_max_bounds)
+    constraint_features/= (constraint_features)
+    edge_attr*=(normalizor)
+    bounds/=( bound_normalizor)
     
     return (constraint_features, edge_index, edge_attr, variable_features, bounds, depth)
 
