@@ -78,13 +78,7 @@ if __name__ == "__main__":
         except:
             ''
             
-    print("Evaluation")
-    print(f"  Problem:                    {','.join(problems)}")
-    print(f"  n_instance/problem:         {n_instance}")
-    print(f"  Nodeselectors evaluated:    {','.join(nodesels + ['default' if default else '' ])}")
-    print(f"  Device for GNN inference:   {device}")
-    print(f"  Normalize features:         {normalize}")
-    print("----------------")
+
     
     
     if on_log:
@@ -100,7 +94,14 @@ if __name__ == "__main__":
             n_instance = len(instances)
         
         instances = instances[:n_instance]
-    
+        
+        print("Evaluation")
+        print(f"  Problem:                    {problem}")
+        print(f"  n_instance/problem:         {len(instances)}")
+        print(f"  Nodeselectors evaluated:    {','.join(nodesels + ['default' if default else '' ])}")
+        print(f"  Device for GNN inference:   {device}")
+        print(f"  Normalize features:         {normalize}")
+        print("----------------")
     
         processes = [  Process(name=f"worker {p}", 
                                         target=partial(record_stats,
