@@ -103,12 +103,10 @@ class CompFeaturizer():
         
         cons_attributes_blocks = map(all_conss_blocks_features.__getitem__, cons_block_idxs)
         
-        #no cuting planes. To support this, please use some hstaks / vstacks
-        adjacency_matrix = tuple(adjacency_matrixes)[0] 
-        cons_attributes = tuple(cons_attributes_blocks)[0] #card(conss) X cons_dim
+        #TO DO ACCELERATE HSTACK VSTACK
+        adjacency_matrix = torch.hstack(tuple(adjacency_matrixes))
+        cons_attributes = torch.vstack(tuple(cons_attributes_blocks))
         
-        
-        adjacency_matrix =  adjacency_matrix
         edge_idxs = adjacency_matrix._indices()
         edge_features =  adjacency_matrix._values().unsqueeze(1)
             
@@ -130,14 +128,14 @@ class CompFeaturizer():
               edge_indices[0], 
               edge_features[0], 
               variable_features[0], 
-              torch.tensor([[-1*lb0, ub0]], device=device).float(),
+              torch.tensor([[lb0, -1*ub0]], device=device).float(),
               torch.tensor([depth0], device=device).float()
               )
         g2 = (constraint_features[1], 
               edge_indices[1], 
               edge_features[1], 
               variable_features[1], 
-              torch.tensor([[-1*lb1, ub1]], device=device).float(),
+              torch.tensor([[lb1, -1*ub1]], device=device).float(),
               torch.tensor([depth1], device=device).float()
               )
         
@@ -179,6 +177,7 @@ class LPFeatureRecorder():
         self.recorded_light = dict()
         self.all_conss_blocks = []
         self.all_conss_blocks_features = []
+        self.obj_adjacency  = None
         
         self.device = device
 
@@ -205,6 +204,7 @@ class LPFeatureRecorder():
                 graph = self.get_graph(model, parent).copy()
                 self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
+                
             self._add_scip_obj_cons(model, sub_milp, graph)
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
@@ -346,6 +346,6 @@ class BipartiteGraphStatic0():
         copy = BipartiteGraphStatic0(self.n0, self.device, allocate=False)
         
         copy.var_attributes = self.var_attributes.clone()
-        copy.cons_block_idxs = self.cons_block_idxs
+        copy.cons_block_idxs = self.cons_block_idxs[:-1] #no scip bonds
         
         return copy
