@@ -205,7 +205,7 @@ class LPFeatureRecorder():
                 graph = self.get_graph(model, parent).copy()
                 self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
-            
+            self._add_scip_obj_cons(model, sub_milp, graph)
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
                                                          graph.cons_block_idxs)
@@ -219,6 +219,29 @@ class LPFeatureRecorder():
     
         
         return graph
+    
+    
+    def _get_obj_adjacency(self, model):
+    
+       if self.obj_adjacency  == None:
+           var_coeff = { self.var2idx[ str(t[0]) ]:c for (t,c) in model.getObjective().terms.items() if c != 0.0 }
+           var_idxs = list(var_coeff.keys())
+           weigths = list(var_coeff.values())
+           cons_idxs = [0]*len(var_idxs)
+           
+           self.obj_adjacency =  torch.torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, 1), device=self.device)
+           self.obj_adjacency = torch.hstack((-1*self.obj_adjacency, self.obj_adjacency))
+           
+       return self.obj_adjacency         
+       
+    
+    def _add_scip_obj_cons(self, model, sub_milp, graph):
+        adjacency_matrix = self._get_obj_adjacency(model)
+        cons_feature = torch.tensor([[ sub_milp.getEstimate() ], [ -sub_milp.getLowerbound() ]], device=self.device).float()
+        graph.cons_block_idxs.append(len(self.all_conss_blocks_features))
+        self.all_conss_blocks_features.append(cons_feature)
+        self.all_conss_blocks.append(adjacency_matrix)
+  
     
                 
     def _add_vars_to_graph(self, graph, model):
