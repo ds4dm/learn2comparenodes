@@ -92,7 +92,7 @@ class CompFeaturizer():
     def _get_graph_pair_data(self, var_attributes0, var_attributes1, cons_block_idxs0, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features, comp_res ):
         
         g1 = self._get_graph_data(var_attributes0, cons_block_idxs0, all_conss_blocks, all_conss_blocks_features)
-        g2 = self._get_graph_data(var_attributes1, cons_block_idxs0, all_conss_blocks, all_conss_blocks_features)
+        g2 = self._get_graph_data(var_attributes1, cons_block_idxs1, all_conss_blocks, all_conss_blocks_features)
      
         return list(zip(g1,g2)) + [comp_res]
     
