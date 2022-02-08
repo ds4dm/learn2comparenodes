@@ -83,7 +83,7 @@ class CompFeaturizer():
         
         if model.getObjectiveSense() == 'maximize':
             bounds0[1], bounds0[0] = bounds0
-            bounds1[1], bounds1[0] = bounds0 
+            bounds1[1], bounds1[0] = bounds1
             
         return self._to_triplet_tensors(g_data, node1.getDepth(), node2.getDepth(), bounds0, bounds1, self.LP_feature_recorder.device)
     
