@@ -165,12 +165,16 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 
 def get_mean(problem, nodesel, instances, stat_type):
     res = 0
+    n = 0
     stat_idx = ['nnode', 'time', 'fe', 'fn', 'inf'].index(stat_type)
     for instance in instances:
-        file = get_record_file(problem, nodesel, instance)
-        res += np.genfromtxt(file)[stat_idx]
-        
-    return res/(len(instances) + (len(instances)==0))
+        try:
+            file = get_record_file(problem, nodesel, instance)
+            res += np.genfromtxt(file)[stat_idx]
+            n += 1
+        except:
+            ''
+    return res/(n + int(n==0)),n
         
 
 def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
@@ -180,12 +184,12 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     print("======================================================")
     
     for nodesel in (['default'] if default else []) + nodesels:
-        
-        nnode_mean = get_mean(problem, nodesel, instances, 'nnode')
-        time_mean =  get_mean(problem, nodesel, instances, 'time')
+            
+        nnode_mean, n = get_mean(problem, nodesel, instances, 'nnode')
+        time_mean, n =  get_mean(problem, nodesel, instances, 'time')
         
     
-        print(f"  {nodesel} ")
+        print(f"  {nodesel}, n={n} ")
         print(f"    Mean NNode Created   : {nnode_mean:.2f}")
         print(f"    Mean Solving Time    : {time_mean:.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
