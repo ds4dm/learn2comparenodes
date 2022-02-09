@@ -104,8 +104,10 @@ class CompFeaturizer():
         cons_attributes_blocks = map(all_conss_blocks_features.__getitem__, cons_block_idxs)
         
         #TO DO ACCELERATE HSTACK VSTACK
-        adjacency_matrix = torch.hstack(tuple(adjacency_matrixes))
-        cons_attributes = torch.vstack(tuple(cons_attributes_blocks))
+        # adjacency_matrix = torch.hstack(tuple(adjacency_matrixes))
+        # cons_attributes = torch.vstack(tuple(cons_attributes_blocks))
+        adjacency_matrix = tuple(adjacency_matrixes)[0]
+        cons_attributes = tuple(cons_attributes_blocks)[0]
         
         edge_idxs = adjacency_matrix._indices()
         edge_features =  adjacency_matrix._values().unsqueeze(1)
