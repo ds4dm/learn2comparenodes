@@ -198,9 +198,9 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
                 
         if re.match('gnn*', nodesel):
-            fe_mean = get_mean(problem, nodesel, instances, 'fe')
-            fn_mean = get_mean(problem, nodesel, instances, 'fn')
-            inf_mean = get_mean(problem, nodesel, instances, 'inf')
+            fe_mean = get_mean(problem, nodesel, instances, 'fe')[0]
+            fn_mean = get_mean(problem, nodesel, instances, 'fn')[0]
+            inf_mean = get_mean(problem, nodesel, instances, 'inf')[0]
             print(f"     |---   Feature Extraction  Mean Time:      {fe_mean:.2f}")
             print(f"     |---   Feature Normalization Mean Time:    {fn_mean:.2f}")
             print(f"     |---   Inference Mean Time:                {inf_mean:.2f}")
