@@ -251,24 +251,26 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     def nodecomp(self, node1,node2):
         
         #measure feature extraction time
-
     
         start = time.time() 
-        lp = LineProfiler()
-        lp.add_function(self.comp_featurizer._get_graph_data)
-        lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
-        g1,g2, _ =lp_wrap(self.model, 
-                                                               node1, 
-                                                               node2)
-        lp.print_stats()
-       # g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
+        
+        #lp profiler
+        # lp = LineProfiler()
+        # lp.add_function(self.comp_featurizer._get_graph_data)
+        # lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
+        # g1,g2, _ =lp_wrap(self.model, 
+        #                                                        node1, 
+        #                                                        node2)
+        # lp.print_stats()
+        
+        # NO lp profiler
+        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
         
         end = time.time()
         self.fe_time += (end - start)
         
         #measure feature normalization + graph creation time
         start = time.time()
-
         
         g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
         
