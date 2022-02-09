@@ -254,8 +254,14 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
 
     
         start = time.time() 
-
-        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
+        lp = LineProfiler()
+        lp.add_function(self.comp_featurizer._get_graph_data)
+        lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
+        g1,g2, _ =lp_wrap(self.model, 
+                                                               node1, 
+                                                               node2)
+        lp.print_stats()
+       # g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
         
         end = time.time()
         self.fe_time += (end - start)
