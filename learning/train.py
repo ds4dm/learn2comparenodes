@@ -102,8 +102,8 @@ if __name__ == "__main__":
         print(f"Device:               {device}")
         print(f"Loss fct:             {loss_fn}")
         print(f"Optimizer:            {optimizer_fn}")  
-        print(f"Model's Size:         {sum(p.numel() for p in policy.parameters())} ")
-        print("-------------------------")
+        print(f"Model's Size:         {sum(p.numel() for p in policy.parameters())} parameters ")
+        print("-------------------------") 
         
         
         for epoch in range(n_epoch):
