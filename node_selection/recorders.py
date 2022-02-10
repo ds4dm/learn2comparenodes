@@ -207,7 +207,7 @@ class LPFeatureRecorder():
                 self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
                 
-            self._add_scip_obj_cons(model, sub_milp, graph)
+            #self._add_scip_obj_cons(model, sub_milp, graph)
             self.recorded[sub_milp.getNumber()] = graph
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
                                                          graph.cons_block_idxs)
@@ -348,6 +348,6 @@ class BipartiteGraphStatic0():
         copy = BipartiteGraphStatic0(self.n0, self.device, allocate=False)
         
         copy.var_attributes = self.var_attributes.clone()
-        copy.cons_block_idxs = self.cons_block_idxs[:-1] #no scip bonds
+        copy.cons_block_idxs = self.cons_block_idxs #no scip bonds
         
         return copy
