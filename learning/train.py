@@ -19,7 +19,7 @@ from utils import process
 if __name__ == "__main__":
     
     problems = ["GISP"]
-    lr = 0.01
+    lr = 0.005
     n_epoch = 5
     patience = 10
     early_stopping = 20
@@ -92,16 +92,17 @@ if __name__ == "__main__":
         
         print("-------------------------")
         print(f"GNN for problem {problem}")
-        print(f"Training on:         {len(train_data)} samples")
-        print(f"Validating on:       {len(valid_data)} samples")
-        print(f"Batch Size Train:    {batch_train}")
-        print(f"Batch Size Valid     {batch_valid}")
-        print(f"Learning rate:       {lr} ")
-        print(f"Number of epochs:    {n_epoch}")
-        print(f"Normalize:           {normalize}")
-        print(f"Device:              {device}")
-        print(f"Loss fct:            {loss_fn}")
-        print(f"Optimizer:           {optimizer_fn}")  
+        print(f"Training on:          {len(train_data)} samples")
+        print(f"Validating on:        {len(valid_data)} samples")
+        print(f"Batch Size Train:     {batch_train}")
+        print(f"Batch Size Valid      {batch_valid}")
+        print(f"Learning rate:        {lr} ")
+        print(f"Number of epochs:     {n_epoch}")
+        print(f"Normalize:            {normalize}")
+        print(f"Device:               {device}")
+        print(f"Loss fct:             {loss_fn}")
+        print(f"Optimizer:            {optimizer_fn}")  
+        print(f"Model's Size:         {sum(p.numel() for p in policy.parameters())} ")
         print("-------------------------")
         
         
