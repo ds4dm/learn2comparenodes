@@ -284,15 +284,15 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         #############################################################################
         start = time.time()
         
-        lp = LineProfiler()
-        lp.add_function(self.policy.convs[0].forward)
-        lp.add_function(self.policy.convs[0].propagate)
-        lp_wrap = lp(self.policy.forward)
-        decision=lp_wrap(batch).item()
-        lp.print_stats()
+        # lp = LineProfiler()
+        # lp.add_function(self.policy.convs[0].forward)
+        # lp.add_function(self.policy.convs[0].propagate)
+        # lp_wrap = lp(self.policy.forward)
+        # decision=lp_wrap(batch).item()
+        # lp.print_stats()
         
        
-        #decision = self.policy(batch).item() 
+        decision = self.policy(batch).item() 
         end = time.time()
         self.inference_time += (end - start)
         
