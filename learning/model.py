@@ -18,10 +18,10 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        self.emb_size = emb_size = 32 #uniform node feature embedding dim
+        self.emb_size = emb_size = 16 #uniform node feature embedding dim
         
-        hidden_dim1 = 16
-        hidden_dim2 = 8
+        hidden_dim1 = 8
+        hidden_dim2 = 4
         hidden_dim3 = 4
         
         # static data
@@ -35,8 +35,6 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.LayerNorm(cons_nfeats),
             torch.nn.Linear(cons_nfeats, emb_size),
             torch.nn.ReLU(),
-            torch.nn.Linear(emb_size, emb_size),
-            torch.nn.ReLU(),
         )
 
         # EDGE EMBEDDING
@@ -48,8 +46,6 @@ class GNNPolicy(torch.nn.Module):
         self.var_embedding = torch.nn.Sequential(
             torch.nn.LayerNorm(var_nfeats),
             torch.nn.Linear(var_nfeats, emb_size),
-            torch.nn.ReLU(),
-            torch.nn.Linear(emb_size, emb_size),
             torch.nn.ReLU(),
         )
 
