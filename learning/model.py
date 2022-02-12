@@ -54,13 +54,13 @@ class GNNPolicy(torch.nn.Module):
         #double check
  
         self.conv1 = GraphConv((emb_size, emb_size), hidden_dim1 )
-        self.conv2 = GraphConv((hidden_dim1, hidden_dim1), hidden_dim2 )
-        self.conv3 = GraphConv((hidden_dim2, hidden_dim2), hidden_dim3 )
+        #self.conv2 = GraphConv((hidden_dim1, hidden_dim1), hidden_dim2 )
+        #self.conv3 = GraphConv((hidden_dim2, hidden_dim2), hidden_dim3 )
         
         self.convs = [ self.conv1 ]
         
         self.final_mlp = torch.nn.Sequential( 
-                                    torch.nn.Linear(2*hidden_dim3+2, 1, bias=False),
+                                    torch.nn.Linear(2*hidden_dim1+2, 1, bias=False),
                                     torch.nn.Sigmoid()
                                     )
      
