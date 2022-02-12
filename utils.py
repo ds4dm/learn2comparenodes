@@ -15,21 +15,18 @@ from learning.utils import normalize_graph
 
 
 
-def setup_oracles(model, instance, name2nodeselector, device):
+def get_nodesels2models(nodesels, instance, problem, normalize, device):
     
-    for nodesel in name2nodeselector:
-        if re.match('oracle*', nodesel):
-            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-            name2nodeselector[nodesel].setOptsol(optsol)
-            
-        elif re.match('gnn*', nodesel):
-            name2nodeselector[nodesel].set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
-            
-def put_missing_nodesels(model, nodesels, problem, normalize, device):
-    
-    putted = dict()
+    res = dict()
+    nodesels2nodeselectors = dict()
     
     for nodesel in nodesels:
+        model = sp.Model()
+        model.hideOutput()
+        model.readProblem(instance)
+        model.setIntParam('randomization/permutationseed', 9)
+        model.setIntParam('randomization/randomseedshift',9)
+        
         comp = None
         if re.match('custom_*', nodesel):
             name = nodesel.split("_")[-1]
@@ -44,6 +41,9 @@ def put_missing_nodesels(model, nodesels, problem, normalize, device):
                                                device,
                                                feature_normalizor,
                                                use_trained_gnn=trained)
+            comp.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
+            
+
         
         elif re.match('oracle*', nodesel) :
             try:
@@ -51,26 +51,26 @@ def put_missing_nodesels(model, nodesels, problem, normalize, device):
             except:
                 inv_proba = 0
             comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
+            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+            comp.setOptsol(optsol)
             
             
-        putted[nodesel] = comp 
+        res[nodesel] = model
         if comp != None: #dont include something already included
-            model.includeNodesel(comp, nodesel, 'testing', 100, 100)
+            model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
+        else:
+            model.setNodeselPriority(nodesel,536870911)
+            
+        
+        res[nodesel] = model
+        nodesels2nodeselectors[nodesel] = comp
+        
         
         
             
-    return putted
+    return res, nodesels2nodeselectors
 
 
-def activate_nodesel(model, nodesel_to_activate, all_nodesels):
-    
-    #canceL all nodesels, WORKS
-    for nodesel in all_nodesels:
-        model.setNodeselPriority(nodesel, 100)
-                
-    #activate this nodesel, WORKS
-    model.setNodeselPriority(nodesel_to_activate, 536870911)
-    
 
 def get_record_file(problem, nodesel, instance):
     save_dir = os.path.join(os.path.dirname(__file__),  f'stats/{problem}/{nodesel}/')
@@ -92,11 +92,12 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj=None):
         fe_time = nodesel_obj.fe_time
         fn_time = nodesel_obj.fn_time
         inference_time = nodesel_obj.inference_time
+        counter = nodesel_obj.counter
     else:
-        fe_time, fn_time, inference_time = -1, -1, -1
+        fe_time, fn_time, inference_time, counter = -1, -1, -1, -1
     
     file = get_record_file(problem, nodesel, instance)
-    np.savetxt(file, np.array([nnode, time, fe_time, fn_time, inference_time]), delimiter=',')
+    np.savetxt(file, np.array([nnode, time, fe_time, fn_time, inference_time, counter]), delimiter=',')
     
  
 
@@ -109,7 +110,7 @@ def print_infos(problem, nodesel, instance):
 
     
 
-def solve_default(problem, instance, verbose):
+def solve_and_record_default(problem, instance, verbose):
     default_model = sp.Model()
     default_model.hideOutput()
     default_model.setIntParam('randomization/permutationseed',9) 
@@ -128,38 +129,39 @@ def solve_default(problem, instance, verbose):
 #problem type for printing purposes
 def record_stats(nodesels, instances, problem, device, normalize, verbose=False, default=True):
         
-    model = sp.Model()
-    model.hideOutput()
-    model.setIntParam('randomization/permutationseed', 9)
-    model.setIntParam('randomization/randomseedshift',9)
+
     
-    name2nodeselector = put_missing_nodesels(model,nodesels, problem, normalize, device)
-    
-    for instance in instances:
-        
+   
+
+
+    for instance in instances:       
         instance = str(instance)
         
-        model.readProblem(instance)
+        if default and not os.path.isfile(get_record_file(problem,'default', instance)):
+            solve_and_record_default(problem, instance, verbose)
         
-        #setup oracles
-        setup_oracles(model, instance, name2nodeselector, device)
+        nodesels2models, nodesels2nodeselectors = get_nodesels2models(nodesels, instance, problem, normalize, device)
+        
+        
+        for nodesel in nodesels:  
             
-       #test nodesels
-        for nodesel in nodesels:
+            model = nodesels2models[nodesel]
+            nodeselector = nodesels2nodeselectors[nodesel]
+        
+                
+           #test nodesels
             if os.path.isfile(get_record_file(problem, nodesel, instance)): #no need to resolve 
                 continue
-            
-            model.freeTransform()
-            activate_nodesel(model, nodesel, nodesels)     
+        
             
             if verbose:
                 print_infos(problem, nodesel, instance)
+                
             model.optimize()
-            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=name2nodeselector[nodesel])
-
-        if default and not os.path.isfile(get_record_file(problem,'default', instance)):
-            solve_default(problem, instance, verbose)
-           
+            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=nodeselector)
+    
+ 
+               
 
 
 
