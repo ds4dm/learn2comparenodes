@@ -250,41 +250,49 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     
     def nodecomp(self, node1,node2):
         
-        #measure feature extraction time
-    
+        #Measure feature extraction time    
+        #############################################################################
         start = time.time() 
-        
         #lp profiler
-        # lp = LineProfiler()
-        # lp.add_function(self.comp_featurizer._get_graph_data)
-        # lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
+        #lp = LineProfiler()
+        #lp.add_function(self.comp_featurizer._get_graph_data)
+        #lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
         # g1,g2, _ =lp_wrap(self.model, 
         #                                                        node1, 
         #                                                        node2)
         # lp.print_stats()
         
-        # NO lp profiler
-        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
         
+        
+        # NO lp profiler
+        
+        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
         end = time.time()
         self.fe_time += (end - start)
         
-        #measure feature normalization + graph creation time
+        
+        #Measure feature normalization + graph creation time
+        #############################################################################
+        
         start = time.time()
-        
         g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
-        
         batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
-        
         end = time.time()
         self.fn_time += (end-start)
         
-        
-        #measure inference time
+        #measure inference time    
+        #############################################################################
         start = time.time()
         
-        decision = self.policy(batch).item() 
+        lp = LineProfiler()
+        lp.add_function(self.policy.convs[0].forward)
+        lp.add_function(self.policy.convs[0].propagate)
+        lp_wrap = lp(self.policy.forward)
+        decision=lp_wrap(batch).item()
+        lp.print_stats()
         
+       
+        #decision = self.policy(batch).item() 
         end = time.time()
         self.inference_time += (end - start)
         
