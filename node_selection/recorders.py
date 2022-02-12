@@ -217,7 +217,7 @@ class LPFeatureRecorder():
         graph = BipartiteGraphStatic0(self.n0, self.device)
         
         self._add_vars_to_graph(graph, model)
-        self._add_conss_to_graph(graph, model, self.original_conss[:100])
+        self._add_conss_to_graph(graph, model, self.original_conss)
     
         
         return graph
