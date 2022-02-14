@@ -18,7 +18,7 @@ class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()
         
-        self.emb_size = emb_size = 16 #uniform node feature embedding dim
+        self.emb_size = emb_size = 32 #uniform node feature embedding dim
         
         hidden_dim1 = 8
         hidden_dim2 = 4
