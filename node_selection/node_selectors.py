@@ -234,6 +234,9 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         self.device = device
         self.feature_normalizor = feature_normalizor
         
+        self.best_primal = np.inf #minimization
+        self.primal_changes = 0
+        
         self.fe_time = 0
         self.fn_time = 0
         self.inference_time = 0
@@ -249,7 +252,19 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         self.counter = 0
     
     def nodecomp(self, node1,node2):
+        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
         
+        if self.model.getObjectiveSense() == 'maximize':
+            curr_primal *= -1
+            
+        if curr_primal < self.best_primal:
+            self.best_primal = curr_primal
+            self.primal_changes += 1
+        
+        if self.primal_changes > 4:
+            return self.estimate_nodecomp(node1, node2)
+    
+    
         #Measure feature extraction time    
         #############################################################################
         start = time.time() 
