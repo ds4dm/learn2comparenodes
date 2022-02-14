@@ -168,7 +168,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 def get_mean(problem, nodesel, instances, stat_type):
     res = 0
     n = 0
-    stat_idx = ['nnode', 'time', 'fe', 'fn', 'inf'].index(stat_type)
+    stat_idx = ['nnode', 'time', 'fe', 'fn', 'inf', 'ncomp'].index(stat_type)
     for instance in instances:
         try:
             file = get_record_file(problem, nodesel, instance)
@@ -182,7 +182,7 @@ def get_mean(problem, nodesel, instances, stat_type):
 def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
     print("======================================================")
-    print(f'Statistics on {problem} over {len(instances)} instances for n in [{min_n}, {max_n}]') 
+    print(f'Statistics on {problem} over {len(instances)} instances for problem size in [{min_n}, {max_n}]') 
     print("======================================================")
     
     for nodesel in (['default'] if default else []) + nodesels:
@@ -203,12 +203,15 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             fe_mean = get_mean(problem, nodesel, instances, 'fe')[0]
             fn_mean = get_mean(problem, nodesel, instances, 'fn')[0]
             inf_mean = get_mean(problem, nodesel, instances, 'inf')[0]
+            ncomp = get_mean(problem, nodesel, instances, 'ncomp')[0]
             print(f"     |---   Feature Extraction  Mean Time:      {fe_mean:.2f}")
             print(f"     |---   Feature Normalization Mean Time:    {fn_mean:.2f}")
             print(f"     |---   Inference Mean Time:                {inf_mean:.2f}")
+            print(f"     |---   Ncomp Mean:                         {ncomp:.2f}")
             
         print("-------------------------------------------------")
             
         
+     
      
     
