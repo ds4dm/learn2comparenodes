@@ -252,6 +252,10 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         self.counter = 0
     
     def nodecomp(self, node1,node2):
+        
+        if self.primal_changes > -1:
+            return self.estimate_nodecomp(node1, node2)
+        
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
         
         if self.model.getObjectiveSense() == 'maximize':
@@ -260,10 +264,7 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
         if curr_primal < self.best_primal:
             self.best_primal = curr_primal
             self.primal_changes += 1
-        
-        if self.primal_changes > 4:
-            return self.estimate_nodecomp(node1, node2)
-    
+            
     
         #Measure feature extraction time    
         #############################################################################
