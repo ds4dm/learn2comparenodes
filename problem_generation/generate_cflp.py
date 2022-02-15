@@ -99,13 +99,11 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         rng = np.random.RandomState(seed)
         instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}'
         instance_path = lp_dir +  "/" + instance_name
-        print(lp_dir)
         generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
         
         if solveInstance:
             model = sp.Model()
             model.hideOutput()
-            print(instance_path + ".lp")
             model.readProblem(instance_path + ".lp")
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
