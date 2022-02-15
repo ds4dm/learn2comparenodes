@@ -85,7 +85,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
 
 
 def get_record_file(problem, nodesel, instance):
-    save_dir = os.path.join(os.path.dirname(__file__),  f'stats/{problem}/{nodesel}/')
+    save_dir = os.path.join(os.path.abspath(''),  f'stats/{problem}/{nodesel}/')
     
     try:
         os.makedirs(save_dir)
