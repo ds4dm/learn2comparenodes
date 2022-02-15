@@ -6,6 +6,22 @@ import pyscipopt as sp
 import numpy as np
 import multiprocessing as md
 from functools import partial
+import imp
+
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
+
+
 
 
 def dimacsToNx(filename):
@@ -68,7 +84,7 @@ def createIP(g, E2, ipfilename):
         for node in g.nodes():
             lp_file.write(f"x{node}\n")
             
-def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, max_n, er_prob, instance, lp_dir, solve) :
+def generate_instances(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, max_n, er_prob, instance, lp_dir, solve) :
     
     for seed in range(seed_start, seed_end):
          
@@ -101,19 +117,6 @@ def generate_instance(seed_start, seed_end, whichSet, setParam, alphaE2, min_n, 
             model.readProblem(lp_dir +"/" + lpname + ".lp")
             model.optimize()
             model.writeBestSol(lp_dir +"/" + lpname + ".sol")
-
-def distribute(n_instance, n_cpu):
-    if n_cpu == 1:
-        return [(0, n_instance)]
-    
-    k = n_instance //( n_cpu -1 )
-    r = n_instance % (n_cpu - 1 )
-    res = []
-    for i in range(n_cpu -1):
-        res.append( ((k*i), (k*(i+1))) )
-    
-    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
-    return res
         
 
 
@@ -189,7 +192,7 @@ if __name__ == "__main__":
     
 
     
-    processes = [  md.Process(name=f"worker {p}", target=partial(generate_instance,
+    processes = [  md.Process(name=f"worker {p}", target=partial(generate_instances,
                                                                   seed + p1, 
                                                                   seed + p2, 
                                                                   whichSet, 
