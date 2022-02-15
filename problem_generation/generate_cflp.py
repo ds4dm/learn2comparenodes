@@ -12,19 +12,6 @@ import multiprocessing as md
 from functools import partial
 import pyscipopt.scip as sp
 
-def distribute(n_instance, n_cpu):
-    if n_cpu == 1:
-        return [(0, n_instance)]
-    
-    k = n_instance //( n_cpu -1 )
-    r = n_instance % (n_cpu - 1 )
-    res = []
-    for i in range(n_cpu -1):
-        res.append( ((k*i), (k*(i+1))) )
-    
-    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
-    return res
-
 
 def generate_capacited_facility_location(rng, filename, n_customers, n_facilities, ratio=1):
     """
@@ -99,21 +86,6 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
         file.write("\nbinary\n")
         file.write("".join([f" y_{j+1}" for j in range(n_facilities)]))
         file.close()
-        
-
-def distribute(n_instance, n_cpu):
-    if n_cpu == 1:
-        return [(0, n_instance)]
-    
-    k = n_instance //( n_cpu -1 )
-    r = n_instance % (n_cpu - 1 )
-    res = []
-    for i in range(n_cpu -1):
-        res.append( ((k*i), (k*(i+1))) )
-    
-    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
-    return res
-
 
 
 def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance):
@@ -136,6 +108,18 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
 
     
 
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
 
 
 
