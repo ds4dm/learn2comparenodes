@@ -16,38 +16,23 @@ import numpy as np
 import torch
 from torch.multiprocessing import Process, set_start_method
 from functools import partial
-from utils import record_stats, display_stats
+from utils import record_stats, display_stats, distribute
 from pathlib import Path 
-
-
-
-def distribute(n_instance, n_cpu):
-    if n_cpu == 1:
-        return [(0, n_instance)]
-    
-    k = n_instance //( n_cpu -1 )
-    r = n_instance % (n_cpu - 1 )
-    res = []
-    for i in range(n_cpu -1):
-        res.append( ((k*i), (k*(i+1))) )
-    
-    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
-    return res
-
        
 if __name__ == "__main__":
     
     n_cpu = 4
-    nodesels = ['gnn_trained']
+    n_instance = 10
+    nodesels = [ 'gnn_trained']
     
     problems = ["GISP"]
     normalize = True
-    n_instance = -1
+    
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    verbose = True
+    verbose = False
     on_log = False
-    default = True
-    delete = False
+    default = False
+    delete = True
     
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-n_cpu':
