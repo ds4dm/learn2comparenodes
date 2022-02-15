@@ -13,6 +13,18 @@ from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
 from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
 from learning.utils import normalize_graph
 
+def distribute(n_instance, n_cpu):
+    if n_cpu == 1:
+        return [(0, n_instance)]
+    
+    k = n_instance //( n_cpu -1 )
+    r = n_instance % (n_cpu - 1 )
+    res = []
+    for i in range(n_cpu -1):
+        res.append( ((k*i), (k*(i+1))) )
+    
+    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
+    return res
 
 
 def get_nodesels2models(nodesels, instance, problem, normalize, device):
