@@ -83,9 +83,10 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
             for j in range(n_facilities):
                 file.write(f"0 <= x_{i+1}_{j+1} <= 1\n")
 
-        file.write("\nbinary\n")
+        file.write("\n Binaries\n")
         for j in range(n_facilities):
             file.write(f"y_{j+1}\n")
+        file.write('End')
         file.close()
 
 
