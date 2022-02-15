@@ -96,7 +96,7 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         ratio = 5
         rng = np.random.RandomState(seed)
         instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}'
-        instance_path = os.path.join(lp_dir, instance_name)
+        instance_path = lp_dir +  instance_name
         generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
         
         if solveInstance:
@@ -128,10 +128,10 @@ def distribute(n_instance, n_cpu):
 if __name__ == "__main__":
     
     n_cpu = 4
-    n_instance = 4
+    n_instance = 10
     
     exp_dir = "data/CFLP/"
-    data_partition = 'test'
+    data_partition = 'train'
     min_n = 60
     max_n = 70
     solveInstance = True
