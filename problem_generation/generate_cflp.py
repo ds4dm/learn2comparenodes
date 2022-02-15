@@ -62,23 +62,23 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
 
     # write problem
     with open(filename, 'w') as file:
-        file.write("minimize\nobj:")
-        file.write("".join([f" +{trans_costs[i, j]} x_{i+1}_{j+1}" for i in range(n_customers) for j in range(n_facilities)]))
-        file.write("".join([f" +{fixed_costs[j]} y_{j+1}" for j in range(n_facilities)]))
+        file.write("minimize\nOBJ:")
+        file.write("".join([f" +{trans_costs[i, j]}x_{i+1}_{j+1}" for i in range(n_customers) for j in range(n_facilities)]))
+        file.write("".join([f" +{fixed_costs[j]}y_{j+1}" for j in range(n_facilities)]))
 
-        file.write("\n\nsubject to\n")
+        file.write("\n Subject to\n")
         for i in range(n_customers):
-            file.write(f"demand_{i+1}:" + "".join([f" -1 x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
+            file.write(f"demand_{i+1}:" + "".join([f" -1x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
         for j in range(n_facilities):
-            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]} x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]} y_{j+1} <= 0\n")
+            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]}x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]}y_{j+1} <= 0\n")
 
         # optional constraints for LP relaxation tightening
-        file.write("total_capacity:" + "".join([f" -{capacities[j]} y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
+        file.write("total_capacity:" + "".join([f" -{capacities[j]}y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"affectation_{i+1}_{j+1}: +1 x_{i+1}_{j+1} -1 y_{j+1} <= 0")
+                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= 0")
 
-        file.write("\nbounds\n")
+        file.write("\n Bounds\n")
         for i in range(n_customers):
             for j in range(n_facilities):
                 file.write(f"0 <= x_{i+1}_{j+1} <= 1\n")
