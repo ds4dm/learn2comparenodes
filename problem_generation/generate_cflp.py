@@ -62,49 +62,53 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
 
     # write problem
     with open(filename, 'w') as file:
-        file.write("minimize\nobj:")
-        file.write("".join([f" +{trans_costs[i, j]} x_{i+1}_{j+1}" for i in range(n_customers) for j in range(n_facilities)]))
-        file.write("".join([f" +{fixed_costs[j]} y_{j+1}" for j in range(n_facilities)]))
+        file.write("minimize\nOBJ:")
+        file.write("".join([f" +{trans_costs[i, j]}x_{i+1}_{j+1}" for i in range(n_customers) for j in range(n_facilities)]))
+        file.write("".join([f" +{fixed_costs[j]}y_{j+1}" for j in range(n_facilities)]))
 
-        file.write("\n\nsubject to\n")
+        file.write("\nSubject to\n")
         for i in range(n_customers):
-            file.write(f"demand_{i+1}:" + "".join([f" -1 x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
+            file.write(f"demand_{i+1}:" + "".join([f" -1x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
         for j in range(n_facilities):
-            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]} x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]} y_{j+1} <= 0\n")
+            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]}x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]}y_{j+1} <= +0\n")
 
         # optional constraints for LP relaxation tightening
-        file.write("total_capacity:" + "".join([f" -{capacities[j]} y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
+        file.write("total_capacity:" + "".join([f" -{capacities[j]}y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"affectation_{i+1}_{j+1}: +1 x_{i+1}_{j+1} -1 y_{j+1} <= 0")
+                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= +0\n")
 
-        file.write("\nbounds\n")
+        file.write("\nBounds\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"0 <= x_{i+1}_{j+1} <= 1\n")
+                file.write(f" 0 <= x_{i+1}_{j+1} <= +1\n")
 
-        file.write("\nbinary\n")
-        file.write("".join([f" y_{j+1}" for j in range(n_facilities)]))
+        file.write("\nBinaries\n")
+        for j in range(n_facilities):
+            file.write(f" y_{j+1}")
+        file.write('\nEnd\n')
         file.close()
+    print(filename)
 
 
 def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance):
     
     for seed in range(start_seed, end_seed):
-        n_customer =  np.random.randint(min_n, max_n+1)
-        n_facility = np.random.randint(min_n, max_n+1)
         ratio = 5
         rng = np.random.RandomState(seed)
-        instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}'
-        instance_path = os.path.join(lp_dir, instance_name)
+        instance_id = rng.uniform(0,1)*100
+        n_customer =  rng.randint(min_n, max_n+1)
+        n_facility = rng.randint(min_n, max_n+1)
+        instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}_id_{instance_id:0.2f}'
+        instance_path = lp_dir +  "/" + instance_name
         generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
-        
+        model = sp.Model()
+        model.hideOutput()
+        model.readProblem(instance_path + ".lp")
         if solveInstance:
-            model = sp.Model()
-            model.hideOutput()
-            model.readProblem(instance_path + ".lp")
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
+
 
     
 
