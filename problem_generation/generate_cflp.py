@@ -88,6 +88,7 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
             file.write(f" y_{j+1}")
         file.write('\nEnd\n')
         file.close()
+    print(filename)
 
 
 def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance):
