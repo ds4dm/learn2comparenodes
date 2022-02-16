@@ -101,12 +101,16 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         instance_path = lp_dir +  "/" + instance_name
         generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
         
-        if solveInstance:
+
+        try:
             model = sp.Model()
             model.hideOutput()
             model.readProblem(instance_path + ".lp")
-            model.optimize()
-            model.writeBestSol(instance_path + ".sol")  
+            if solveInstance:
+                model.optimize()
+                model.writeBestSol(instance_path + ".sol")  
+        except:
+            os.remove(instance_path + ".lp" )
 
     
 
