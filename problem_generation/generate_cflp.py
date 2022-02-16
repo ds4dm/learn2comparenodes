@@ -112,7 +112,10 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
                 model.optimize()
                 model.writeBestSol(instance_path + ".sol")  
         except:
-            os.remove(instance_path + ".lp" )
+            try:
+                os.remove(instance_path + ".lp" )
+            except:
+                ''
 
     
 
