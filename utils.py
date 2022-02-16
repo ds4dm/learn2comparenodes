@@ -53,7 +53,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                                                device,
                                                feature_normalizor,
                                                use_trained_gnn=trained)
-            comp.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(), model.getConss(), device))
+            comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
             
 
         
