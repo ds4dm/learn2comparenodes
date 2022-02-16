@@ -70,18 +70,18 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
         for i in range(n_customers):
             file.write(f"demand_{i+1}:" + "".join([f" -1x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
         for j in range(n_facilities):
-            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]}x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]}y_{j+1} <= 0\n")
+            file.write(f"capacity_{j+1}:" + "".join([f" +{demands[i]}x_{i+1}_{j+1}" for i in range(n_customers)]) + f" -{capacities[j]}y_{j+1} <= +0\n")
 
         # optional constraints for LP relaxation tightening
         file.write("total_capacity:" + "".join([f" -{capacities[j]}y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= 0\n")
+                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= +0\n")
 
         file.write("\nBounds\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f" 0 <= x_{i+1}_{j+1} <= 1\n")
+                file.write(f" 0 <= x_{i+1}_{j+1} <= +1\n")
 
         file.write("\nBinaries\n")
         for j in range(n_facilities):
