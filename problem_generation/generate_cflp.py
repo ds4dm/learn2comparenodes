@@ -94,11 +94,11 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
 def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance):
     
     for seed in range(start_seed, end_seed):
-        n_customer =  np.random.randint(min_n, max_n+1)
-        n_facility = np.random.randint(min_n, max_n+1)
         ratio = 5
         rng = np.random.RandomState(seed)
         instance_id = rng.uniform(0,1)*100
+        n_customer =  rng.randint(min_n, max_n+1)
+        n_facility = rng.randint(min_n, max_n+1)
         instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}_id_{instance_id:0.2f}'
         instance_path = lp_dir +  "/" + instance_name
         generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
