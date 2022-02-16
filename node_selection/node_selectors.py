@@ -254,10 +254,11 @@ class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
     def nodecomp(self, node1,node2):
         
         n = 3
-        if self.primal_changes >= n: #infer until obtained nth best primal solution
-            return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
+
+        if self.primal_changes >= n: #infer until obtained nth best primal solution
+            return self.estimate_nodecomp(node1, node2)
         
         if self.model.getObjectiveSense() == 'maximize':
             curr_primal *= -1
