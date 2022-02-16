@@ -66,7 +66,7 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
         file.write("".join([f" +{trans_costs[i, j]}x_{i+1}_{j+1}" for i in range(n_customers) for j in range(n_facilities)]))
         file.write("".join([f" +{fixed_costs[j]}y_{j+1}" for j in range(n_facilities)]))
 
-        file.write("\n Subject to\n")
+        file.write("\nSubject to\n")
         for i in range(n_customers):
             file.write(f"demand_{i+1}:" + "".join([f" -1x_{i+1}_{j+1}" for j in range(n_facilities)]) + f" <= -1\n")
         for j in range(n_facilities):
@@ -76,16 +76,16 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
         file.write("total_capacity:" + "".join([f" -{capacities[j]}y_{j+1}" for j in range(n_facilities)]) + f" <= -{total_demand}\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= 0")
+                file.write(f"affectation_{i+1}_{j+1}: +1x_{i+1}_{j+1} -1y_{j+1} <= 0\n")
 
-        file.write("\n Bounds\n")
+        file.write("\nBounds\n")
         for i in range(n_customers):
             for j in range(n_facilities):
-                file.write(f"0 <= x_{i+1}_{j+1} <= 1\n")
+                file.write(f" 0 <= x_{i+1}_{j+1} <= 1\n")
 
-        file.write("\n Binaries\n")
+        file.write("\nBinaries\n")
         for j in range(n_facilities):
-            file.write(f"y_{j+1}\n")
+            file.write(f" y_{j+1}")
         file.write('End')
         file.close()
 
@@ -130,10 +130,10 @@ def distribute(n_instance, n_cpu):
 if __name__ == "__main__":
     
     n_cpu = 4
-    n_instance = 10
+    n_instance = 4
     
     exp_dir = "data/CFLP/"
-    data_partition = 'train'
+    data_partition = 'test'
     min_n = 60
     max_n = 70
     solveInstance = True
