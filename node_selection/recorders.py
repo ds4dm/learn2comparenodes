@@ -166,12 +166,17 @@ class CompFeaturizer():
 #1LP recorder per problem
 class LPFeatureRecorder():
     
-    def __init__(self, varrs, original_conss, device):
+    def __init__(self, model, device):
+        
+        varrs = model.getVars()
+        original_conss = model.getConss()
+        
+        self.model = model
         
         self.n0 = len(varrs)
         
         self.varrs = varrs
-        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), "t_" + str(var) ]   ])
+        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), "t_" + str(var) ]  ])
         
         self.original_conss = original_conss
         
@@ -182,6 +187,10 @@ class LPFeatureRecorder():
         self.obj_adjacency  = None
         
         self.device = device
+        
+        root_graph = self.get_root_graph(model)
+        self.recorded[1] = root_graph
+        self.recorded_light[1] = (root_graph.var_attributes, root_graph.cons_block_idxs)
 
    
     def get_graph(self, model, sub_milp):
