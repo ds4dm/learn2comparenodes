@@ -20,6 +20,8 @@ from pyscipopt import Nodesel
 from data_type import BipartiteGraphPairData
 from model import GNNPolicy
 from line_profiler import LineProfiler
+from joblib import dump, load
+
 
 
 class CustomNodeSelector(Nodesel):
@@ -215,13 +217,35 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
             
     def setOptsol(self, optsol):
         self.optsol = optsol
-   
+        
+
+class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
-class OracleNodeSelectorEstimator(OracleNodeSelectorAbdel):
+    def __init__(self, problem, comp_featurizer):
+        super().__init__()
+        
+        self.policy = load(f'./learning/policy_{problem}_svm.pkl')
+        self.comp_featurizer = comp_featurizer
+    
+    def nodecomp(self, node1, node2):
+        
+        f1, f2 = (self.comp_featurizer.get_features(self.model, node1),
+                  self.comp_featurizer.get_features(self.model, node2))
+        
+        X = np.hstack((f1,f2))
+        
+        decision = self.policy.predict(X)[0]
+        
+        return -1 if decision < 0.5 else 1
+
+    
+        
+    
+    
+class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
-        super().__init__("optimal_plunger", inv_proba=0)
-        
+        super().__init__()
         policy = GNNPolicy()
         if use_trained_gnn: 
             print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main

@@ -48,8 +48,8 @@ class CompFeaturizerSVM():
         return self
 
     def get_features(self, model, node):
-        f = np.transpose(np.ones((10,1)))
-        #todo
+        f = np.ones((1,10))
+        #TODO
 
         return f
     

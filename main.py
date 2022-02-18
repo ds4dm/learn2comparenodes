@@ -22,8 +22,8 @@ from pathlib import Path
 if __name__ == "__main__":
     
     n_cpu = 4
-    n_instance = 10
-    nodesels = [ 'gnn_trained']
+    n_instance = 4
+    nodesels = [ 'svm', 'gnn_trained','custom_estimate']
     
     problems = ["GISP"]
     normalize = True

@@ -9,8 +9,11 @@ import os
 import re
 import numpy as np
 import pyscipopt.scip as sp
-from node_selection.recorders import CompFeaturizer, LPFeatureRecorder
-from node_selection.node_selectors import CustomNodeSelector,OracleNodeSelectorEstimator, OracleNodeSelectorAbdel
+from node_selection.recorders import CompFeaturizerSVM, CompFeaturizer, LPFeatureRecorder
+from node_selection.node_selectors import (CustomNodeSelector,
+                                           OracleNodeSelectorAbdel, 
+                                           OracleNodeSelectorEstimator_SVM,
+                                           OracleNodeSelectorEstimator)
 from learning.utils import normalize_graph
 
 def distribute(n_instance, n_cpu):
@@ -40,9 +43,14 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         model.setIntParam('randomization/randomseedshift',9)
         
         comp = None
+        
         if re.match('custom_*', nodesel):
             name = nodesel.split("_")[-1]
             comp = CustomNodeSelector(name)
+        
+        elif nodesel in ['svm']:
+            comp_featurizer = CompFeaturizerSVM()
+            comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer)
             
         elif nodesel in ['gnn_trained', 'gnn_untrained']:
             trained = nodesel.split('_')[-1] == "trained"  

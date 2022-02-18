@@ -20,7 +20,7 @@ from joblib import dump, load
 def get_data(files):
     #TODO
     
-    return np.random.rand(100,3), np.random.randint(0,2,size=(100,)), np.random.randint(1,62,size=(100,2))
+    return np.random.rand(100,20), np.random.randint(0,2,size=(100,)), np.random.randint(1,62,size=(100,2))
 
 
 
@@ -42,7 +42,8 @@ if __name__ == '__main__':
         
         model.fit(X,y, np.exp(2.67/np.min(depths, axis=1)))
         
-        dump(model, f'policy_{problem}_SVM.pkl')
+        dump(model, f'policy_{problem}_svm.pkl')
+        
         
         
         
