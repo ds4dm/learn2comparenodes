@@ -13,6 +13,7 @@ Contains utilities to save and load comparaison behavioural data
 import os
 import imp
 import torch
+import numpy as np
 
 def load_src(name, fpath):
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
@@ -20,6 +21,39 @@ def load_src(name, fpath):
 load_src("data_type", "../learning/data_type.py" )
 
 from data_type import BipartiteGraphPairData
+
+
+class CompFeaturizerSVM():
+    def __init__(self, save_dir=None, instance_name=None):
+        self.instance_name = instance_name
+        self.save_dir = save_dir
+        
+    def save_comp(self, model, node1, node2, comp_res, comp_id):
+        
+        f1,f2 = self.get_features(model, node1), self.get_features(model, node2)
+        
+        
+        file_path = os.path.join(self.save_dir, f"{self.instance_name}_{comp_id}.csv")
+        file = open(file_path, 'a')
+        
+        np.savetxt(file, f1, delimiter=',')
+        np.savetxt(file, f2, delimiter=',')
+        file.write(str(comp_res))
+        file.close()
+        
+        return self
+    
+    def set_save_dir(self, save_dir):
+        self.save_dir = save_dir
+        return self
+
+    def get_features(self, model, node):
+        f = np.transpose(np.ones((10,1)))
+        #todo
+
+        return f
+    
+
 
 
 

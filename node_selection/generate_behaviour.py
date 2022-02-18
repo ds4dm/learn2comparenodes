@@ -23,7 +23,9 @@ import multiprocessing as md
 from pathlib import Path 
 from functools import partial
 from node_selectors import OracleNodeSelectorAbdel
-from recorders import LPFeatureRecorder, CompFeaturizer
+from recorders import LPFeatureRecorder, CompFeaturizer, CompFeaturizerSVM
+
+
 
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
@@ -35,7 +37,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_behaviour_saver.set_LP_feature_recorder(LP_feature_recorder)
-        self.counter = 0
+
         
         
     def nodecomp(self, node1, node2):
@@ -61,7 +63,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 
 
-def run_episode(oracle_type, instance,  save_dir):
+def run_episode(oracle_type, instance,  save_dir, svm):
     
     model = sp.Model()
     model.hideOutput()
@@ -71,13 +73,17 @@ def run_episode(oracle_type, instance,  save_dir):
     model.readProblem(instance)
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-    comp_behaviour_saver = CompFeaturizer(f"{save_dir}", 
+    
+    
+    CompFeaturizerConstrucor = CompFeaturizerSVM if svm else CompFeaturizer
+    comp_behaviour_saver = CompFeaturizerConstrucor(f"{save_dir}", 
                                               instance_name=str(instance).split("/")[-1])
+    
+    
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
-    oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model.getVars(),
-                                                        model.getConss(),
-                                                        'cpu'))
+    if isinstance(comp_behaviour_saver, CompFeaturizer): #gnn
+        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, 'cpu'))
     
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing",
                          536870911,  536870911)
@@ -98,10 +104,10 @@ def run_episode(oracle_type, instance,  save_dir):
     return 1
 
 
-def run_episodes(oracle_type, instances, save_dir):
+def run_episodes(oracle_type, instances, save_dir, svm=False):
     
     for instance in instances:
-        run_episode(oracle_type, instance, save_dir)
+        run_episode(oracle_type, instance, save_dir, svm)
         
     print("finished running episodes for process " + str(md.current_process()))
         
@@ -127,8 +133,9 @@ if __name__ == "__main__":
     
     oracle = 'optimal_plunger'
     problem = 'GISP'
-    data_partitions = ['train', 'valid']
+    data_partitions = ['train', 'valid'] #dont change
     n_cpu = 1
+    svm = False
     
     with open("nnodes.csv", "w") as f:
         f.write("")
@@ -146,11 +153,16 @@ if __name__ == "__main__":
             problem = str(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             n_cpu = int(sys.argv[i + 1])
+        if sys.argv[i] == '-svm':
+            n_cpu = bool(int(sys.argv[i + 1]))
+   
    
   
     for data_partition in data_partitions:
         
-        save_dir = lp_dir= os.path.join(os.path.dirname(__file__), f"./data/{problem}/{data_partition}")
+
+        save_dir = lp_dir= os.path.join(os.path.dirname(__file__), f'./data{"_svm" if svm else ""}/{problem}/{data_partition}')
+
     
         try:
             os.makedirs(save_dir)
@@ -169,7 +181,8 @@ if __name__ == "__main__":
                                         target=partial(run_episodes,
                                                         oracle_type=oracle,
                                                         instances=instances[ p1 : p2], 
-                                                        save_dir=save_dir))
+                                                        save_dir=save_dir,
+                                                        svm=svm))
                         for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu))]
         
         
