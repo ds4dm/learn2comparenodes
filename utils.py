@@ -62,8 +62,6 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                                                feature_normalizor,
                                                use_trained_gnn=trained)
             comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
-            
-
         
         elif re.match('oracle*', nodesel) :
             try:
@@ -148,11 +146,7 @@ def solve_and_record_default(problem, instance, verbose):
 #take a list of nodeselectors to evaluate, a list of instance to test on, and the 
 #problem type for printing purposes
 def record_stats(nodesels, instances, problem, device, normalize, verbose=False, default=True):
-        
-
     
-   
-
 
     for instance in instances:       
         instance = str(instance)
@@ -167,7 +161,6 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
             
             model = nodesels2models[nodesel]
             nodeselector = nodesels2nodeselectors[nodesel]
-        
                 
            #test nodesels
             if os.path.isfile(get_record_file(problem, nodesel, instance)): #no need to resolve 
