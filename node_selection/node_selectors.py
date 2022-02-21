@@ -264,6 +264,8 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.inference_time = 0
         self.counter = 0
         
+        self.scores = dict()
+        
         
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
@@ -288,6 +290,29 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         if curr_primal < self.best_primal:
             self.best_primal = curr_primal
             self.primal_changes += 1
+        
+        
+        comp_scores = [-1,-1]
+        
+        for comp_idx, node in enumerate([node1, node2]):
+            n_idx = node.getNumber()
+        
+            if n_idx in self.scores:
+                comp_scores[comp_idx] = self.scores[n_idx]
+            else:
+                g =  self.comp_featurizer.get_bipartite_graph_data_tensors_from_scip(self.model, node)
+                score = self.policy.forward_graph(*g)
+                self.scores[n_idx] = score 
+                comp_scores[comp_idx] = score
+        
+        return -1 if np.argmax(comp_scores) == 0 else 1
+    
+        
+        
+                
+            
+            
+            
             
     
         #Measure feature extraction time    
