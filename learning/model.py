@@ -19,7 +19,7 @@ class GNNPolicy(torch.nn.Module):
         super().__init__()
         
         self.emb_size = emb_size = 32 #uniform node feature embedding dim
-        self.emb_size_bounds = 4
+        self.emb_size_bounds = 2
         
         hidden_dim1 = 8
         hidden_dim2 = 4
@@ -70,12 +70,12 @@ class GNNPolicy(torch.nn.Module):
         
         self.convs = [ self.conv1, self.conv2, self.conv3 ]
         
-        # out_size = hidden_dim3 if len(self.convs)==3 else emb_size
+        out_size = hidden_dim3 if len(self.convs)==3 else emb_size
         
-        # self.final_mlp = torch.nn.Sequential( 
-        #                     torch.nn.Linear(2*out_size+2, 1, bias=False),
-        #                     torch.nn.Sigmoid()
-        #                     )
+        self.final_mlp = torch.nn.Sequential( 
+                             torch.nn.Linear(2*out_size+self.emb_size_bounds, 1, bias=False),
+                             torch.nn.Sigmoid()
+                             )
            
 
     
@@ -124,10 +124,10 @@ class GNNPolicy(torch.nn.Module):
         if inv:
             graph0, graph1 = graph1, graph0
         
-        score0 = torch.linalg.norm(self.forward_graph(*graph0), dim=1) #concatenation of averages variable/constraint features after conv 
-        score1 = torch.linalg.norm(self.forward_graph(*graph1), dim=1)
-        
-        return torch.sigmoid(-score0 + score1)
+        score0 = self.forward_graph(*graph0) #concatenation of averages variable/constraint features after conv 
+        score1 = self.forward_graph(*graph1)
+        return torch.sigmoid( - torch.linalg.norm(score0, dim=1) +  torch.linalg.norm(score1, dim=1))
+        #return self.final_mlp(-score0 + score1).squeeze(1)
         
         
        
