@@ -19,6 +19,7 @@ class GNNPolicy(torch.nn.Module):
         super().__init__()
         
         self.emb_size = emb_size = 32 #uniform node feature embedding dim
+        self.emb_size_bounds = 4
         
         hidden_dim1 = 8
         hidden_dim2 = 4
@@ -27,6 +28,7 @@ class GNNPolicy(torch.nn.Module):
         # static data
         cons_nfeats = 1 
         edge_nfeats = 1
+        bound_nfeats= 2
         var_nfeats = 6
         
 
@@ -47,6 +49,13 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.LayerNorm(var_nfeats),
             torch.nn.Linear(var_nfeats, emb_size),
             torch.nn.ReLU(),
+        )
+        
+        #Bound EMBEDDING
+        self.bound_embedding = torch.nn.Sequential(
+            torch.nn.LayerNorm(bound_nfeats),
+            torch.nn.Linear(bound_nfeats, self.emb_size_bounds),
+            torch.nn.ReLU()
         )
 
 
@@ -132,8 +141,8 @@ class GNNPolicy(torch.nn.Module):
         variable_features = self.var_embedding(variable_features)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
-        
-        
+        bbounds = self.bound_embedding(bbounds)
+ 
         
         edge_indices_reversed = torch.stack([edge_indices[1], edge_indices[0]], dim=0)
         
