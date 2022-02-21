@@ -118,7 +118,7 @@ class GNNPolicy(torch.nn.Module):
         score0 = torch.linalg.norm(self.forward_graph(*graph0), dim=1) #concatenation of averages variable/constraint features after conv 
         score1 = torch.linalg.norm(self.forward_graph(*graph1), dim=1)
         
-        return F.sigmoid(-score0 + score1)
+        return torch.sigmoid(-score0 + score1)
         
         
        
