@@ -90,7 +90,7 @@ class GNNPolicy(torch.nn.Module):
         
         try :
        
-            graph0 = (batch.constraint_features_s, 
+            graph1 = (batch.constraint_features_s, 
                       batch.edge_index_s, 
                       batch.edge_attr_s, 
                       batch.variable_features_s, 
@@ -99,7 +99,7 @@ class GNNPolicy(torch.nn.Module):
                       batch.variable_features_s_batch)
             
         
-            graph1 = (batch.constraint_features_t,
+            graph2 = (batch.constraint_features_t,
                       batch.edge_index_t, 
                       batch.edge_attr_t,
                       batch.variable_features_t,
@@ -108,25 +108,25 @@ class GNNPolicy(torch.nn.Module):
                       batch.variable_features_t_batch)
                 
         except AttributeError:
-            graph0 = (batch.constraint_features_s, 
+            graph1 = (batch.constraint_features_s, 
                       batch.edge_index_s, 
                       batch.edge_attr_s, 
                       batch.variable_features_s,
                       batch.bounds_s)
             
         
-            graph1 = (batch.constraint_features_t,
+            graph2 = (batch.constraint_features_t,
                       batch.edge_index_t, 
                       batch.edge_attr_t,
                       batch.variable_features_t,
                       batch.bounds_t)
         
         if inv:
-            graph0, graph1 = graph1, graph0
+            graph1, graph2 = graph2, graph1
         
-        score0 = self.forward_graph(*graph0) #concatenation of averages variable/constraint features after conv 
-        score1 = self.forward_graph(*graph1)
-        return torch.sigmoid( - torch.linalg.norm(score0, dim=1) +  torch.linalg.norm(score1, dim=1))
+        score1 = self.forward_graph(*graph1) #concatenation of averages variable/constraint features after conv 
+        score2 = self.forward_graph(*graph2)
+        return torch.sigmoid( - torch.linalg.norm(score1, dim=1) +  torch.linalg.norm(score2, dim=1))
         #return self.final_mlp(-score0 + score1).squeeze(1)
         
         
