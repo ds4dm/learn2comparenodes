@@ -300,8 +300,10 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             if n_idx in self.scores:
                 comp_scores[comp_idx] = self.scores[n_idx]
             else:
-                g =  self.comp_featurizer.get_bipartite_graph_data_tensors_from_scip(self.model, node)
-                score = self.policy.forward_graph(*g)
+                g =  self.comp_featurizer.get_bipartite_graph_data_tensors_from_scip(self.model, node)[:-1]#no depth
+                
+                score = torch.linalg.norm(self.policy.forward_graph(*g), dim=1).item()
+                
                 self.scores[n_idx] = score 
                 comp_scores[comp_idx] = score
         
@@ -315,52 +317,52 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             
             
     
-        #Measure feature extraction time    
-        #############################################################################
-        start = time.time() 
-        #lp profiler
-        #lp = LineProfiler()
-        #lp.add_function(self.comp_featurizer._get_graph_data)
-        #lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
-        # g1,g2, _ =lp_wrap(self.model, 
-        #                                                        node1, 
-        #                                                        node2)
-        # lp.print_stats()
+        # #Measure feature extraction time    
+        # #############################################################################
+        # start = time.time() 
+        # #lp profiler
+        # #lp = LineProfiler()
+        # #lp.add_function(self.comp_featurizer._get_graph_data)
+        # #lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
+        # # g1,g2, _ =lp_wrap(self.model, 
+        # #                                                        node1, 
+        # #                                                        node2)
+        # # lp.print_stats()
         
         
         
-        # NO lp profiler
+        # # NO lp profiler
         
-        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
-        end = time.time()
-        self.fe_time += (end - start)
+        # g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
+        # end = time.time()
+        # self.fe_time += (end - start)
         
         
-        #Measure feature normalization + graph creation time
-        #############################################################################
+        # #Measure feature normalization + graph creation time
+        # #############################################################################
         
-        start = time.time()
-        g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
-        batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
-        end = time.time()
-        self.fn_time += (end-start)
+        # start = time.time()
+        # g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
+        # batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
+        # end = time.time()
+        # self.fn_time += (end-start)
         
-        #measure inference time    
-        #############################################################################
-        start = time.time()
+        # #measure inference time    
+        # #############################################################################
+        # start = time.time()
         
-        # lp = LineProfiler()
-        # lp.add_function(self.policy.convs[0].forward)
-        # lp.add_function(self.policy.convs[0].propagate)
-        # lp_wrap = lp(self.policy.forward)
-        # decision=lp_wrap(batch).item()
-        # lp.print_stats()
+        # # lp = LineProfiler()
+        # # lp.add_function(self.policy.convs[0].forward)
+        # # lp.add_function(self.policy.convs[0].propagate)
+        # # lp_wrap = lp(self.policy.forward)
+        # # decision=lp_wrap(batch).item()
+        # # lp.print_stats()
         
        
-        decision = self.policy(batch).item() 
-        end = time.time()
-        self.inference_time += (end - start)
+        # decision = self.policy(batch).item() 
+        # end = time.time()
+        # self.inference_time += (end - start)
         
-        self.counter += 1
+        # self.counter += 1
         
-        return -1 if decision < 0.5 else 1
+        # return -1 if decision < 0.5 else 1
