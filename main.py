@@ -23,7 +23,7 @@ if __name__ == "__main__":
     
     n_cpu = 4
     n_instance = 4
-    nodesels = [ 'svm', 'gnn_trained','custom_estimate']
+    nodesels = [ 'gnn_trained','custom_estimate']
     
     problems = ["GISP"]
     normalize = True
