@@ -89,6 +89,52 @@ class CompFeaturizer():
     
     
     
+    
+    def get_graph_for_inf(self,model, node):
+        
+        self.LP_feature_recorder.record_sub_milp_graph(model, node)
+        graphidx2graphdata = self.LP_feature_recorder.recorded_light
+        all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
+        all_conss_blocks_features = self.LP_feature_recorder.all_conss_blocks_features
+        
+        g_idx = node.getNumber()
+        
+        var_attributes, cons_block_idxs = graphidx2graphdata[g_idx]
+        
+    
+        g_data = self._get_graph_data(var_attributes, cons_block_idxs, all_conss_blocks, all_conss_blocks_features)
+        
+        variable_features = g_data[0]
+        constraint_features = g_data[1]
+        edge_indices = g_data[2]
+        edge_features = g_data[3]
+        
+        lb, ub = node.getLowerbound(), node.getEstimate()
+        depth = node.getDepth()
+        
+        if model.getObjectiveSense() == 'maximize':
+            lb,ub = ub,lb
+            
+        g = (constraint_features,
+              edge_indices, 
+              edge_features, 
+              variable_features, 
+              torch.tensor([[lb, -1*ub]], device=self.LP_feature_recorder.device).float(),
+              torch.tensor([depth], device=self.LP_feature_recorder.device).float()
+              )
+            
+        return g
+        
+        
+        
+        
+        
+        
+        
+        
+    
+    
+    
     def get_triplet_tensors(self, model, node1, node2, comp_res=0):
                 
         self.LP_feature_recorder.record_sub_milp_graph(model, node1)
