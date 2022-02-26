@@ -48,6 +48,12 @@ class GNNPolicy(torch.nn.Module):
             torch.nn.Linear(var_nfeats, emb_size),
             torch.nn.ReLU(),
         )
+        
+        self.bounds_embedding = torch.nn.Sequential(
+            torch.nn.LayerNorm(2),
+            torch.nn.Linear(2,2),
+            torch.nn.ReLU(),
+        )
 
 
 
@@ -134,6 +140,7 @@ class GNNPolicy(torch.nn.Module):
         variable_features = self.var_embedding(variable_features)
         constraint_features = self.cons_embedding(constraint_features)
         edge_features = self.edge_embedding(edge_features)
+        bbounds = self.bounds_embedding(bbounds)
         
         
         
