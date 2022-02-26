@@ -330,7 +330,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
                 self.fn_time += (time.time() - start)
                 
                 start = time.time()
-                score = self.policy.forward_graph(*g)
+                score = self.policy.forward_graph(*g).item()
                 self.scores[n_idx] = score 
                 comp_scores[comp_idx] = score
                 self.inference_time += (time.time() - start)
