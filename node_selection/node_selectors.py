@@ -266,6 +266,8 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.inference_time = 0
         self.counter = 0
         
+        self.scores = dict()
+        
         
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
@@ -277,7 +279,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def nodecomp(self, node1,node2):
         
-        n = 3
+        n = 100000000
 
         if self.primal_changes >= n: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
@@ -291,53 +293,48 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             self.best_primal = curr_primal
             self.primal_changes += 1
             
+            
+        # g1 = self.comp_featurizer.get_graph_for_inf(self.model, node1) 
+        # g2 = self.comp_featurizer.get_graph_for_inf(self.model, node2)
+        
+        # g1 = self.feature_normalizor(*g1)[:-1]
+        # g2 = self.feature_normalizor(*g2)[:-1]
+        
+        # sc1 = self.policy.forward_graph(*g1)
+        # sc2 = self.policy.forward_graph(*g2)
+        
+        
+        # # decision = self.policy.final_mlp(-sc1 + sc2).item()
+        
+        
+
+        # g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
+        # batch = BipartiteGraphPairData(*g1,*g2)
+        
+        # decision = self.policy(batch).item() 
     
-        #Measure feature extraction time    
-        #############################################################################
-        start = time.time() 
-        #lp profiler
-        #lp = LineProfiler()
-        #lp.add_function(self.comp_featurizer._get_graph_data)
-        #lp_wrap = lp(self.comp_featurizer.get_triplet_tensors)
-        # g1,g2, _ =lp_wrap(self.model, 
-        #                                                        node1, 
-        #                                                        node2)
-        # lp.print_stats()
+        comp_scores = [-1,-1]
         
+        for comp_idx, node in enumerate([node1, node2]):
+            n_idx = node.getNumber()
         
-        
-        # NO lp profiler
-        
-        g1,g2, _ = self.comp_featurizer.get_triplet_tensors(self.model, node1, node2)
-        end = time.time()
-        self.fe_time += (end - start)
-        
-        
-        #Measure feature normalization + graph creation time
-        #############################################################################
-        
-        start = time.time()
-        g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
-        batch = BipartiteGraphPairData(*g1,*g2) #normaly this is already in device
-        end = time.time()
-        self.fn_time += (end-start)
-        
-        #measure inference time    
-        #############################################################################
-        start = time.time()
-        
-        # lp = LineProfiler()
-        # lp.add_function(self.policy.convs[0].forward)
-        # lp.add_function(self.policy.convs[0].propagate)
-        # lp_wrap = lp(self.policy.forward)
-        # decision=lp_wrap(batch).item()
-        # lp.print_stats()
-        
-       
-        decision = self.policy(batch).item() 
-        end = time.time()
-        self.inference_time += (end - start)
-        
+            if n_idx in self.scores:
+                comp_scores[comp_idx] = self.scores[n_idx]
+            else:
+                start = time.time()
+                g =  self.comp_featurizer.get_graph_for_inf(self.model, node)
+                self.fe_time += (time.time() - start)
+                
+                start = time.time()
+                g = self.feature_normalizor(*g)[:-1]
+                self.fn_time += (time.time() - start)
+                
+                start = time.time()
+                score = self.policy.forward_graph(*g)
+                self.scores[n_idx] = score 
+                comp_scores[comp_idx] = score
+                self.inference_time += (time.time() - start)
+                
         self.counter += 1
         
-        return -1 if decision < 0.5 else 1
+        return -1 if comp_scores[0] > comp_scores[1] else 1
