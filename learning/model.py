@@ -118,7 +118,9 @@ class GNNPolicy(torch.nn.Module):
         score0 = self.forward_graph(*graph0) #concatenation of averages variable/constraint features after conv 
         score1 = self.forward_graph(*graph1)
         
-        return self.final_mlp(-score0 + score1).squeeze(1)
+        #return self.final_mlp(-score0 + score1).squeeze(1)
+        
+        return torch.sigmoid(-score0+score1)
         
         
        
@@ -172,8 +174,9 @@ class GNNPolicy(torch.nn.Module):
         else:
             constraint_avg = torch.mean(constraint_features, axis=0, keepdim=True)
             variable_avg = torch.mean(variable_features, axis=0, keepdim=True)
-
-        return torch.cat((variable_avg, constraint_avg, bbounds), dim=1)
+            
+        #return torch.cat((variable_avg, constraint_avg, bbounds), dim=1)
+        return torch.linalg.norm(variable_avg, dim=1) + torch.linalg.norm(constraint_avg, dim=1) + torch.linalg.norm(bbounds, dim=1)
     
 
     
