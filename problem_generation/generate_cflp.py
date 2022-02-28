@@ -11,7 +11,57 @@ import os
 import multiprocessing as md
 from functools import partial
 import pyscipopt.scip as sp
+import networkx as nx
 
+
+
+def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio):
+    
+    adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
+    edge_list = []
+    
+    added_arcs = 0
+    #gen network
+    while(True):
+        i = rng.randint(0,n_nodes)
+        j = rng.randint(0,n_nodes)
+        if i ==j or adj_mat[i][j] != 0:
+            continue
+        else:
+            c_ij = rng.randint(*c_range)
+            f_ij = ratio*c_ij
+            u_ij = rng.randint(1,k_max+1)* rng.randint(*d_range)
+            adj_mat[i][j] = (c_ij, f_ij, u_ij)
+            added_arcs += 1
+            edge_list.append((i,j))
+        if added_arcs == n_arcs:
+            break
+        
+    G = nx.DiGraph()
+    G.add_nodes_from([i for i in range(n_nodes)])
+    G.add_edges_from(edge_list)
+    
+    print(G)
+     
+    commodities = [ 0 for _ in range(n_commodities) ]
+    for k in range(n_commodities):
+        while True:
+            o_k = rng.randint(0, n_nodes)
+            d_k = rng.randint(0, n_nodes)
+            
+            if nx.has_path(G, o_k, d_k):
+                break
+        
+        demand_k = rng.randint(*d_range)
+        commodities[k] = (o_k, d_k, demand_k)
+    
+    return adj_mat, commodities
+
+rng = np.random.RandomState(0)
+matrix, commodities = generate_fixed_charge_commodity_fcnf(rng, '22', 10, 2, 100, (0,100), (0,100), 2, 1)
+    
+            
+    
 
 def generate_capacited_facility_location(rng, filename, n_customers, n_facilities, ratio=1):
     """
