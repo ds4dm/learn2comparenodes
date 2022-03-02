@@ -19,7 +19,9 @@ def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commo
     
     adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
     edge_list = []
-    
+    incommings = dict([ (j, []) for j in range(n_nodes) ])
+    outcommings = dict([(i, []) for i in range(n_nodes) ])
+        
     added_arcs = 0
     #gen network
     while(True):
@@ -34,6 +36,12 @@ def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commo
             adj_mat[i][j] = (c_ij, f_ij, u_ij)
             added_arcs += 1
             edge_list.append((i,j))
+            
+            incommings[j].append(i)
+            outcommings[i].append(j)
+            
+            
+            
         if added_arcs == n_arcs:
             break
         
@@ -49,17 +57,62 @@ def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commo
             o_k = rng.randint(0, n_nodes)
             d_k = rng.randint(0, n_nodes)
             
-            if nx.has_path(G, o_k, d_k):
+            if nx.has_path(G, o_k, d_k) and o_k != d_k:
                 break
         
         demand_k = rng.randint(*d_range)
         commodities[k] = (o_k, d_k, demand_k)
-    
-    return adj_mat, commodities
+        
+    with open(filename, 'w') as file:
+        file.write("minimize\nOBJ:")
+        file.write("".join([f" + {commodities[k][2]*adj_mat[i][j][0]}x_{i+1}_{j+1}_{k+1}" for (i,j) in edge_list for k in range(n_commodities)]))
+        file.write("".join([f" + {adj_mat[i][j][1]}y_{i+1}_{j+1}" for (i,j) in edge_list ]))
+        
+        
+        file.write("\nSubject to\n")
+        
+        for i in range(n_nodes):
+            for k in range(n_commodities):
+                
+                delta_i = 1 if (commodities[k][0] == i ) else (-1 if commodities[k][1] == i else 0)
+                
+                file.write(f"flow_{i+1}_{k+1}_{0}:" + 
+                           "".join([f" +x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
+                           "".join([f" -x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ]) + f" <= {delta_i}\n"   )
+                
+                
+                file.write(f"flow_{i+1}_{k+1}_{1}:" + 
+                           "".join([f" -x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
+                           "".join([f" +x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ])+ f" <= {-1*delta_i}\n"    )
+                
+        
+        for (i,j) in edge_list:
+            file.write(f"arc_{i+1}_{j+1}:" + 
+                       "".join([f" +{commodities[k][2]}x_{i+1}_{j+1}_{k+1}" for k in range(n_commodities) ]) + f"-{adj_mat[i][j][2]}y_{i+1}_{j+1} <= +0\n" )
+            
+        
+        file.write("\nBounds\n")
+        for (i,j) in edge_list:
+            for k in range(n_commodities):
+                file.write(f" 0 <= x_{i+1}_{j+1}_{k+1} <= +1\n")
 
-rng = np.random.RandomState(0)
-matrix, commodities = generate_fixed_charge_commodity_fcnf(rng, '22', 10, 2, 100, (0,100), (0,100), 2, 1)
+        file.write("\nBinaries\n")
+        for (i,j) in edge_list:
+            file.write(f" y_{i+1}_{j+1}")
+            
+        file.write('\nEnd\n')
+        file.close()
+        
+for i in range(10):
+    rng = np.random.RandomState(i)
+    generate_fixed_charge_commodity_fcnf(rng, '22.lp', 10, 60, 20, (1,100), (1,10), 2, 5)
     
+    model = sp.Model()
+    model.hideOutput()
+    model.readProblem('22.lp')
+    model.optimize()
+    print(model.getNNodes())
+    print(model.getObjVal())
             
     
 
@@ -182,7 +235,7 @@ def distribute(n_instance, n_cpu):
 if __name__ == "__main__":
     
     n_cpu = 4
-    n_instance = 4
+    n_instance = 0
     
     exp_dir = "data/CFLP/"
     data_partition = 'test'
