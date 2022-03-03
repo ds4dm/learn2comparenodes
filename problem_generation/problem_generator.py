@@ -53,13 +53,13 @@ if __name__ == "__main__":
     
     
     min_n_nodes = 20
-    max_n_nodes = 30
+    max_n_nodes = 20
     
     min_n_arcs = 120
-    max_n_arcs = 150
+    max_n_arcs = 140
     
-    min_n_commodities = 10
-    max_n_commodities = 20
+    min_n_commodities = 30
+    max_n_commodities = 40
     
     
     
@@ -139,24 +139,24 @@ if __name__ == "__main__":
         
     elif problem == 'FCMCNF':
         
-# #=============================================================================
-#         processes = [  md.Process(name=f"worker {p}", target=partial(generate_fcmcnf.generate_instances,
-#                                                                       seed + p1, 
-#                                                                       seed + p2, 
-#                                                                       min_n_nodes,
-#                                                                       max_n_nodes,
-#                                                                       min_n_arcs,
-#                                                                       max_n_arcs,
-#                                                                       min_n_commodities,
-#                                                                       max_n_commodities,
-#                                                                       lp_dir, 
-#                                                                       solveInstance))
+#=============================================================================
+        processes = [  md.Process(name=f"worker {p}", target=partial(generate_fcmcnf.generate_instances,
+                                                                      seed + p1, 
+                                                                      seed + p2, 
+                                                                      min_n_nodes,
+                                                                      max_n_nodes,
+                                                                      min_n_arcs,
+                                                                      max_n_arcs,
+                                                                      min_n_commodities,
+                                                                      max_n_commodities,
+                                                                      lp_dir, 
+                                                                      solveInstance))
                       
                       
-#                       for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
+                      for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
         
-# #=============================================================================
-        generate_fcmcnf.generate_instances(0, n_instance, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
+#=============================================================================
+        #generate_fcmcnf.generate_instances(0, n_instance, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
         
     
  

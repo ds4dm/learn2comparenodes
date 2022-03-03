@@ -203,7 +203,7 @@ def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arc
         generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio)
         
         model = sp.Model()
-       # model.hideOutput()
+        model.hideOutput()
         model.readProblem(instance_path + ".lp")
         
         if solveInstance:
