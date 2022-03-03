@@ -268,9 +268,9 @@ class LPFeatureRecorder():
         
         self.device = device
         
-        root_graph = self.get_root_graph(model)
-        self.recorded[1] = root_graph
-        self.recorded_light[1] = (root_graph.var_attributes, root_graph.cons_block_idxs)
+        # root_graph = self.get_root_graph(model)
+        # self.recorded[1] = root_graph
+        # self.recorded_light[1] = (root_graph.var_attributes, root_graph.cons_block_idxs)
 
    
     def get_graph(self, model, sub_milp):
