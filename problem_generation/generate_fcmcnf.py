@@ -15,7 +15,7 @@ import networkx as nx
 
 
 
-def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio):
+def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio):
     
     adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
     edge_list = []
@@ -103,17 +103,6 @@ def generate_fixed_charge_commodity_fcnf(rng, filename, n_nodes, n_arcs, n_commo
         file.write('\nEnd\n')
         file.close()
         
-for i in range(10):
-    rng = np.random.RandomState(i)
-    generate_fixed_charge_commodity_fcnf(rng, '22.lp', 10, 60, 20, (1,100), (1,10), 2, 5)
-    
-    model = sp.Model()
-    model.hideOutput()
-    model.readProblem('22.lp')
-    model.optimize()
-    print(model.getNNodes())
-    print(model.getObjVal())
-            
     
 
 def generate_capacited_facility_location(rng, filename, n_customers, n_facilities, ratio=1):
@@ -194,20 +183,39 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
     print(filename)
 
 
-def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance):
+def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance):
     
     for seed in range(start_seed, end_seed):
         ratio = 5
         rng = np.random.RandomState(seed)
         instance_id = rng.uniform(0,1)*100
-        n_customer =  rng.randint(min_n, max_n+1)
-        n_facility = rng.randint(min_n, max_n+1)
-        instance_name = f'n_customer={n_customer}_n_facility={n_facility}_ratio={ratio}_id_{instance_id:0.2f}'
+        
+        
+        n_nodes =  rng.randint(min_n_nodes, max_n_nodes+1)
+        n_arcs = rng.randint(min_n_arcs, max_n_arcs+1)
+        n_commodities = rng.randint(min_n_commodities, max_n_commodities+1)
+        
+        
+        c_range = (1,10)
+        d_range = (1,10)
+        
+        k_max = 2
+        ratio = 5
+        
+        
+        instance_name = f'n_nodes={n_nodes}_n_arcs={n_arcs}_n_commodities={n_commodities}_id_{instance_id:0.2f}'
         instance_path = lp_dir +  "/" + instance_name
-        generate_capacited_facility_location(rng, instance_path + ".lp", n_customer, n_facility, ratio)
+        filename = instance_path+'.lp'
+        
+        
+        
+        
+        generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio)
+        
         model = sp.Model()
-        model.hideOutput()
+       # model.hideOutput()
         model.readProblem(instance_path + ".lp")
+        
         if solveInstance:
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
@@ -215,86 +223,4 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
 
     
 
-def distribute(n_instance, n_cpu):
-    if n_cpu == 1:
-        return [(0, n_instance)]
-    
-    k = n_instance //( n_cpu -1 )
-    r = n_instance % (n_cpu - 1 )
-    res = []
-    for i in range(n_cpu -1):
-        res.append( ((k*i), (k*(i+1))) )
-    
-    res.append(((n_cpu - 1) *k ,(n_cpu - 1) *k + r ))
-    return res
-
-
-
-
-        
-if __name__ == "__main__":
-    
-    n_cpu = 4
-    n_instance = 0
-    
-    exp_dir = "data/CFLP/"
-    data_partition = 'test'
-    min_n = 60
-    max_n = 70
-    solveInstance = True
-    seed = 0
-    
-    
-
-    # seed = 0
-    for i in range(1, len(sys.argv), 2):
-        if sys.argv[i] == '-data_partition':
-            data_partition = sys.argv[i + 1]
-        if sys.argv[i] == '-min_n':
-            min_n = int(sys.argv[i + 1])
-        if sys.argv[i] == '-max_n':
-            max_n = int(sys.argv[i + 1])
-        if sys.argv[i] == '-solve':
-            solveInstance = bool(int(sys.argv[i + 1]))
-        if sys.argv[i] == '-n_instance':
-            n_instance = int(sys.argv[i + 1])
-        if sys.argv[i] == '-n_cpu':
-            n_cpu = int(sys.argv[i + 1])
-    
-    
-    exp_dir = exp_dir + data_partition
-    lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
-    try:
-        os.makedirs(lp_dir)
-    except FileExistsError:
-        ""
-    
-    print("Summary for CFLP generation")
-    print(f"n_instance    :     {n_instance}")
-    print(f"size interval :     {min_n, max_n}")
-    print(f"n_cpu         :     {n_cpu} ")
-    print(f"solve         :     {solveInstance}")
-    print(f"saving dir    :     {lp_dir}")
-    
-        
-            
-    cpu_count = md.cpu_count()//2 if n_cpu == None else n_cpu
-    
-
-    
-    processes = [  md.Process(name=f"worker {p}", target=partial(generate_instances,
-                                                                  seed + p1, 
-                                                                  seed + p2, 
-                                                                  min_n, 
-                                                                  max_n, 
-                                                                  lp_dir, 
-                                                                  solveInstance))
-                 for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
-    
- 
-    a = list(map(lambda p: p.start(), processes)) #run processes
-    b = list(map(lambda p: p.join(), processes)) #join processes
-    print('Generated')
- 
-    
 
