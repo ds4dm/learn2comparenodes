@@ -25,14 +25,14 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
     added_arcs = 0
     #gen network
     while(True):
-        i = rng.randint(0,n_nodes)
+        i = rng.randint(0,n_nodes) 
         j = rng.randint(0,n_nodes)
         if i ==j or adj_mat[i][j] != 0:
             continue
         else:
-            c_ij = rng.randint(*c_range)
-            f_ij = ratio*c_ij
-            u_ij = rng.randint(1,k_max+1)* rng.randint(*d_range)
+            c_ij = rng.uniform(*c_range)
+            f_ij = rng.uniform(c_range[0]*ratio, c_range[1]*ratio)
+            u_ij = rng.uniform(1,k_max+1)* rng.uniform(*d_range)
             adj_mat[i][j] = (c_ij, f_ij, u_ij)
             added_arcs += 1
             edge_list.append((i,j))
@@ -60,7 +60,7 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
             if nx.has_path(G, o_k, d_k) and o_k != d_k:
                 break
         
-        demand_k = rng.randint(*d_range)
+        demand_k = rng.uniform(*d_range)
         commodities[k] = (o_k, d_k, demand_k)
         
     with open(filename, 'w') as file:
@@ -78,23 +78,13 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
                 
                 file.write(f"flow_{i+1}_{k+1}_{0}:" + 
                            "".join([f" +x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
-                           "".join([f" -x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ]) + f" <= {delta_i}\n"   )
-                
-                
-                file.write(f"flow_{i+1}_{k+1}_{1}:" + 
-                           "".join([f" -x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
-                           "".join([f" +x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ])+ f" <= {-1*delta_i}\n"    )
+                           "".join([f" -x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ]) + f" = {delta_i}\n"   )
                 
         
         for (i,j) in edge_list:
             file.write(f"arc_{i+1}_{j+1}:" + 
                        "".join([f" +{commodities[k][2]}x_{i+1}_{j+1}_{k+1}" for k in range(n_commodities) ]) + f"-{adj_mat[i][j][2]}y_{i+1}_{j+1} <= +0\n" )
             
-        
-        file.write("\nBounds\n")
-        for (i,j) in edge_list:
-            for k in range(n_commodities):
-                file.write(f" 0 <= x_{i+1}_{j+1}_{k+1} <= +1\n")
 
         file.write("\nBinaries\n")
         for (i,j) in edge_list:
