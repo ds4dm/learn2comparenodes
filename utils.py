@@ -39,7 +39,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         model = sp.Model()
         model.hideOutput()
         model.readProblem(instance)
-        model.setIntParam('separating/maxrounds', 0)
+        #model.setIntParam('separating/maxrounds', 0)
         model.setIntParam('randomization/permutationseed', 9)
         model.setIntParam('randomization/randomseedshift',9)
         
