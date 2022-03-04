@@ -26,11 +26,11 @@ def normalize_graph(constraint_features,
     
     var_normalizor = var_max_bounds[edge_index[0]]
     cons_normalizor = constraint_features[edge_index[1]]
-    normalizor = var_normalizor/(cons_normalizor)
+    normalizor = var_normalizor/(cons_normalizor + (cons_normalizor == 0))
     
     variable_features[:,2].div_(obj_norm)
     variable_features[:,:2].div_(var_max_bounds)
-    constraint_features.div_(constraint_features)
+    constraint_features.div_(constraint_features + (constraint_features == 0) )
     edge_attr.mul_(normalizor)
     bounds.div_(bound_normalizor)
         
