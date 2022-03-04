@@ -61,6 +61,9 @@ if __name__ == "__main__":
     min_n_commodities = 30
     max_n_commodities = 40
     
+    if problem == 'FCMCNF':
+        min_n, max_n = min_n_arcs, max_n_arcs
+    
     
     
     
