@@ -112,7 +112,7 @@ def run_episodes(oracle_type, instances, save_dir, svm=False):
     for instance in instances:
         run_episode(oracle_type, instance, save_dir, svm)
         
-    print("finished running episodes for process " + str(md.current_process()))
+    print("finished running episodes for process")
         
     return 1
     
