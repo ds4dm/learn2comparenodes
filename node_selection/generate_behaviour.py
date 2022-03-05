@@ -19,11 +19,11 @@ import os
 import sys
 import numpy as np
 import pyscipopt.scip as sp
-import multiprocessing as md
 from pathlib import Path 
 from functools import partial
 from node_selectors import OracleNodeSelectorAbdel
 from recorders import LPFeatureRecorder, CompFeaturizer, CompFeaturizerSVM
+from torch.multiprocessing import Process, set_start_method
 
 
 
@@ -180,7 +180,8 @@ if __name__ == "__main__":
         print(f"Geneating {data_partition} samples from {n_instance} instances using oracle {oracle}")
         
         chunck_size = int(np.floor(len(instances)/n_cpu))
-        processes = [  md.Process(name=f"worker {p}", 
+      
+        processes = [  Process(name=f"worker {p}", 
                                         target=partial(run_episodes,
                                                         oracle_type=oracle,
                                                         instances=instances[ p1 : p2], 
@@ -189,6 +190,10 @@ if __name__ == "__main__":
                         for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu))]
         
         
+        try:
+            set_start_method('spawn')
+        except RuntimeError:
+            ''
             
         a = list(map(lambda p: p.start(), processes)) #run processes
         b = list(map(lambda p: p.join(), processes)) #join processes
