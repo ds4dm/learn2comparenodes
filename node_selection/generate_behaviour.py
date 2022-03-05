@@ -63,10 +63,11 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 
 
-def run_episode(oracle_type, instance,  save_dir, svm):
+def run_episode(oracle_type, instance,  save_dir, svm, device):
     
     model = sp.Model()
     model.hideOutput()
+    
     
     #Setting up oracle selector
     instance = str(instance)
@@ -84,7 +85,7 @@ def run_episode(oracle_type, instance,  save_dir, svm):
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
     if isinstance(comp_behaviour_saver, CompFeaturizer): #gnn
-        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, 'cuda'))
+        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, device))
         
         print(oracle_ns)
     
@@ -107,10 +108,10 @@ def run_episode(oracle_type, instance,  save_dir, svm):
     return 1
 
 
-def run_episodes(oracle_type, instances, save_dir, svm=False):
+def run_episodes(oracle_type, instances, save_dir, svm, device):
     
     for instance in instances:
-        run_episode(oracle_type, instance, save_dir, svm)
+        run_episode(oracle_type, instance, save_dir, svm, device)
         
     print("finished running episodes for process")
         
@@ -135,9 +136,10 @@ if __name__ == "__main__":
 
     
     oracle = 'optimal_plunger'
-    problem = 'GISP'
+    problem = 'FCMCNF'
     data_partitions = ['train', 'valid'] #dont change
     n_cpu = 1
+    device = 'cpu'
     svm = False
     
     with open("nnodes.csv", "w") as f:
@@ -157,7 +159,9 @@ if __name__ == "__main__":
         if sys.argv[i] == '-n_cpu':
             n_cpu = int(sys.argv[i + 1])
         if sys.argv[i] == '-svm':
-            n_cpu = bool(int(sys.argv[i + 1]))
+            svm = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-device':
+            device = str(sys.argv[i + 1])
    
    
   
@@ -186,7 +190,8 @@ if __name__ == "__main__":
                                                         oracle_type=oracle,
                                                         instances=instances[ p1 : p2], 
                                                         save_dir=save_dir,
-                                                        svm=svm))
+                                                        svm=svm,
+                                                        device=device))
                         for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu))]
         
         
