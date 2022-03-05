@@ -84,7 +84,9 @@ def run_episode(oracle_type, instance,  save_dir, svm):
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
     oracle_ns.setOptsol(optsol)
     if isinstance(comp_behaviour_saver, CompFeaturizer): #gnn
-        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, 'cpu'))
+        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, 'cuda'))
+        
+        print(oracle_ns)
     
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing",
                          536870911,  536870911)
