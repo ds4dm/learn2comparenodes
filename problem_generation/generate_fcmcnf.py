@@ -76,7 +76,7 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
                 
                 delta_i = 1 if (commodities[k][0] == i ) else (-1 if commodities[k][1] == i else 0)
                 
-                file.write(f"flow_{i+1}_{k+1}_{0}:" + 
+                file.write(f"flow_{i+1}_{j+1}_{k+1}:" + 
                            "".join([f" +x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
                            "".join([f" -x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ]) + f" = {delta_i}\n"   )
                 
