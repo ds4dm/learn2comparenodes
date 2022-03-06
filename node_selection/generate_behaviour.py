@@ -72,7 +72,6 @@ def run_episode(oracle_type, instance,  save_dir, svm, device):
     #Setting up oracle selector
     instance = str(instance)
     model.readProblem(instance)
-    model.setIntParam('separating/maxrounds', 0)
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
     
