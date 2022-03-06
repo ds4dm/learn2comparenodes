@@ -72,6 +72,13 @@ def run_episode(oracle_type, instance,  save_dir, svm, device):
     #Setting up oracle selector
     instance = str(instance)
     model.readProblem(instance)
+    model.setParam('constraints/linear/upgrade/logicor',0)
+    model.setParam('constraints/linear/upgrade/indicator',0)
+    model.setParam('constraints/linear/upgrade/knapsack', 0)
+    model.setParam('constraints/linear/upgrade/setppc', 0)
+    model.setParam('constraints/linear/upgrade/xor', 0)
+    model.setParam('constraints/linear/upgrade/varbound', 0)
+    
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
     

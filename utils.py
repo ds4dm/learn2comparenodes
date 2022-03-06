@@ -41,6 +41,13 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         model.readProblem(instance)
         model.setIntParam('randomization/permutationseed', 9)
         model.setIntParam('randomization/randomseedshift',9)
+        model.setParam('constraints/linear/upgrade/logicor',0)
+        model.setParam('constraints/linear/upgrade/indicator',0)
+        model.setParam('constraints/linear/upgrade/knapsack', 0)
+        model.setParam('constraints/linear/upgrade/setppc', 0)
+        model.setParam('constraints/linear/upgrade/xor', 0)
+        model.setParam('constraints/linear/upgrade/varbound', 0)
+    
         
         comp = None
         
