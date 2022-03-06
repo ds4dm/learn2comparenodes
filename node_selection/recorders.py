@@ -383,19 +383,26 @@ class LPFeatureRecorder():
     
     def _get_feature_cons(self, model, cons):
         
-        cons_n = str(cons)
-        
-        if re.match('flow', cons_n):
-            rhs = model.getRhs(cons)
-            leq = 0
-            eq = 1
-            geq = 0
-        elif re.match('arc', cons_n):
+        try:
+            
+            cons_n = str(cons)
+            
+            if re.match('flow', cons_n):
+                rhs = model.getRhs(cons)
+                leq = 0
+                eq = 1
+                geq = 0
+            elif re.match('arc', cons_n):
+                rhs = 0
+                leq = eq =  1
+                geq = 0
+            else:
+                rhs = model.getRhs(cons)
+                leq = eq = 1
+                geq = 0
+        except:
+            'logicor no repr'
             rhs = 0
-            leq = eq =  1
-            geq = 0
-        else:
-            rhs = model.getRhs(cons)
             leq = eq = 1
             geq = 0
   
