@@ -25,7 +25,7 @@ class GNNPolicy(torch.nn.Module):
         hidden_dim3 = 4
         
         # static data
-        cons_nfeats = 1 
+        cons_nfeats = 4
         edge_nfeats = 1
         var_nfeats = 6
         

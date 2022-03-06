@@ -14,6 +14,7 @@ import os
 import imp
 import torch
 import numpy as np
+import re
 
 def load_src(name, fpath):
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
@@ -381,8 +382,24 @@ class LPFeatureRecorder():
         
     
     def _get_feature_cons(self, model, cons):
-        rhs = model.getRhs(cons)
-        return torch.tensor([ rhs ], device=self.device).float()
+        
+        cons_n = str(cons)
+        
+        if re.match('flow', cons_n):
+            rhs = model.getRhs(cons)
+            leq = 0
+            eq = 1
+            geq = 0
+        elif re.match('arc', cons_n):
+            rhs = 0
+            leq = eq =  1
+            geq = 0
+        else:
+            rhs = model.getRhs(cons)
+            leq = eq = 1
+            geq = 0
+  
+        return torch.tensor([ rhs, leq, eq, geq ], device=self.device).float()
     
     def _get_feature_var(self, model, var):
         
@@ -419,7 +436,7 @@ class LPFeatureRecorder():
 class BipartiteGraphStatic0():
     
     #Defines the structure of the problem solved. Invariant toward problems
-    def __init__(self, n0, device, d0=6, d1=1, allocate=True):
+    def __init__(self, n0, device, d0=6, d1=4, allocate=True):
         
         self.n0, self.d0, self.d1 = n0, d0, d1
         self.device = device
