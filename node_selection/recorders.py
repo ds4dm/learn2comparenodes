@@ -294,7 +294,7 @@ class LPFeatureRecorder():
                 
             else:
                 graph = self.get_graph(model, parent).copy()
-                self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
+                #self._add_conss_to_graph(graph, model, sub_milp.getAddedConss())
                 self._change_branched_bounds(graph, sub_milp)
                 
             #self._add_scip_obj_cons(model, sub_milp, graph)
