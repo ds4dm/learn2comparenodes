@@ -257,7 +257,7 @@ class LPFeatureRecorder():
         self.n0 = len(varrs)
         
         self.varrs = varrs
-        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), "t_" + str(var) ]  ])
+        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), 't_' + str(var) ]  ])
         
         self.original_conss = original_conss
         
