@@ -521,6 +521,10 @@ cdef extern from "scip/scip.h":
     SCIP_STAGE SCIPgetStage(SCIP* scip)
     SCIP_RETCODE SCIPsetProbName(SCIP* scip, char* name)
     const char* SCIPgetProbName(SCIP* scip)
+    
+    #BOUNDS
+    SCIP_Real SCIPgetLowerbound(SCIP* scip)
+    SCIP_Real SCIPgetUpperbound(SCIP* scip)
 
     # Diving methods
     SCIP_RETCODE SCIPstartDive(SCIP* scip)
@@ -636,6 +640,7 @@ cdef extern from "scip/scip.h":
     # Node Methods
     SCIP_NODE* SCIPgetCurrentNode(SCIP* scip)
     SCIP_NODE* SCIPgetRootNode(SCIP* scip)
+    int SCIPgetPlungeDepth(SCIP* scip)
     SCIP_NODE* SCIPnodeGetParent(SCIP_NODE* node)
     SCIP_Longint SCIPnodeGetNumber(SCIP_NODE* node)
     int SCIPnodeGetDepth(SCIP_NODE* node)
@@ -720,6 +725,11 @@ cdef extern from "scip/scip.h":
     int SCIPgetNVars(SCIP* scip)
     int SCIPgetNOrigVars(SCIP* scip)
     SCIP_VARTYPE SCIPvarGetType(SCIP_VAR* var)
+    
+    SCIP_BRANCHDIR SCIPvarGetBranchDirection(SCIP_VAR* var)
+    SCIP_Real SCIPvarGetRootSol(SCIP_VAR* var)
+    SCIP_Real SCIPvarGetSol(SCIP_VAR* var, SCIP_Bool withlp)
+    
     SCIP_Bool SCIPvarIsOriginal(SCIP_VAR* var)
     SCIP_Bool SCIPvarIsTransformed(SCIP_VAR* var)
     SCIP_COL* SCIPvarGetCol(SCIP_VAR* var)
