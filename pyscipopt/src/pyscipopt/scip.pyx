@@ -766,6 +766,128 @@ cdef class Node:
     def __eq__(self, other):
         return (self.__class__ == other.__class__
                 and self.scip_node == (<Node>other).scip_node)
+    
+    
+    def getHeHeaumeEisnerFeatures(self, Model model, int maxdepth):
+        
+        cdef dict feat = dict([('vals', []), ('maxdepth', maxdepth) ])
+        
+        #c type datastructures
+        cdef SCIP_NODETYPE nodetype
+        cdef SCIP_Real nodelowerbound
+        cdef SCIP_Real rootlowerbound
+        cdef SCIP_Real lowerbound          
+        cdef SCIP_Real upperbound          
+        cdef SCIP_VAR* branchvar
+        cdef SCIP_BRANCHDIR branchdirpreferred
+        cdef SCIP_Real branchbound
+        cdef SCIP_Bool haslp
+        cdef SCIP_Bool upperboundinf
+        cdef SCIP_Real varsol
+        cdef SCIP_Real varrootsol
+        
+
+        #assertion
+            
+        assert(self.scip_node != NULL);
+        assert(SCIPnodeGetDepth(self.scip_node) != 0)
+        assert(maxdepth != 0)
+    
+        boundchgs = self.getDomchg().getBoundchgs()
+        
+        assert(boundchgs[0].getBoundchgtype() == SCIP_BOUNDCHGTYPE_BRANCHING)
+        
+        
+        #EXTRACTION
+        
+        nodetype = SCIPnodeGetType(self.scip_node)
+        lowerbound  = SCIPnodeGetLowerbound(self.scip_node)
+        rootlowerbound = abs(SCIPnodeGetLowerbound(SCIPgetRootNode(model._scip)))
+        
+        if model.isZero(rootlowerbound) :
+           rootlowerbound = 0.0001
+        assert(not model.isInfinity(rootlowerbound))
+        
+        lowerbound = SCIPgetLowerbound(model._scip)
+        upperbound = SCIPgetUpperbound(model._scip)
+        
+        if model.isInfinity(upperbound) or model.isInfinity(-upperbound):
+           upperboundinf = True
+        else:
+           upperboundinf = False
+           
+        feat['depth'] = SCIPnodeGetDepth(self.scip_node)
+        
+        if model.isEQ(upperbound, lowerbound):
+           feat['vals'][SCIP_FEATNODESEL_GAP] = 0
+        elif model.isZero(lowerbound) or upperboundinf:
+           feat['vals'][SCIP_FEATNODESEL_GAPINF] = 1
+        else:
+           feat['vals'][SCIP_FEATNODESEL_GAP] = (upperbound - lowerbound)/abs(lowerbound)
+     
+        if upperboundinf:
+
+           feat['vals'][SCIP_FEATNODESEL_GLOBALUPPERBOUNDINF] = 1
+           upperbound = lowerbound + 0.2 * (upperbound - lowerbound)
+           
+        else:
+           feat['vals'][SCIP_FEATNODESEL_GLOBALUPPERBOUND] = upperbound / rootlowerbound
+     
+        feat['vals'][SCIP_FEATNODESEL_PLUNGEDEPTH] = SCIPgetPlungeDepth(model._scip)
+        feat['vals'][SCIP_FEATNODESEL_RELATIVEDEPTH] = feat['depth'] /maxdepth * 10.0
+     
+        
+        #Branching features 
+        cdef BoundChange boundchg
+        boundchg = boundchgs[0]
+        branchvar = SCIPboundchgGetVar(boundchg.scip_boundchg)
+        branchbound = SCIPboundchgGetNewbound(boundchg.scip_boundchg)
+        branchdirpreferred = SCIPvarGetBranchDirection(branchvar)
+     
+        varsol = SCIPvarGetSol(branchvar, True)
+        varrootsol = SCIPvarGetRootSol(branchvar)
+     
+        feat['boundtype'] = SCIPboundchgGetBoundchgtype(boundchg.scip_boundchg)
+     
+        #CALCULATE FEATURES
+        # feat['vals'][SCIP_FEATNODESEL_LOWERBOUND] = 
+        #    nodelowerbound / rootlowerbound
+     
+        # feat['vals'][SCIP_FEATNODESEL_ESTIMATE] = 
+        #    SCIPnodeGetEstimate(node.scip_node) / rootlowerbound
+     
+        # if not model.isEQ(upperbound, lowerbound):
+        #    feat['vals'][SCIP_FEATNODESEL_RELATIVEBOUND] = (nodelowerbound - lowerbound) / (upperbound - lowerbound);
+     
+        # if nodetype == SCIP_NODETYPE_SIBLING :
+        #    feat['vals'][SCIP_FEATNODESEL_TYPE_SIBLING] = 1
+        # elif nodetype == SCIP_NODETYPE_CHILD:
+        #    feat['vals'][SCIP_FEATNODESEL_TYPE_CHILD] = 1
+        # elif( nodetype == SCIP_NODETYPE_LEAF )
+        #    feat['vals'][SCIP_FEATNODESEL_TYPE_LEAF] = 1
+     
+        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_BOUNDLPDIFF] = branchbound - varsol
+        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_ROOTLPDIFF] = varrootsol - varsol
+     
+        # if branchdirpreferred == SCIP_BRANCHDIR_DOWNWARDS:
+        #    feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_DOWN] = 1;
+        # elif branchdirpreferred == SCIP_BRANCHDIR_UPWARDS: 
+        #    feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_UP] = 1;
+     
+        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PSEUDOCOST] = SCIPvarGetPseudocost(branchvar, scip->stat, branchbound - varsol);
+     
+        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_INF] = 
+        #    SCIPvarGetAvgInferences(branchvar, scip->stat, SCIP_BRANCHDIR_UPWARDS) / (SCIP_Real)feat->maxdepth 
+        #    if feat['boundtype'] == SCIP_BOUNDTYPE_LOWER  else
+        #    SCIPvarGetAvgInferences(branchvar, scip->stat, SCIP_BRANCHDIR_DOWNWARDS) / (SCIP_Real)feat->maxdepth;
+     
+        print(feat)
+            
+        return feat
+        
+    
+    
+
 
 cdef class Variable(Expr):
     """Is a linear expression and has SCIP_VAR*"""
