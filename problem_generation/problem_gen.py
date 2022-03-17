@@ -92,12 +92,13 @@ if __name__ == "__main__":
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             n_cpu = int(sys.argv[i + 1])
-    
+            
+    exp_dir = f"data/{problem}/"
     assert exp_dir is not None
     if instance is None:
         assert min_n is not None
         assert max_n is not None
-    exp_dir = f"data/{problem}/"
+        
     exp_dir = exp_dir + data_partition
     lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
     try:
