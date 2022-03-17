@@ -1,1 +1,0 @@
-source activate l2sn &&module load gcc &&python generate_gisp.py -n_cpu 32 -n_instance 10000 -data_partition train -solve 1 -min_n 60 -max_n 70 &&python generate_gisp.py -n_cpu 32 -n_instance 1000 -data_partition valid -solve 1 -min_n 60 -max_n 70 &&python generate_gisp.py -n_cpu 32 -n_instance 1000 -data_partition test -solve 1 -min_n 60 -max_n 70 
