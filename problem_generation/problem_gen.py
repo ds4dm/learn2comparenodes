@@ -97,7 +97,7 @@ if __name__ == "__main__":
     if instance is None:
         assert min_n is not None
         assert max_n is not None
-    
+    exp_dir = f"data/{problem}/"
     exp_dir = exp_dir + data_partition
     lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
     try:
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     if problem == 'FCMCNF':
         min_n, max_n = min_n_arcs, max_n_arcs
     
-    exp_dir = f"data/{problem}/"
+    
     
     print(f"Summary for {problem} generation")
     print(f"n_instance    :     {n_instance}")
