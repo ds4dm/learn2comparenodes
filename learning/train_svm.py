@@ -41,23 +41,41 @@ def get_data(files):
 
 if __name__ == '__main__':
     
-    problems = ['FCMCNF']
+    problem = 'FCMCNF'
+    n_sample = 10000
+    n_epoch = 10
     
-    for problem in problems:
+    for i in range(1, len(sys.argv), 2):
+        if sys.argv[i] == '-problem':
+            problem = str(sys.argv[i + 1])
+        if sys.argv[i] == '-n_epoch':
+            n_epoch = int(sys.argv[i + 1])
+        if sys.argv[i] == '-n_sample':
+            n_sample = int(sys.argv[i + 1])
         
-        train_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                                f"../node_selection/data_svm/{problem}/train")).glob("*.csv") ]
-        
-        valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                                f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ]
+    
 
-        X,y,depths = get_data(train_files)
+        
+    train_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
+                                                            f"../node_selection/data_svm/{problem}/train")).glob("*.csv") ][:n_sample]
     
-        model = svm.LinearSVC()
-        
-        model.fit(X,y, np.exp(2.67/np.min(depths, axis=1)))
-        
-        dump(model, f'policy_{problem}_svm.pkl')
+    valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
+                                                            f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ][:int(0.2*n_sample)]
+
+    X,y,depths = get_data(train_files)
+    X_valid, y_valid, depths_valid = get_data(valid_files)
+    
+    print(f"X shape {X.shape}")
+
+    model = svm.LinearSVC()
+    
+    model.fit(X,y, np.exp(2.67/np.min(depths, axis=1)))
+    
+    valid_acc = model.score(X_valid,y_valid, np.min(depths_valid, axis=1))
+    
+    print(f"Accuracy on validation set : {valid_acc}")
+    
+    dump(model, f'policy_{problem}_svm.pkl')
         
         
         
