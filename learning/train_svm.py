@@ -18,24 +18,39 @@ from joblib import dump, load
 
 
 def get_data(files):
-    #TODO
     
-    return np.random.rand(100,20), np.random.randint(0,2,size=(100,)), np.random.randint(1,62,size=(100,2))
+    X = []
+    y = []
+    depths = []
+    
+    for file in files:
+        
+        f_array = np.loadtxt(file)
+        features = f_array[:-1]
+        comp_res = f_array[-1]
+        X.append(features)
+        y.append(comp_res)
+        depths.append(np.array([f_array[18], f_array[-3]]))
+        
+    return np.array(X),np.array(y), np.array(depths)
+        
+        
+    
 
 
 
 if __name__ == '__main__':
     
-    problems = ['GISP']
+    problems = ['FCMCNF']
     
     for problem in problems:
         
         train_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                                f"../node_selection/data_svm/{problem}/train")).glob("*.pt") ]
+                                                                f"../node_selection/data_svm/{problem}/train")).glob("*.csv") ]
         
         valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                                f"../node_selection/data_svm/{problem}/valid")).glob("*.pt") ]
-        
+                                                                f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ]
+
         X,y,depths = get_data(train_files)
     
         model = svm.LinearSVC()
