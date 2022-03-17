@@ -145,11 +145,12 @@ if __name__ == "__main__":
 
     
     oracle = 'optimal_plunger'
-    problem = 'FCMCNF'
+    problem = 'GISP'
     data_partitions = ['train', 'valid'] #dont change
-    n_cpu = 1
+    n_cpu = 4
+    n_instance = 4
     device = 'cpu'
-    svm = False
+    svm = True
     
     with open("nnodes.csv", "w") as f:
         f.write("")
@@ -167,6 +168,8 @@ if __name__ == "__main__":
             problem = str(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             n_cpu = int(sys.argv[i + 1])
+        if sys.argv[i] == '-n_instance':
+            n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-svm':
             svm = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-device':
@@ -185,12 +188,11 @@ if __name__ == "__main__":
         except FileExistsError:
             ""
         
-        
+        n_keep  = n_instance if data_partition == 'train' else int(0.2*n_instance)
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
-                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))
-        n_instance = len(instances)
+                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))[:n_keep]
         
-        print(f"Geneating {data_partition} samples from {n_instance} instances using oracle {oracle}")
+        print(f"Generating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
         chunck_size = int(np.floor(len(instances)/n_cpu))
       
