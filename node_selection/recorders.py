@@ -54,7 +54,7 @@ class CompFeaturizerSVM():
         model = self.m
         
         f = []
-        feat = node.getHeHeaumeEisnerFeatures(model, model.getDepth())
+        feat = node.getHeHeaumeEisnerFeatures(model, model.getDepth()+1 )
         
         
         for k in ['vals', 'depth', 'maxdepth' ]:
