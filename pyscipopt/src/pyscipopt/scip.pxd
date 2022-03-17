@@ -729,6 +729,9 @@ cdef extern from "scip/scip.h":
     SCIP_BRANCHDIR SCIPvarGetBranchDirection(SCIP_VAR* var)
     SCIP_Real SCIPvarGetRootSol(SCIP_VAR* var)
     SCIP_Real SCIPvarGetSol(SCIP_VAR* var, SCIP_Bool withlp)
+    SCIP_Real SCIPgetVarAvgInferences(SCIP* scip, SCIP_VAR* var, SCIP_BRANCHDIR dir)
+    
+    
     
     SCIP_Bool SCIPvarIsOriginal(SCIP_VAR* var)
     SCIP_Bool SCIPvarIsTransformed(SCIP_VAR* var)
@@ -745,7 +748,7 @@ cdef extern from "scip/scip.h":
     void SCIPvarSetData(SCIP_VAR* var, SCIP_VARDATA* vardata)
     SCIP_VARDATA* SCIPvarGetData(SCIP_VAR* var)
     SCIP_Real SCIPvarGetAvgSol(SCIP_VAR* var)
-    SCIP_Real SCIPgetVarPseudocost(SCIP* scip, SCIP_VAR *var, SCIP_BRANCHDIR dir)
+    SCIP_Real SCIPgetVarPseudocost(SCIP* scip, SCIP_VAR* var, SCIP_BRANCHDIR dir)
     SCIP_Real SCIPvarGetCutoffSum(SCIP_VAR* var, SCIP_BRANCHDIR dir)
     SCIP_Longint SCIPvarGetNBranchings(SCIP_VAR* var, SCIP_BRANCHDIR dir)
 

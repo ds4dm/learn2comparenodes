@@ -770,7 +770,7 @@ cdef class Node:
     
     def getHeHeaumeEisnerFeatures(self, Model model, int maxdepth):
         
-        cdef dict feat = dict([('vals', []), ('maxdepth', maxdepth) ])
+        cdef dict feat = dict([('vals', dict()), ('maxdepth', maxdepth) ])
         
         #c type datastructures
         cdef SCIP_NODETYPE nodetype
@@ -785,6 +785,26 @@ cdef class Node:
         cdef SCIP_Bool upperboundinf
         cdef SCIP_Real varsol
         cdef SCIP_Real varrootsol
+        
+        SCIP_FEATNODESEL_GAPINF = 1
+        SCIP_FEATNODESEL_GAP = 2
+        SCIP_FEATNODESEL_GLOBALUPPERBOUNDINF = 3
+        SCIP_FEATNODESEL_GLOBALUPPERBOUND = 4
+        SCIP_FEATNODESEL_PLUNGEDEPTH = 5
+        SCIP_FEATNODESEL_RELATIVEDEPTH = 6
+        SCIP_FEATNODESEL_LOWERBOUND = 7
+        SCIP_FEATNODESEL_ESTIMATE = 8
+        SCIP_FEATNODESEL_RELATIVEBOUND = 9
+        SCIP_FEATNODESEL_TYPE_SIBLING = 10
+        SCIP_FEATNODESEL_TYPE_CHILD = 11
+        SCIP_FEATNODESEL_TYPE_LEAF = 12
+        SCIP_FEATNODESEL_BRANCHVAR_BOUNDLPDIFF = 13
+        SCIP_FEATNODESEL_BRANCHVAR_ROOTLPDIFF = 14
+        SCIP_FEATNODESEL_BRANCHVAR_PRIO_DOWN = 15
+        SCIP_FEATNODESEL_BRANCHVAR_PRIO_UP = 16
+        SCIP_FEATNODESEL_BRANCHVAR_PSEUDOCOST = 17
+        SCIP_FEATNODESEL_BRANCHVAR_INF = 18
+        
         
 
         #assertion
@@ -801,7 +821,7 @@ cdef class Node:
         #EXTRACTION
         
         nodetype = SCIPnodeGetType(self.scip_node)
-        lowerbound  = SCIPnodeGetLowerbound(self.scip_node)
+        nodelowerbound  = SCIPnodeGetLowerbound(self.scip_node)
         rootlowerbound = abs(SCIPnodeGetLowerbound(SCIPgetRootNode(model._scip)))
         
         if model.isZero(rootlowerbound) :
@@ -850,38 +870,32 @@ cdef class Node:
         feat['boundtype'] = SCIPboundchgGetBoundchgtype(boundchg.scip_boundchg)
      
         #CALCULATE FEATURES
-        # feat['vals'][SCIP_FEATNODESEL_LOWERBOUND] = 
-        #    nodelowerbound / rootlowerbound
+        feat['vals'][SCIP_FEATNODESEL_LOWERBOUND] = nodelowerbound / rootlowerbound
      
-        # feat['vals'][SCIP_FEATNODESEL_ESTIMATE] = 
-        #    SCIPnodeGetEstimate(node.scip_node) / rootlowerbound
+        feat['vals'][SCIP_FEATNODESEL_ESTIMATE] = SCIPnodeGetEstimate(self.scip_node) / rootlowerbound
      
-        # if not model.isEQ(upperbound, lowerbound):
-        #    feat['vals'][SCIP_FEATNODESEL_RELATIVEBOUND] = (nodelowerbound - lowerbound) / (upperbound - lowerbound);
+        if not model.isEQ(upperbound, lowerbound):
+            feat['vals'][SCIP_FEATNODESEL_RELATIVEBOUND] = (nodelowerbound - lowerbound) / (upperbound - lowerbound)
      
-        # if nodetype == SCIP_NODETYPE_SIBLING :
-        #    feat['vals'][SCIP_FEATNODESEL_TYPE_SIBLING] = 1
-        # elif nodetype == SCIP_NODETYPE_CHILD:
-        #    feat['vals'][SCIP_FEATNODESEL_TYPE_CHILD] = 1
-        # elif( nodetype == SCIP_NODETYPE_LEAF )
-        #    feat['vals'][SCIP_FEATNODESEL_TYPE_LEAF] = 1
+        if nodetype == SCIP_NODETYPE_SIBLING :
+            feat['vals'][SCIP_FEATNODESEL_TYPE_SIBLING] = 1
+        elif nodetype == SCIP_NODETYPE_CHILD:
+            feat['vals'][SCIP_FEATNODESEL_TYPE_CHILD] = 1
+        elif( nodetype == SCIP_NODETYPE_LEAF ):
+            feat['vals'][SCIP_FEATNODESEL_TYPE_LEAF] = 1
      
-        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_BOUNDLPDIFF] = branchbound - varsol
-        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_ROOTLPDIFF] = varrootsol - varsol
+        feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_BOUNDLPDIFF] = branchbound - varsol
+        feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_ROOTLPDIFF] = varrootsol - varsol
      
-        # if branchdirpreferred == SCIP_BRANCHDIR_DOWNWARDS:
-        #    feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_DOWN] = 1;
-        # elif branchdirpreferred == SCIP_BRANCHDIR_UPWARDS: 
-        #    feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_UP] = 1;
+        if branchdirpreferred == SCIP_BRANCHDIR_DOWNWARDS:
+            feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_DOWN] = 1
+        elif branchdirpreferred == SCIP_BRANCHDIR_UPWARDS: 
+            feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PRIO_UP] = 1
      
-        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PSEUDOCOST] = SCIPvarGetPseudocost(branchvar, scip->stat, branchbound - varsol);
+        feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_PSEUDOCOST] = SCIPgetVarPseudocost(model._scip, branchvar, branchdirpreferred);
      
-        # feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_INF] = 
-        #    SCIPvarGetAvgInferences(branchvar, scip->stat, SCIP_BRANCHDIR_UPWARDS) / (SCIP_Real)feat->maxdepth 
-        #    if feat['boundtype'] == SCIP_BOUNDTYPE_LOWER  else
-        #    SCIPvarGetAvgInferences(branchvar, scip->stat, SCIP_BRANCHDIR_DOWNWARDS) / (SCIP_Real)feat->maxdepth;
-     
-        print(feat)
+        feat['vals'][SCIP_FEATNODESEL_BRANCHVAR_INF] = SCIPgetVarAvgInferences(model._scip, branchvar, SCIP_BRANCHDIR_UPWARDS) / maxdepth  if feat['boundtype'] == SCIP_BOUNDTYPE_LOWER  else SCIPgetVarAvgInferences(model._scip, branchvar, SCIP_BRANCHDIR_DOWNWARDS) / maxdepth
+        
             
         return feat
         
