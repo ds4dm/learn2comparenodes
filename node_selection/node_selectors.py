@@ -229,8 +229,8 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
     def nodecomp(self, node1, node2):
         
-        f1, f2 = (self.comp_featurizer.get_features(self.model, node1),
-                  self.comp_featurizer.get_features(self.model, node2))
+        f1, f2 = (self.comp_featurizer.get_features(node1),
+                  self.comp_featurizer.get_features(node2))
         
         X = np.hstack((f1,f2))
         

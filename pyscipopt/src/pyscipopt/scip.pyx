@@ -770,7 +770,7 @@ cdef class Node:
     
     def getHeHeaumeEisnerFeatures(self, Model model, int maxdepth):
         
-        cdef dict feat = dict([('vals', dict()), ('maxdepth', maxdepth) ])
+        cdef dict feat = dict([('vals', dict()), ('maxdepth', maxdepth), ('depth',11111) ])
         
         #c type datastructures
         cdef SCIP_NODETYPE nodetype
@@ -811,7 +811,6 @@ cdef class Node:
             
         assert(self.scip_node != NULL);
         assert(SCIPnodeGetDepth(self.scip_node) != 0)
-        assert(maxdepth != 0)
     
         boundchgs = self.getDomchg().getBoundchgs()
         

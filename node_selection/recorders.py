@@ -25,13 +25,14 @@ from data_type import BipartiteGraphPairData
 
 
 class CompFeaturizerSVM():
-    def __init__(self, save_dir=None, instance_name=None):
+    def __init__(self, model,save_dir=None, instance_name=None):
         self.instance_name = instance_name
         self.save_dir = save_dir
+        self.m = model
         
     def save_comp(self, model, node1, node2, comp_res, comp_id):
         
-        f1,f2 = self.get_features(model, node1), self.get_features(model, node2)
+        f1,f2 = self.get_features(node1), self.get_features(node2)
         
         
         file_path = os.path.join(self.save_dir, f"{self.instance_name}_{comp_id}.csv")
@@ -48,9 +49,25 @@ class CompFeaturizerSVM():
         self.save_dir = save_dir
         return self
 
-    def get_features(self, model, node):
-        f = np.ones((1,10))
-        #TODO
+    def get_features(self, node):
+        
+        model = self.m
+        
+        f = []
+        feat = node.getHeHeaumeEisnerFeatures(model, model.getDepth())
+        
+        
+        for k in ['vals', 'depth', 'maxdepth' ]:
+            if k == 'vals':
+                
+                for i in range(1,19):
+                    try:
+                        f.append(feat[k][i])
+                    except:
+                        f.append(0)
+                    
+            else:
+                f.append(feat[k])
 
         return f
     
