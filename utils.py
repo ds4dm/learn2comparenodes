@@ -56,7 +56,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
             comp = CustomNodeSelector(name)
         
         elif nodesel in ['svm']:
-            comp_featurizer = CompFeaturizerSVM()
+            comp_featurizer = CompFeaturizerSVM(model)
             comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer)
             
         elif nodesel in ['gnn_trained', 'gnn_untrained']:
