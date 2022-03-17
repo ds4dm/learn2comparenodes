@@ -74,6 +74,8 @@ if __name__ == "__main__":
             instance = sys.argv[i + 1]
         if sys.argv[i] == '-data_partition':
             data_partition = sys.argv[i + 1]
+        if sys.argv[i] == '-problem':
+            problem = sys.argv[i + 1]
         if sys.argv[i] == '-min_n':
             min_n = int(sys.argv[i + 1])
         if sys.argv[i] == '-max_n':
