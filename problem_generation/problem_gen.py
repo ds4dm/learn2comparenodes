@@ -36,8 +36,6 @@ if __name__ == "__main__":
     n_instance = 16
     
     problem = 'FCMCNF'
-    
-    exp_dir = f"data/{problem}/"
     data_partition = 'test'
     min_n = 15
     max_n = 20
@@ -60,11 +58,7 @@ if __name__ == "__main__":
     
     min_n_commodities = 30
     max_n_commodities = 40
-    
-    if problem == 'FCMCNF':
-        min_n, max_n = min_n_arcs, max_n_arcs
-    
-    
+
     
     
 
@@ -110,6 +104,12 @@ if __name__ == "__main__":
         os.makedirs(lp_dir)
     except FileExistsError:
         ""
+        
+        
+    if problem == 'FCMCNF':
+        min_n, max_n = min_n_arcs, max_n_arcs
+    
+    exp_dir = f"data/{problem}/"
     
     print(f"Summary for {problem} generation")
     print(f"n_instance    :     {n_instance}")
