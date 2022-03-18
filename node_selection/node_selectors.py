@@ -233,6 +233,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
                   self.comp_featurizer.get_features(node2))
         
         X = np.hstack((f1,f2))
+        X = X[np.newaxis, :]
         
         decision = self.policy.predict(X)[0]
         

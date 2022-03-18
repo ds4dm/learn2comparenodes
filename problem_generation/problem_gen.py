@@ -36,8 +36,6 @@ if __name__ == "__main__":
     n_instance = 16
     
     problem = 'FCMCNF'
-    
-    exp_dir = f"data/{problem}/"
     data_partition = 'test'
     min_n = 15
     max_n = 20
@@ -60,11 +58,7 @@ if __name__ == "__main__":
     
     min_n_commodities = 30
     max_n_commodities = 40
-    
-    if problem == 'FCMCNF':
-        min_n, max_n = min_n_arcs, max_n_arcs
-    
-    
+
     
     
 
@@ -98,18 +92,25 @@ if __name__ == "__main__":
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
             n_cpu = int(sys.argv[i + 1])
-    
+            
+    exp_dir = f"data/{problem}/"
     assert exp_dir is not None
     if instance is None:
         assert min_n is not None
         assert max_n is not None
-    
+        
     exp_dir = exp_dir + data_partition
     lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
     try:
         os.makedirs(lp_dir)
     except FileExistsError:
         ""
+        
+        
+    if problem == 'FCMCNF':
+        min_n, max_n = min_n_arcs, max_n_arcs
+    
+    
     
     print(f"Summary for {problem} generation")
     print(f"n_instance    :     {n_instance}")
