@@ -525,6 +525,13 @@ cdef extern from "scip/scip.h":
     #BOUNDS
     SCIP_Real SCIPgetLowerbound(SCIP* scip)
     SCIP_Real SCIPgetUpperbound(SCIP* scip)
+    SCIP_Real SCIPgetCutoffbound(SCIP* scip)
+    int SCIPgetMaxDepth(SCIP* scip)
+    SCIP_Longint SCIPgetNNodeLPIterations(SCIP* scip)
+    SCIP_Longint SCIPgetNStrongbranchLPIterations(SCIP* scip)
+    
+    #Other 
+    SCIP_Longint SCIPgetNSolsFound(SCIP* scip)
 
     # Diving methods
     SCIP_RETCODE SCIPstartDive(SCIP* scip)
@@ -1074,6 +1081,7 @@ cdef extern from "scip/scip.h":
     SCIP_RELAX* SCIPfindRelax(SCIP* scip, const char* name)
 
     # Node selection plugin
+    const char* SCIPnodeselGetName(SCIP_NODESEL *nodesel)
     SCIP_RETCODE SCIPincludeNodesel(SCIP* scip,
                                     const char* name,
                                     const char* desc,

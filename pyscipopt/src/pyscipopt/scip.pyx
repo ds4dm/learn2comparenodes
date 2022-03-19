@@ -27,6 +27,8 @@ include "sepa.pxi"
 include "relax.pxi"
 include "nodesel.pxi"
 
+import numpy as np
+
 # recommended SCIP version; major version is required
 MAJOR = 7
 MINOR = 0
@@ -1884,6 +1886,189 @@ cdef class Model:
     def getBestboundNode(self):
         """gets the node with smallest lower bound from the tree (child, sibling, or leaf)."""
         return Node.create(SCIPgetBestboundNode(self._scip))
+    
+    def getEstimateSelNode(self):
+        
+        cdef SCIP_NODESELDATA* nodeseldata
+        cdef int minplungedepth
+        cdef int maxplungedepth
+        cdef int plungedepth
+        cdef int bestnodefreq
+        cdef int breadthfirstdepth
+        cdef int plungeoffset
+        
+        cdef SCIP_Real maxplungequot
+        cdef SCIP_NODESEL* nodesel
+        cdef SCIP_NODE* selnode
+        
+        cdef SCIP_NODE* node
+        cdef SCIP_Real lowerbound
+        cdef SCIP_Real cutoffbound
+        cdef SCIP_Real maxbound
+        
+        nodesel = SCIPfindNodesel(self._scip,'estimate')
+     
+        assert(nodesel != NULL)
+        NODESEL_NAME = 'estimate'
+        assert(SCIPnodeselGetName(nodesel) == NODESEL_NAME)
+            
+            
+
+     
+        selnode = NULL
+     
+        #/* get node selector user data */
+        nodeseldata = SCIPnodeselGetData(nodesel)
+        assert(nodeseldata != NULL)
+        
+     
+        #/* check if the breadth-first search should be applied */
+        breadthfirstdepth = -1
+        if( SCIPgetDepth(self._scip) <= breadthfirstdepth):
+    
+     
+           #SCIPdebugMsg(self._scip, "perform breadth-first search at depth <%d>\n", SCIPgetDepth(self._scip));
+     
+           node = SCIPgetPrioSibling(self._scip);
+           if( node != NULL ):
+           
+              selnode = node
+              #SCIPdebugMsg(scip, "  -> selected prio sibling: estimate=%g\n", SCIPnodeGetEstimate(selnode));
+              return Node.create(selnode)
+           
+     
+           node = SCIPgetPrioChild(self._scip)
+           if( node != NULL ):
+           
+              selnode = node
+              #SCIPdebugMsg(scip, "  -> selected prio child: estimate=%g\n", SCIPnodeGetEstimate(selnode))
+              return Node.create(selnode)
+           
+        
+     
+        bestnodefreq = 10
+        plungeoffset = 0
+     
+        #/* check if we don't want to do plunging yet */
+        if( SCIPgetNNodes(self._scip) < plungeoffset ):
+        
+           #/* we don't want to plunge yet: select best node from the tree */
+           #SCIPdebugMsg(self._scip, "nnodes=%d \n", SCIPgetNNodes(self._scip))
+     
+           if( SCIPgetNNodes(self._scip) % bestnodefreq == 0 ):
+              selnode = SCIPgetBestboundNode(self._scip)
+           else:
+              selnode = SCIPgetBestNode(self._scip)
+         
+           return Node.create(selnode)
+        
+     
+        #/* calculate minimal and maximal plunging depth */
+        minplungedepth = -1
+        maxplungedepth = -1
+        maxplungequot = 0.25
+        if( minplungedepth == -1 ):
+        
+           minplungedepth = SCIPgetMaxDepth(self._scip)//10
+           if( SCIPgetNStrongbranchLPIterations(self._scip) > 2*SCIPgetNNodeLPIterations(self._scip) ):
+             minplungedepth += 10
+           if( maxplungedepth >= 0 ):
+              minplungedepth = min(minplungedepth, maxplungedepth)
+        
+        if( maxplungedepth == -1 ):
+           maxplungedepth = SCIPgetMaxDepth(self._scip)//2
+        maxplungedepth = max(maxplungedepth, minplungedepth)
+     
+        #/* check, if we exceeded the maximal plunging depth */
+        plungedepth = SCIPgetPlungeDepth(self._scip)
+        if( plungedepth > maxplungedepth ):
+        
+           #/* we don't want to plunge again: select best node from the tree */
+           #SCIPdebugMsg(self._scip, "plungedepth: [%d,%d], cur: %d -> abort plunging\n", minplungedepth, maxplungedepth, plungedepth);
+           if( SCIPgetNNodes(self._scip) % bestnodefreq == 0 ):
+              selnode = SCIPgetBestboundNode(self._scip)
+           else:
+              selnode = SCIPgetBestNode(self._scip)
+           # SCIPdebugMsg(scip, "  -> best node   : lower=%g\n",
+           #    *selnode != NULL ? SCIPnodeGetLowerbound(*selnode) : SCIPinfinity(scip))
+       
+        else:   
+        
+  
+     
+           #/* get global lower and cutoff bound */
+           lowerbound = SCIPgetLowerbound(self._scip)
+           cutoffbound = SCIPgetCutoffbound(self._scip)
+     
+           # /* if we didn't find a solution yet, the cutoff bound is usually very bad:
+           #  * use only 20% of the gap as cutoff bound
+           #  */
+           if( SCIPgetNSolsFound(self._scip) == 0 ):
+              cutoffbound = lowerbound + 0.2 * (cutoffbound - lowerbound)
+     
+           #/* check, if plunging is forced at the current depth */
+           if( plungedepth < minplungedepth ):
+              maxbound = SCIPinfinity(self._scip)
+           else:
+           
+              #/* calculate maximal plunging bound */
+              maxbound = lowerbound + maxplungequot * (cutoffbound - lowerbound)
+           
+     
+           #SCIPdebugMsg(scip, "plungedepth: [%d,%d], cur: %d, bounds: [%g,%g], maxbound: %g\n",
+              #minplungedepth, maxplungedepth, plungedepth, lowerbound, cutoffbound, maxbound);
+     
+           # /* we want to plunge again: prefer children over siblings, and siblings over leaves,
+           #  * but only select a child or sibling, if its estimate is small enough;
+           #  * prefer using nodes with higher node selection priority assigned by the branching rule
+           #  */
+           node = SCIPgetPrioChild(self._scip)
+           if( node != NULL and SCIPnodeGetEstimate(node) < maxbound ):
+               
+           
+              selnode = node
+              #SCIPdebugMsg(scip, "  -> selected prio child: estimate=%g\n", SCIPnodeGetEstimate(*selnode));
+           
+           else:
+           
+              node = SCIPgetBestChild(self._scip)
+              if( node != NULL and SCIPnodeGetEstimate(node) < maxbound ):
+                  
+              
+                 selnode = node
+                 #SCIPdebugMsg(scip, "  -> selected best child: estimate=%g\n", SCIPnodeGetEstimate(*selnode));
+              
+                
+              else:
+              
+                 node = SCIPgetPrioSibling(self._scip)
+                 if( node != NULL and SCIPnodeGetEstimate(node) < maxbound ):
+                 
+                    selnode = node
+                    #SCIPdebugMsg(scip, "  -> selected prio sibling: estimate=%g\n", SCIPnodeGetEstimate(*selnode));
+                 
+                 else:
+                     
+                 
+                    node = SCIPgetBestSibling(self._scip);
+                    if( node != NULL and SCIPnodeGetEstimate(node) < maxbound ):
+                    
+                       selnode = node;
+                       #SCIPdebugMsg(scip, "  -> selected best sibling: estimate=%g\n", SCIPnodeGetEstimate(*selnode));
+                    
+                    else:
+                    
+                       if( SCIPgetNNodes(self._scip) % bestnodefreq == 0 ):
+                          selnode = SCIPgetBestboundNode(self._scip)
+                       else:
+                          selnode = SCIPgetBestNode(self._scip)
+                       #SCIPdebugMsg(scip, "  -> selected best leaf: estimate=%g\n",
+                          #selnode != NULL ? SCIPnodeGetEstimate(*selnode) : SCIPinfinity(scip));
+
+     
+        return Node.create(selnode)
+     
+            
 
     def getOpenNodes(self):
         """access to all data of open nodes (leaves, children, and siblings)
