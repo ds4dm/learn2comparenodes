@@ -246,7 +246,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
 class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
-        super().__init__()
+        super().__init__(policy='estimate')
         policy = GNNPolicy()
         if use_trained_gnn: 
             print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main
@@ -280,7 +280,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def nodecomp(self, node1,node2):
         
-        n = 100000000
+        n = 4
 
         if self.primal_changes >= n: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
