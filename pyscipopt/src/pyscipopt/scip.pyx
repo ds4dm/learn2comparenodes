@@ -1909,8 +1909,6 @@ cdef class Model:
         nodesel = SCIPfindNodesel(self._scip,'estimate')
      
         assert(nodesel != NULL)
-        NODESEL_NAME = 'estimate'
-        assert(SCIPnodeselGetName(nodesel) == NODESEL_NAME)
             
             
 
