@@ -69,7 +69,7 @@ class CustomNodeSelector(Nodesel):
     
     #Estimate 
     def estimate_nodeselect(self):
-        return {"selnode": self.model.getBestNode()}
+        return {'selnode':self.model.getEstimateSelNode() }
     
     def estimate_nodecomp(self, node1,node2):
         
