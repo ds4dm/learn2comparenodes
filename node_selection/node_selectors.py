@@ -161,15 +161,13 @@ class CustomNodeSelector(Nodesel):
 
 class OracleNodeSelectorAbdel(CustomNodeSelector):
     
-    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0):
+    def __init__(self, oracle_type, optsol=0, sel_policy=None, prune_policy='estimate', inv_proba=0):
+        super().__init__(policy=sel_policy) 
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
         self.inv_proba = inv_proba
     
-    
-    def nodeselect(self):
-        return {"selnode": self.model.getBestNode()}
     
     
     def nodecomp(self, node1, node2, return_type=False):
