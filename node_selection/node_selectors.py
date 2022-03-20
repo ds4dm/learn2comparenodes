@@ -222,13 +222,29 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
 class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer):
-        super().__init__()
+        super().__init__(policy='estimate')
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
         self.comp_featurizer = comp_featurizer
-    
-    def nodecomp(self, node1, node2):
+        self.counter = 0
+        self.primal_changes = 0
         
+    def nodecomp(self, node1, node2):
+
+        n = 8 
+        
+        if self.primal_changes >= n: #infer until obtained nth best primal solution
+            return self.estimate_nodecomp(node1, node2)
+        
+        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
+        
+        if self.model.getObjectiveSense() == 'maximize':
+            curr_primal *= -1
+            
+        if curr_primal < self.best_primal:
+            self.best_primal = curr_primal
+            self.primal_changes += 1
+         
         f1, f2 = (self.comp_featurizer.get_features(node1),
                   self.comp_featurizer.get_features(node2))
         
@@ -236,7 +252,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         X = X[np.newaxis, :]
         
         decision = self.policy.predict(X)[0]
-        
+        self.counter += 1
         return -1 if decision < 0.5 else 1
 
     
@@ -280,7 +296,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def nodecomp(self, node1,node2):
         
-        n = 4
+        n = 8
 
         if self.primal_changes >= n: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
