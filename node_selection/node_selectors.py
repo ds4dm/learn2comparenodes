@@ -226,6 +226,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         self.comp_featurizer = comp_featurizer
         self.counter = 0
         self.primal_changes = 0
+        self.best_primal = np.inf
         
     def nodecomp(self, node1, node2):
 
