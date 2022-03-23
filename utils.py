@@ -205,7 +205,7 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     print(f'Statistics on {problem} over {len(instances)} instances for problem size in [{min_n}, {max_n}]') 
     print("======================================================")
     
-    for nodesel in (['default'] if default else []) + nodesels:
+    for nodesel in nodesels + (['default'] if default else []):
             
         nnode_mean, n = get_mean(problem, nodesel, instances, 'nnode')
         time_mean, n =  get_mean(problem, nodesel, instances, 'time')
