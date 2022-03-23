@@ -75,7 +75,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                 inv_proba = float(nodesel.split('_')[-1])
             except:
                 inv_proba = 0
-            comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
+            comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0, inv_proba=inv_proba)
             optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             comp.setOptsol(optsol)
             
