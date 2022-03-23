@@ -25,12 +25,13 @@ from joblib import dump, load
 
 
 class CustomNodeSelector(Nodesel):
-    def __init__(self, policy='estimate'):
-        self.default_policy = policy
+    def __init__(self, sel_policy='estimate', comp_policy=''):
+        self.sel_policy = sel_policy
+        self.comp_policy = comp_policy
         
     def nodeselect(self, policy=None):
         
-        policy = policy if policy is not None else self.default_policy
+        policy = policy if policy is not None else self.sel_policy
         
         if policy == 'estimate':
             res = self.estimate_nodeselect()
@@ -49,7 +50,7 @@ class CustomNodeSelector(Nodesel):
     
     def nodecomp(self, node1, node2, policy=None):
         
-        policy = policy if policy is not None else self.default_policy
+        policy = policy if policy is not None else self.comp_policy
         
         if policy == 'estimate':
             res = self.estimate_nodecomp(node1, node2)
@@ -309,26 +310,6 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             self.best_primal = curr_primal
             self.primal_changes += 1
             
-            
-        # g1 = self.comp_featurizer.get_graph_for_inf(self.model, node1) 
-        # g2 = self.comp_featurizer.get_graph_for_inf(self.model, node2)
-        
-        # g1 = self.feature_normalizor(*g1)[:-1]
-        # g2 = self.feature_normalizor(*g2)[:-1]
-        
-        # sc1 = self.policy.forward_graph(*g1)
-        # sc2 = self.policy.forward_graph(*g2)
-        
-        
-        # # decision = self.policy.final_mlp(-sc1 + sc2).item()
-        
-        
-
-        # g1, g2 = self.feature_normalizor(*g1), self.feature_normalizor(*g2)
-        # batch = BipartiteGraphPairData(*g1,*g2)
-        
-        # decision = self.policy(batch).item() 
-    
         comp_scores = [-1,-1]
         
         for comp_idx, node in enumerate([node1, node2]):
