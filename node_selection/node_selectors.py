@@ -25,7 +25,7 @@ from joblib import dump, load
 
 
 class CustomNodeSelector(Nodesel):
-    def __init__(self, policy=None):
+    def __init__(self, policy='estimate'):
         self.default_policy = policy
         
     def nodeselect(self, policy=None):
@@ -161,8 +161,8 @@ class CustomNodeSelector(Nodesel):
 
 class OracleNodeSelectorAbdel(CustomNodeSelector):
     
-    def __init__(self, oracle_type, optsol=0, sel_policy=None, prune_policy='estimate', inv_proba=0):
-        super().__init__(policy=sel_policy) 
+    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0):
+        super().__init__() 
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
@@ -220,7 +220,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
 class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer):
-        super().__init__(policy='estimate')
+        super().__init__()
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
         self.comp_featurizer = comp_featurizer
@@ -232,7 +232,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
 
         n = 8 
         
-        if self.primal_changes >= n: #infer until obtained nth best primal solution
+        if self.primal_changes >= n or self.counter > 1500: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
@@ -261,7 +261,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
 class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
-        super().__init__(policy='estimate')
+        super().__init__()
         policy = GNNPolicy()
         if use_trained_gnn: 
             print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main
@@ -297,7 +297,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         
         n = 8
 
-        if self.primal_changes >= n: #infer until obtained nth best primal solution
+        if self.primal_changes >= n or self.counter > 1500: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
