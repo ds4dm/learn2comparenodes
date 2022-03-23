@@ -55,23 +55,18 @@ if __name__ == "__main__":
             default = bool(int(sys.argv[i + 1]))  
         if sys.argv[i] == '-delete':
             delete = bool(int(sys.argv[i + 1]))  
-    if delete:
-        try:
-            import shutil
-            shutil.rmtree(os.path.join(os.path.dirname(__file__), 
-                                           'stats'))
-        except:
-            ''
-            
 
-    
-    
-    if on_log:
-        sys.stdout = open(os.path.join(os.path.dirname(__file__), 
-                                       'evaluation.log'), 'w')
         
 
     for problem in problems:
+        
+        if delete:
+            try:
+                import shutil
+                shutil.rmtree(os.path.join(os.path.dirname(__file__), 
+                                               f'stats/{problem}'))
+            except:
+                ''
         
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
                                            f"./problem_generation/data/{problem}/test")).glob("*.lp"))
