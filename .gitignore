@@ -41,21 +41,5 @@ Thumbs.db
 *.war
 
 # Large media files
-*.mp4
-*.tiff
-*.avi
-*.flv
-*.mov
-*.wmv
-*.pickle
-*.DS_*
-*.lp
-*.sol
-*.pt
-*.pkl
-
 # Data
-*.csv
 *.pt
-*.pkl
-
