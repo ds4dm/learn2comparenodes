@@ -25,7 +25,7 @@ from joblib import dump, load
 
 
 class CustomNodeSelector(Nodesel):
-    def __init__(self, sel_policy='estimate', comp_policy=''):
+    def __init__(self, sel_policy='', comp_policy=''):
         self.sel_policy = sel_policy
         self.comp_policy = comp_policy
         
