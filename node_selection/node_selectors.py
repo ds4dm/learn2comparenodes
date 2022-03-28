@@ -25,14 +25,11 @@ from joblib import dump, load
 
 
 class CustomNodeSelector(Nodesel):
-<<<<<<< HEAD
-    def __init__(self, policy=None):
-        self.default_policy = 'estimate'
-=======
-    def __init__(self, sel_policy='', comp_policy=''):
+
+    def __init__(self, sel_policy='estimate', comp_policy=''):
         self.sel_policy = sel_policy
         self.comp_policy = comp_policy
->>>>>>> 290e6c58163b06543efbcfc75904cd59f9432a1d
+
         
     def nodeselect(self, policy=None):
         
@@ -166,12 +163,9 @@ class CustomNodeSelector(Nodesel):
 
 
 class OracleNodeSelectorAbdel(CustomNodeSelector):
-    
-<<<<<<< HEAD
-    def __init__(self, oracle_type, optsol=0, sel_policy=None, prune_policy='estimate', inv_proba=0):
-=======
+
     def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0):
->>>>>>> 290e6c58163b06543efbcfc75904cd59f9432a1d
+
         super().__init__() 
         self.oracle_type = oracle_type
         self.optsol = optsol
@@ -272,6 +266,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
         super().__init__()
+        
         policy = GNNPolicy()
         if use_trained_gnn: 
             print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main

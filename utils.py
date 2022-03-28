@@ -53,7 +53,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         
         if re.match('custom_*', nodesel):
             name = nodesel.split("_")[-1]
-            comp = CustomNodeSelector(name)
+            comp = CustomNodeSelector(sel_policy=name,comp_policy=name)
         
         elif nodesel in ['svm']:
             comp_featurizer = CompFeaturizerSVM(model)
