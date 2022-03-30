@@ -26,11 +26,11 @@ def write_lp(clauses, filename):
     counter = 0
     with open(filename, 'w') as file:
         file.write("maximize\nOBJ:")
-        file.write("".join([f" + {clause[1]}c_{idx}" for idx,clause in enumerate(clauses) ]))
+        file.write("".join([f" +{clause[1]}c_{idx}" for idx,clause in enumerate(clauses) ]))
 
         
         
-        file.write("\nSubject to\n")
+        file.write("\n\nSubject to\n")
 
         
 
@@ -57,7 +57,7 @@ def write_lp(clauses, filename):
                     
                     
             
-            file.write(f"clause_{idx}:" + ''.join([ f" + {yi}" for yi in pos_varrs]) + ''.join([ f" + 1 - {yi}" for yi in neg_varrs]) + f' >= c_{idx}\n')
+            file.write(f"clause_{idx}:" + ''.join([ f" -{yi}" for yi in pos_varrs]) + ''.join([ f" +{yi}" for yi in neg_varrs]) + f' +c_{idx} <= +{len(neg_varrs)} \n')
             
             
 
