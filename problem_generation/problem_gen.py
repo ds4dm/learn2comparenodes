@@ -170,7 +170,7 @@ if __name__ == "__main__":
     b = list(map(lambda p: p.join(), processes)) #join processes
     
     seed = n_instance
-    while (len(list(Path(lp_dir).glob("*.lp")))) != n_instance):
+    while len(list(Path(lp_dir).glob("*.lp"))) != n_instance :
         fcmcnf.generate_instances(seed, seed+1, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
         seed += 1
 
