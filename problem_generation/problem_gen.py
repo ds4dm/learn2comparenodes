@@ -53,11 +53,11 @@ if __name__ == "__main__":
     min_n_nodes = 20
     max_n_nodes = 20
     
-    min_n_arcs = 120
-    max_n_arcs = 140
+    min_n_arcs = 80
+    max_n_arcs = 100
     
-    min_n_commodities = 30
-    max_n_commodities = 40
+    min_n_commodities = 20
+    max_n_commodities = 30
 
     
     
