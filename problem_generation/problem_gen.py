@@ -7,6 +7,7 @@ import numpy as np
 import multiprocessing as md
 from functools import partial
 import imp
+from pathlib import Path 
 
 import gisp
 import fcmcnf
