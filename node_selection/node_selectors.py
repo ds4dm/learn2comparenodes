@@ -26,7 +26,7 @@ from joblib import dump, load
 
 class CustomNodeSelector(Nodesel):
 
-    def __init__(self, sel_policy='estimate', comp_policy=''):
+    def __init__(self, sel_policy='', comp_policy=''):
         self.sel_policy = sel_policy
         self.comp_policy = comp_policy
 
@@ -234,7 +234,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
     def nodecomp(self, node1, node2):
 
-        n = 8 
+        n = 4
         
         if self.primal_changes >= n: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
@@ -300,7 +300,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     
     def nodecomp(self, node1,node2):
         
-        n = 8
+        n = 4
 
         if self.primal_changes >= n: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
