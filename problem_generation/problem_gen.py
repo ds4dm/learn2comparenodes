@@ -38,8 +38,8 @@ if __name__ == "__main__":
     
     problem = 'FCMCNF'
     data_partition = 'test'
-    min_n = 15
-    max_n = 20
+    min_n = 60
+    max_n = 70
     n_nodes = 50
     er_prob = 0.6
     whichSet = 'SET2'
