@@ -147,8 +147,8 @@ if __name__ == "__main__":
     oracle = 'optimal_plunger'
     problem = 'GISP'
     data_partitions = ['train', 'valid'] #dont change
-    n_cpu = 4
-    n_instance = 4
+    n_cpu = 10
+    n_instance = -1
     device = 'cpu'
     svm = True
     
@@ -188,13 +188,12 @@ if __name__ == "__main__":
         except FileExistsError:
             ""
         
-        n_keep  = n_instance if data_partition == 'train' else int(0.2*n_instance)
+        n_keep  = n_instance if data_partition == 'train' or n_instance == -1 else int(0.2*n_instance)
         instances = list(Path(os.path.join(os.path.dirname(__file__), 
                                            f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))[:n_keep]
         
         print(f"Generating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
-        chunck_size = int(np.floor(len(instances)/n_cpu))
       
         processes = [  Process(name=f"worker {p}", 
                                         target=partial(run_episodes,
@@ -203,7 +202,7 @@ if __name__ == "__main__":
                                                         save_dir=save_dir,
                                                         svm=svm,
                                                         device=device))
-                        for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu))]
+                        for p,(p1,p2) in enumerate(distribute(len(instances), n_cpu))]
         
         
         try:
