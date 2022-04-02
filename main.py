@@ -23,15 +23,15 @@ if __name__ == "__main__":
     
     n_cpu = 4
     n_instance = 4
-    nodesels = [ 'gnn_trained','custom_estimate']
+    nodesels = ['estimate_estimate', 'estimate_dummy', 'expert_dummy','gnn_dummy', 'svm_dummy']
     
-    problems = ["GISP"]
+    problems = ["GISP", 'FCMCNF']
     normalize = True
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = False
     on_log = False
-    default = False
+    default = True
     delete = True
     
     for i in range(1, len(sys.argv), 2):

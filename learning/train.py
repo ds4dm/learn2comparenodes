@@ -135,31 +135,6 @@ if __name__ == "__main__":
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
-    decisions = [ policy(dvalid.to(device)).item() for dvalid in valid_data ]
-    
-    import matplotlib.pyplot as plt
-    plt.figure(0)
-    plt.hist(decisions)
-    plt.title('decisions histogramme for valid set')
-    plt.savefig("./hist.png")
-    
-    plt.figure(1)
-    plt.plot(train_losses, label='train')
-    plt.plot(valid_losses, label='valid')
-    plt.title('losses')
-    plt.xlabel('epoch')
-    plt.legend()
-    plt.savefig("./losses.png")
-    
-    
-    plt.figure(2)
-    plt.plot(train_accs, label='train')
-    plt.plot(valid_accs, label='valid')
-    plt.title('accuracies')
-    plt.xlabel('epoch')
-    plt.legend()
-    plt.savefig("./accuracies.png")
-    
 
 
 
