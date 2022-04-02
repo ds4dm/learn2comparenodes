@@ -164,9 +164,9 @@ class CustomNodeSelector(Nodesel):
 
 class OracleNodeSelectorAbdel(CustomNodeSelector):
 
-    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0):
+    def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0, sel_policy=''):
 
-        super().__init__() 
+        super().__init__(sel_policy=sel_policy) 
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
@@ -223,8 +223,8 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
 
 class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer):
-        super().__init__()
+    def __init__(self, problem, comp_featurizer, sel_policy=''):
+        super().__init__(sel_policy=sel_policy)
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
         self.comp_featurizer = comp_featurizer
@@ -264,8 +264,8 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
 class OracleNodeSelectorEstimator(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True):
-        super().__init__()
+    def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True, sel_policy=''):
+        super().__init__(sel_policy=sel_policy)
         
         policy = GNNPolicy()
         if use_trained_gnn: 

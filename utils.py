@@ -51,40 +51,40 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         
         comp = None
         
-        if re.match('custom_*', nodesel):
-            name = nodesel.split("_")[-1]
-            comp = CustomNodeSelector(sel_policy=name,comp_policy=name)
         
-        elif nodesel in ['svm']:
-            comp_featurizer = CompFeaturizerSVM(model)
-            comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer)
-            
-        elif nodesel in ['gnn_trained', 'gnn_untrained']:
-            trained = nodesel.split('_')[-1] == "trained"  
+        comp_policy, sel_policy = nodesel.split("_")
+        
+        
+        if comp_policy == 'gnn':
             comp_featurizer = CompFeaturizer()
             feature_normalizor = normalize_graph if normalize else lambda x: x
             comp = OracleNodeSelectorEstimator(problem,
                                                comp_featurizer,
                                                device,
                                                feature_normalizor,
-                                               use_trained_gnn=trained)
+                                               use_trained_gnn=True,
+                                               sel_policy=sel_policy)
+            
             comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
         
-        elif re.match('oracle*', nodesel) :
-            try:
-                inv_proba = float(nodesel.split('_')[-1])
-            except:
-                inv_proba = 0
-            comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=inv_proba)
+        elif comp_policy == 'svm':
+            comp_featurizer = CompFeaturizerSVM(model)
+            comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy)
+            
+        elif comp_policy == 'expert':
+            comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=0)
             optsol = model.readSolFile(instance.replace(".lp", ".sol"))
             comp.setOptsol(optsol)
             
+        else:
+            comp = CustomNodeSelector(comp_policy=comp_policy, sel_policy=sel_policy)
+        
+ 
             
         res[nodesel] = model
-        if comp != None: #dont include something already included
-            model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
-        else:
-            model.setNodeselPriority(nodesel,536870911)
+
+        model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
+
             
         
         res[nodesel] = model
