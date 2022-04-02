@@ -42,7 +42,7 @@ def get_data(files):
 if __name__ == '__main__':
     
     problem = 'FCMCNF'
-    n_sample = 10000
+    n_sample = -1
     n_epoch = 10
     
     for i in range(1, len(sys.argv), 2):
@@ -60,8 +60,8 @@ if __name__ == '__main__':
                                                             f"../node_selection/data_svm/{problem}/train")).glob("*.csv") ][:n_sample]
     
     valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                            f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ][:int(0.2*n_sample)]
-
+                                                            f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ][:int(0.2*n_sample if n_sample != -1 else -1)]
+    print(train_files)
     X,y,depths = get_data(train_files)
     X_valid, y_valid, depths_valid = get_data(valid_files)
     

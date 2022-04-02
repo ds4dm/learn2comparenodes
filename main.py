@@ -23,15 +23,15 @@ if __name__ == "__main__":
     
     n_cpu = 4
     n_instance = 4
-    nodesels = [ 'gnn_trained','custom_estimate']
+    nodesels = ['estimate_estimate', 'estimate_dummy', 'expert_dummy','gnn_dummy', 'svm_dummy']
     
-    problems = ["GISP"]
+    problems = ["GISP", 'FCMCNF']
     normalize = True
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = False
     on_log = False
-    default = False
+    default = True
     delete = True
     
     for i in range(1, len(sys.argv), 2):
@@ -83,7 +83,7 @@ if __name__ == "__main__":
         print("Evaluation")
         print(f"  Problem:                    {problem}")
         print(f"  n_instance/problem:         {len(instances)}")
-        print(f"  Nodeselectors evaluated:    {','.join(nodesels + ['default' if default else '' ])}")
+        print(f"  Nodeselectors evaluated:    {','.join(['default' if default else '' ] + nodesels)}")
         print(f"  Device for GNN inference:   {device}")
         print(f"  Normalize features:         {normalize}")
         print("----------------")

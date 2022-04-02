@@ -20,8 +20,8 @@ if __name__ == "__main__":
     
     problem = "GISP"
     lr = 0.005
-    n_epoch = 10
-    n_sample = 10000
+    n_epoch = 2
+    n_sample = -1
     patience = 10
     early_stopping = 20
     normalize = True
@@ -66,12 +66,11 @@ if __name__ == "__main__":
                                                             f"../node_selection/data/{problem}/train")).glob("*.pt") ][:n_sample]
     
     valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
-                                                            f"../node_selection/data/{problem}/valid")).glob("*.pt") ][:int(0.2*n_sample)]
+                                                            f"../node_selection/data/{problem}/valid")).glob("*.pt") ][:int(0.2*n_sample if n_sample != -1 else -1)]
     
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
     
-    #inspect(train_data[:100])
     
 # TO DO : learn something from the data
     train_loader = torch_geometric.loader.DataLoader(train_data, 
@@ -136,31 +135,6 @@ if __name__ == "__main__":
     torch.save(policy.state_dict(),f'policy_{problem}.pkl')
 
 
-    decisions = [ policy(dvalid.to(device)).item() for dvalid in valid_data ]
-    
-    import matplotlib.pyplot as plt
-    plt.figure(0)
-    plt.hist(decisions)
-    plt.title('decisions histogramme for valid set')
-    plt.savefig("./hist.png")
-    
-    plt.figure(1)
-    plt.plot(train_losses, label='train')
-    plt.plot(valid_losses, label='valid')
-    plt.title('losses')
-    plt.xlabel('epoch')
-    plt.legend()
-    plt.savefig("./losses.png")
-    
-    
-    plt.figure(2)
-    plt.plot(train_accs, label='train')
-    plt.plot(valid_accs, label='valid')
-    plt.title('accuracies')
-    plt.xlabel('epoch')
-    plt.legend()
-    plt.savefig("./accuracies.png")
-    
 
 
 
