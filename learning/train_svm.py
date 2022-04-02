@@ -61,7 +61,7 @@ if __name__ == '__main__':
     
     valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
                                                             f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ][:int(0.2*n_sample if n_sample != -1 else -1)]
-
+    print(train_files)
     X,y,depths = get_data(train_files)
     X_valid, y_valid, depths_valid = get_data(valid_files)
     
