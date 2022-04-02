@@ -83,7 +83,7 @@ if __name__ == "__main__":
         print("Evaluation")
         print(f"  Problem:                    {problem}")
         print(f"  n_instance/problem:         {len(instances)}")
-        print(f"  Nodeselectors evaluated:    {','.join(nodesels + ['default' if default else '' ])}")
+        print(f"  Nodeselectors evaluated:    {','.join(['default' if default else '' ] + nodesels)}")
         print(f"  Device for GNN inference:   {device}")
         print(f"  Normalize features:         {normalize}")
         print("----------------")
