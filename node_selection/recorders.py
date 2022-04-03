@@ -425,13 +425,7 @@ class LPFeatureRecorder():
         
         
         return torch.tensor([ rhs, leq, eq, geq ], device=self.device).float()
-            
 
-
-
-return torch.tensor([ rhs, leq, eq, geq ], device=self.device).float()
-
-    
     def _get_feature_var(self, model, var):
         
         lb, ub = var.getLbOriginal(), var.getUbOriginal()
