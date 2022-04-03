@@ -150,7 +150,7 @@ if __name__ == "__main__":
     n_cpu = 10
     n_instance = -1
     device = 'cpu'
-    svm = True
+    svm = False
     
     with open("nnodes.csv", "w") as f:
         f.write("")
