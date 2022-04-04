@@ -17,6 +17,7 @@ Created on Tue Oct 12 12:54:57 2021
 
 import os
 import sys
+import random
 import numpy as np
 import pyscipopt.scip as sp
 from pathlib import Path 
@@ -189,8 +190,8 @@ if __name__ == "__main__":
             ""
         
         n_keep  = n_instance if data_partition == 'train' or n_instance == -1 else int(0.2*n_instance)
-        instances = list(Path(os.path.join(os.path.dirname(__file__), 
-                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))[:n_keep]
+        instances = random.shuffle(list(Path(os.path.join(os.path.dirname(__file__), 
+                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp")))[:n_keep]
         
         print(f"Generating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
