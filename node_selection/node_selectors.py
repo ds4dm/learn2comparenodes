@@ -228,15 +228,19 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
         self.comp_featurizer = comp_featurizer
+        
         self.counter = 0
+        self.inf_counter = 0
+        
+        self.n_primal = 4
         self.primal_changes = 0
         self.best_primal = np.inf
         
     def nodecomp(self, node1, node2):
-
-        n = 4
         
-        if self.primal_changes >= n: #infer until obtained nth best primal solution
+        self.counter += 1
+        
+        if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
@@ -255,7 +259,8 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         X = X[np.newaxis, :]
         
         decision = self.policy.predict(X)[0]
-        self.counter += 1
+        self.inf_counter += 1
+        
         return -1 if decision < 0.5 else 1
 
     
@@ -279,6 +284,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.device = device
         self.feature_normalizor = feature_normalizor
         
+        self.n_primal = 4
         self.best_primal = np.inf #minimization
         self.primal_changes = 0
         
@@ -286,6 +292,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fn_time = 0
         self.inference_time = 0
         self.counter = 0
+        self.inf_counter = 0
         
         self.scores = dict()
         
@@ -297,12 +304,13 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fn_time = 0
         self.inference_time = 0
         self.counter = 0
+        self.inf_counter = 0
     
     def nodecomp(self, node1,node2):
         
-        n = 4
-
-        if self.primal_changes >= n: #infer until obtained nth best primal solution
+        self.counter += 1        
+        
+        if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
@@ -336,6 +344,6 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
                 comp_scores[comp_idx] = score
                 self.inference_time += (time.time() - start)
                 
-        self.counter += 1
+        self.inf_counter += 1
         
         return -1 if comp_scores[0] > comp_scores[1] else 1
