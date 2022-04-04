@@ -277,6 +277,8 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True, sel_policy=''):
         super().__init__(sel_policy=sel_policy)
         
+        
+        
         policy = GNNPolicy()
         if use_trained_gnn: 
             print(policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device))) #run from main

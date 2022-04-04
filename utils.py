@@ -36,6 +36,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
     nodesels2nodeselectors = dict()
     
     for nodesel in nodesels:
+        
         model = sp.Model()
         model.hideOutput()
         model.readProblem(instance)
@@ -109,20 +110,27 @@ def get_record_file(problem, nodesel, instance):
     file = os.path.join(save_dir, instance.replace('.lp', '.csv'))
     return file
 
-def record_stats_instance(problem, nodesel, model, instance, nodesel_obj=None):
+def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
     nnode = model.getNNodes()
     time = model.getSolvingTime()
+    
+    if nodesel_obj != None:    
+        comp_counter = nodesel_obj.comp_counter
+        sel_counter = nodesel_obj.sel_counter
+    else:
+        comp_counter = sel_counter = -1
+    
     
     if re.match('gnn*', nodesel):
         fe_time = nodesel_obj.fe_time
         fn_time = nodesel_obj.fn_time
         inference_time = nodesel_obj.inference_time
-        counter = nodesel_obj.counter
+        inf_counter = nodesel_obj.inf_counter
     else:
-        fe_time, fn_time, inference_time, counter = -1, -1, -1, -1
+        fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1
     
     file = get_record_file(problem, nodesel, instance)
-    np.savetxt(file, np.array([nnode, time, fe_time, fn_time, inference_time, counter]), delimiter=',')
+    np.savetxt(file, np.array([nnode, time, comp_counter, sel_counter, fe_time, fn_time, inference_time, inf_counter]), delimiter=',')
     
  
 
@@ -145,7 +153,7 @@ def solve_and_record_default(problem, instance, verbose):
         print_infos(problem, 'default', instance)
     
     default_model.optimize()        
-    record_stats_instance(problem, 'default', default_model, instance, nodesel_obj=None)
+    record_stats_instance(problem, 'default', default_model, instance, None)
 
     
 
@@ -161,8 +169,8 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
         if default and not os.path.isfile(get_record_file(problem,'default', instance)):
             solve_and_record_default(problem, instance, verbose)
         
-        nodesels2models, nodesels2nodeselectors = get_nodesels2models(nodesels, instance, problem, normalize, device)
         
+        nodesels2models, nodesels2nodeselectors = get_nodesels2models(nodesels, instance, problem, normalize, device)
         
         for nodesel in nodesels:  
             
@@ -178,7 +186,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
                 print_infos(problem, nodesel, instance)
                 
             model.optimize()
-            record_stats_instance(problem, nodesel, model, instance, nodesel_obj=nodeselector)
+            record_stats_instance(problem, nodesel, model, instance, nodeselector)
     
  
                
@@ -188,7 +196,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 def get_mean(problem, nodesel, instances, stat_type):
     res = 0
     n = 0
-    stat_idx = ['nnode', 'time', 'fe', 'fn', 'inf', 'ncomp'].index(stat_type)
+    stat_idx = ['nnode', 'time', 'ncomp','nsel','fe', 'fn', 'inf','ninf'].index(stat_type)
     for instance in instances:
         try:
             file = get_record_file(problem, nodesel, instance)
