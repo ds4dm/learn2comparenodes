@@ -126,8 +126,16 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         fn_time = nodesel_obj.fn_time
         inference_time = nodesel_obj.inference_time
         inf_counter = nodesel_obj.inf_counter
+        
     else:
         fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1
+    
+    
+    if re.match('svm*', nodesel):
+        inf_counter = nodesel_obj.inf_counter
+    
+    
+        
     
     file = get_record_file(problem, nodesel, instance)
     np.savetxt(file, np.array([nnode, time, comp_counter, sel_counter, fe_time, fn_time, inference_time, inf_counter]), delimiter=',')
