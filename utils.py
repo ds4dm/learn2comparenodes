@@ -202,7 +202,7 @@ def get_mean(problem, nodesel, instances, stat_type):
 def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
     print("======================================================")
-    print(f'Statistics on {problem} over {len(instances)} instances for problem size in [{min_n}, {max_n}]') 
+    print(f'Statistics on {problem} for problem size in [{min_n}, {max_n}]') 
     print("======================================================")
     
     for nodesel in (['default'] if default else []) + nodesels:
@@ -211,9 +211,10 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
         time_mean, n =  get_mean(problem, nodesel, instances, 'time')
         
     
-        print(f"  {nodesel}, n={n} ")
-        print(f"    Mean NNode Created   : {nnode_mean:.2f}")
-        print(f"    Mean Solving Time    : {time_mean:.2f}")
+        print(f"  {nodesel} ")
+        print(f"      Mean over n={n} instances : ")
+        print(f"        |- B&B Tree Size   : {nnode_mean:.2f}")
+        print(f"        |- Solving Time    : {time_mean:.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
     
@@ -224,10 +225,10 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             fn_mean = get_mean(problem, nodesel, instances, 'fn')[0]
             inf_mean = get_mean(problem, nodesel, instances, 'inf')[0]
             ncomp = get_mean(problem, nodesel, instances, 'ncomp')[0]
-            print(f"     |---   Feature Extraction  Mean Time:      {fe_mean:.2f}")
-            print(f"     |---   Feature Normalization Mean Time:    {fn_mean:.2f}")
-            print(f"     |---   Inference Mean Time:                {inf_mean:.2f}")
-            print(f"     |---   Ncomp Mean:                         {ncomp:.2f}")
+            print(f"           |---   Feature Extraction Time:       {fe_mean:.2f}")
+            print(f"           |---   Feature Normalization Time:    {fn_mean:.2f}")
+            print(f"           |---   Inference Time:                {inf_mean:.2f}")
+            print(f"           |---   nodecomp Calls:                {ncomp:.2f}")
             
         print("-------------------------------------------------")
             
