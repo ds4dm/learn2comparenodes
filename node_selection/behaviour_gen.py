@@ -190,8 +190,11 @@ if __name__ == "__main__":
             ""
         
         n_keep  = n_instance if data_partition == 'train' or n_instance == -1 else int(0.2*n_instance)
-        instances = random.shuffle(list(Path(os.path.join(os.path.dirname(__file__), 
-                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp")))[:n_keep]
+        
+        instances = list(Path(os.path.join(os.path.dirname(__file__), 
+                                           f"../problem_generation/data/{problem}/{data_partition}")).glob("*.lp"))
+        random.shuffle(instances)
+        instances = instances[:n_keep]
         
         print(f"Generating {data_partition} samples from {len(instances)} instances using oracle {oracle}")
         
