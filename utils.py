@@ -216,13 +216,16 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     for nodesel in (['default'] if default else []) + nodesels:
             
         nnode_mean, n = get_mean(problem, nodesel, instances, 'nnode')
-        time_mean, n =  get_mean(problem, nodesel, instances, 'time')
+        time_mean  =  get_mean(problem, nodesel, instances, 'time')[0]
+        ncomp_mean = get_mean(problem, nodesel, instances, 'ncomp')[0]
+        nsel_mean = get_mean(problem, nodesel, instances, 'nsel')[0]
+        
         
     
         print(f"  {nodesel} ")
         print(f"      Mean over n={n} instances : ")
-        print(f"        |- B&B Tree Size   : {nnode_mean:.2f}")
-        print(f"        |- Solving Time    : {time_mean:.2f}")
+        print(f"        |- B&B Tree Size   :  {nnode_mean:.2f}")
+        print(f"        |- Solving Time    :  {time_mean:.2f}")
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
     
@@ -232,11 +235,18 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             fe_mean = get_mean(problem, nodesel, instances, 'fe')[0]
             fn_mean = get_mean(problem, nodesel, instances, 'fn')[0]
             inf_mean = get_mean(problem, nodesel, instances, 'inf')[0]
-            ncomp = get_mean(problem, nodesel, instances, 'ncomp')[0]
+            
+            
             print(f"           |---   Feature Extraction Time:       {fe_mean:.2f}")
             print(f"           |---   Feature Normalization Time:    {fn_mean:.2f}")
             print(f"           |---   Inference Time:                {inf_mean:.2f}")
-            print(f"           |---   nodecomp Calls:                {ncomp:.2f}")
+            
+            
+        print(f"        |- nodecomp calls   : {ncomp_mean:.2f}")
+        if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
+            inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
+            print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.2f}")
+        print(f"        |- nodesel calls   : {nsel_mean:.2f}")
             
         print("-------------------------------------------------")
             
