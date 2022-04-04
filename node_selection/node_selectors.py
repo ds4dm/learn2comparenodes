@@ -29,9 +29,13 @@ class CustomNodeSelector(Nodesel):
     def __init__(self, sel_policy='', comp_policy=''):
         self.sel_policy = sel_policy
         self.comp_policy = comp_policy
+        self.sel_counter = 0
+        self.comp_counter = 0
 
         
     def nodeselect(self, policy=None):
+        
+        self.sel_counter += 1
         
         policy = policy if policy is not None else self.sel_policy
         
@@ -51,6 +55,8 @@ class CustomNodeSelector(Nodesel):
         return res
     
     def nodecomp(self, node1, node2, policy=None):
+        
+        self.comp_counter += 1
         
         policy = policy if policy is not None else self.comp_policy
         
@@ -229,7 +235,6 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
         self.comp_featurizer = comp_featurizer
         
-        self.counter = 0
         self.inf_counter = 0
         
         self.n_primal = 4
@@ -238,7 +243,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
     def nodecomp(self, node1, node2):
         
-        self.counter += 1
+        self.comp_counter += 1
         
         if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
@@ -291,7 +296,6 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fe_time = 0
         self.fn_time = 0
         self.inference_time = 0
-        self.counter = 0
         self.inf_counter = 0
         
         self.scores = dict()
@@ -303,12 +307,11 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fe_time = 0
         self.fn_time = 0
         self.inference_time = 0
-        self.counter = 0
         self.inf_counter = 0
     
     def nodecomp(self, node1,node2):
         
-        self.counter += 1        
+        self.comp_counter += 1        
         
         if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
             return self.estimate_nodecomp(node1, node2)
