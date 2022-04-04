@@ -126,8 +126,16 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         fn_time = nodesel_obj.fn_time
         inference_time = nodesel_obj.inference_time
         inf_counter = nodesel_obj.inf_counter
+        
     else:
         fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1
+    
+    
+    if re.match('svm*', nodesel):
+        inf_counter = nodesel_obj.inf_counter
+    
+    
+        
     
     file = get_record_file(problem, nodesel, instance)
     np.savetxt(file, np.array([nnode, time, comp_counter, sel_counter, fe_time, fn_time, inference_time, inf_counter]), delimiter=',')
@@ -224,8 +232,9 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
         print(f"  {nodesel} ")
         print(f"      Mean over n={n} instances : ")
-        print(f"        |- B&B Tree Size   :  {nnode_mean:.2f}")
+        print(f"        |- B&B Tree Size   :  {nnode_mean:.0f}")
         print(f"        |- Solving Time    :  {time_mean:.2f}")
+        
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
     
@@ -241,13 +250,12 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             print(f"           |---   Feature Normalization Time:    {fn_mean:.2f}")
             print(f"           |---   Inference Time:                {inf_mean:.2f}")
             
-            
-        print(f"        |- nodecomp calls   : {ncomp_mean:.2f}")
-        if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
-            inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
-            print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.2f}")
-        print(f"        |- nodesel calls   : {nsel_mean:.2f}")
-            
+        if nodesel != 'default':
+            print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")
+            if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
+                inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
+                print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.0f}")
+            print(f"        |- nodesel calls   :  {nsel_mean:.0f}")
         print("-------------------------------------------------")
             
         
