@@ -80,10 +80,6 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
             else:
                 comp = CustomNodeSelector(comp_policy=comp_policy, sel_policy=sel_policy)
 
-
-
-            res[nodesel] = model
-
             model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
         
         else:
