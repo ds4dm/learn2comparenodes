@@ -168,7 +168,7 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         print(instance_name)
         
         model = sp.Model()
-        #model.hideOutput()
+        model.hideOutput()
         model.readProblem(instance_path + ".lp")
         
         if solveInstance:
