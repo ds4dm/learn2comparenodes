@@ -11,6 +11,7 @@ from pathlib import Path
 
 import gisp
 import fcmcnf
+import wpms
 
 
 
@@ -34,12 +35,10 @@ def distribute(n_instance, n_cpu):
 if __name__ == "__main__":
     instance = None
     n_cpu = 4
-    n_instance = 16
+    n_instance = 4
     
-    problem = 'FCMCNF'
+    problem = 'WPMS'
     data_partition = 'test'
-    min_n = 60
-    max_n = 70
     n_nodes = 50
     er_prob = 0.6
     whichSet = 'SET2'
@@ -50,7 +49,12 @@ if __name__ == "__main__":
     
     seed = 0
     
+    #GISP nodes
     
+    min_n = 60
+    max_n = 70
+    
+    #FCMCNF
     min_n_nodes = 20
     max_n_nodes = 20
     
@@ -60,6 +64,10 @@ if __name__ == "__main__":
     min_n_commodities = 20
     max_n_commodities = 30
 
+
+    #WPMS n 
+    min_n = 10
+    max_n = 15
     
     
 
@@ -75,20 +83,8 @@ if __name__ == "__main__":
             min_n = int(sys.argv[i + 1])
         if sys.argv[i] == '-max_n':
             max_n = int(sys.argv[i + 1])
-        if sys.argv[i] == '-er_prob':
-            er_prob = float(sys.argv[i + 1])
-        if sys.argv[i] == '-whichSet':
-            whichSet = sys.argv[i + 1]
-        if sys.argv[i] == '-setParam':
-            setParam = float(sys.argv[i + 1])
-        if sys.argv[i] == '-alphaE2':
-            alphaE2 = float(sys.argv[i + 1])
-        if sys.argv[i] == '-timelimit':
-            timelimit = float(sys.argv[i + 1])
         if sys.argv[i] == '-solve':
             solveInstance = bool(int(sys.argv[i + 1]))
-        if sys.argv[i] == '-seed_start':
-            seed = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_cpu':
@@ -164,16 +160,33 @@ if __name__ == "__main__":
         
 #=============================================================================
         #generate_fcmcnf.generate_instances(0, n_instance, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
+    elif problem == 'WPMS':
         
+#=============================================================================
+        processes = [  md.Process(name=f"worker {p}", target=partial(wpms.generate_instances,
+                                                                      seed + p1, 
+                                                                      seed + p2, 
+                                                                      min_n,
+                                                                      max_n,
+                                                                      lp_dir, 
+                                                                      solveInstance))
+                      
+                      
+                      for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
+        
+#=============================================================================
+        #generate_fcmcnf.generate_instances(0, n_instance, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
+        
+    
     
  
     a = list(map(lambda p: p.start(), processes)) #run processes
     b = list(map(lambda p: p.join(), processes)) #join processes
     
-    seed = n_instance
-    while len(list(Path(lp_dir).glob("*.lp"))) <= n_instance :
-        fcmcnf.generate_instances(seed, seed+1, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
-        seed += 1
+    # seed = n_instance
+    # while len(list(Path(lp_dir).glob("*.lp"))) <= n_instance :
+    #     fcmcnf.generate_instances(seed, seed+1, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance)
+    #     seed += 1
 
     
     print('Generated')
