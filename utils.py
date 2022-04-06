@@ -52,39 +52,46 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         
         comp = None
         
-        
-        comp_policy, sel_policy = nodesel.split("_")
-        
-        
-        if comp_policy == 'gnn':
-            comp_featurizer = CompFeaturizer()
-            feature_normalizor = normalize_graph if normalize else lambda x: x
-            comp = OracleNodeSelectorEstimator(problem,
-                                               comp_featurizer,
-                                               device,
-                                               feature_normalizor,
-                                               use_trained_gnn=True,
-                                               sel_policy=sel_policy)
-            
-            comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
-        
-        elif comp_policy == 'svm':
-            comp_featurizer = CompFeaturizerSVM(model)
-            comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy)
-            
-        elif comp_policy == 'expert':
-            comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=0)
-            optsol = model.readSolFile(instance.replace(".lp", ".sol"))
-            comp.setOptsol(optsol)
-            
-        else:
-            comp = CustomNodeSelector(comp_policy=comp_policy, sel_policy=sel_policy)
-        
- 
-            
-        res[nodesel] = model
+        if not re.match('default*', nodesel):
+            comp_policy, sel_policy = nodesel.split("_")
 
-        model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
+
+            if comp_policy == 'gnn':
+                comp_featurizer = CompFeaturizer()
+                feature_normalizor = normalize_graph if normalize else lambda x: x
+                comp = OracleNodeSelectorEstimator(problem,
+                                                   comp_featurizer,
+                                                   device,
+                                                   feature_normalizor,
+                                                   use_trained_gnn=True,
+                                                   sel_policy=sel_policy)
+
+                comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
+
+            elif comp_policy == 'svm':
+                comp_featurizer = CompFeaturizerSVM(model)
+                comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy)
+
+            elif comp_policy == 'expert':
+                comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=0)
+                optsol = model.readSolFile(instance.replace(".lp", ".sol"))
+                comp.setOptsol(optsol)
+
+            else:
+                comp = CustomNodeSelector(comp_policy=comp_policy, sel_policy=sel_policy)
+
+
+
+            res[nodesel] = model
+
+            model.includeNodesel(comp, nodesel, 'testing',  536870911,  536870911)
+        
+        else:
+            _, nsel_name, priority = nodesel.split("_")
+            assert(nsel_name in ['estimate', 'dfs', 'bfs'] #to do add other default methods 
+            priority = int(priority)
+            model.setNodeselPriority(nsel_name, priority)
+            
 
             
         
