@@ -210,13 +210,13 @@ def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arc
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
             
-            if model.getNNodes() <= 1:
+            if model.getNNodes() <= 300:
                 os.remove(instance_path+ ".lp" )
                 os.remove(instance_path+ ".sol")
             
-            
 
 
-    
+
+
 
 
