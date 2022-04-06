@@ -84,7 +84,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         
         else:
             _, nsel_name, priority = nodesel.split("_")
-            assert(nsel_name in ['estimate', 'dfs', 'bfs'] #to do add other default methods 
+            assert(nsel_name in ['estimate', 'dfs', 'bfs']) #to do add other default methods 
             priority = int(priority)
             model.setNodeselPriority(nsel_name, priority)
             
