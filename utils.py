@@ -253,7 +253,7 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             print(f"           |---   Feature Normalization Time:    {fn_mean:.2f}")
             print(f"           |---   Inference Time:                {inf_mean:.2f}")
             
-        if nodesel != 'default':
+        if not re.match('default*', nodesel):
             print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")
             if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
                 inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
