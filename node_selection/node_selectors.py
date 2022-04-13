@@ -316,6 +316,10 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.comp_counter += 1        
         
         if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
+            self.comp_policy = 'estimate'
+            self.sel_policy = 'estimate'
+            
+            
             return self.estimate_nodecomp(node1, node2)
         
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
