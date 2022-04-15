@@ -33,11 +33,10 @@ class CustomNodeSelector(Nodesel):
         self.comp_counter = 0
 
         
-    def nodeselect(self, policy=None):
+    def nodeselect(self):
         
         self.sel_counter += 1
-        
-        policy = policy if policy is not None else self.sel_policy
+        policy = self.sel_policy
         
         if policy == 'estimate':
             res = self.estimate_nodeselect()
@@ -54,11 +53,12 @@ class CustomNodeSelector(Nodesel):
             
         return res
     
-    def nodecomp(self, node1, node2, policy=None):
+    def nodecomp(self, node1, node2):
         
         self.comp_counter += 1
+        policy = self.comp_policy
         
-        policy = policy if policy is not None else self.comp_policy
+        print(self.comp_policy)
         
         if policy == 'estimate':
             res = self.estimate_nodecomp(node1, node2)
@@ -172,17 +172,38 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
 
     def __init__(self, oracle_type, optsol=0, prune_policy='estimate', inv_proba=0, sel_policy=''):
 
-        super().__init__(sel_policy=sel_policy) 
+        super().__init__(sel_policy=sel_policy)
         self.oracle_type = oracle_type
         self.optsol = optsol
         self.prune_policy = prune_policy 
         self.inv_proba = inv_proba
+        self.sel_policy = sel_policy
     
     
+    def nodeselect(self):
+        
+        self.sel_counter += 1
+        
+        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
+        self.optsolval = self.model.getSolObjVal(self.optsol)
+        
+        if curr_primal == self.optsolval:
+            return {'selnode':self.model.getEstimateSelNode() }
+        
+        return {'selnode':self.model.getBestNode() }
+        
+        
     
     def nodecomp(self, node1, node2, return_type=False):
         
-        if self.oracle_type == "optimal_plunger":            
+        self.comp_counter += 1
+        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
+        self.optsolval = self.model.getSolObjVal(self.optsol)
+        
+        if curr_primal == self.optsolval:
+            return self.estimate_nodecomp(node1, node2)
+        
+        elif self.oracle_type == "optimal_plunger":            
         
             d1 = self.is_sol_in_domaine(self.optsol, node1)
             d2 = self.is_sol_in_domaine(self.optsol, node2)
@@ -197,10 +218,11 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
                 res = comp_type = 1
             
             else:
-                res, comp_type = super().nodecomp(node1, node2, policy=self.prune_policy), 10              
+                res, comp_type = self.estimate_nodecomp(node1, node2), 10              
             
             inv_res = -1 if res == 1 else 1
             res = inv_res if inv else res
+            
             return res if not return_type  else  (res, comp_type)
         else:
             raise NotImplementedError
@@ -237,9 +259,9 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.inf_counter = 0
         
-        self.n_primal = 4
-        self.primal_changes = 0
+        self.n_primal = np.inf
         self.best_primal = np.inf
+        self.primal_changes = 0
         
     def nodecomp(self, node1, node2):
         
@@ -274,7 +296,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
 class OracleNodeSelectorEstimator(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer, device, feature_normalizor, use_trained_gnn=True, sel_policy=''):
+    def __init__(self, problem, comp_featurizer, device, feature_normalizor, n_primal=4, use_trained_gnn=True, sel_policy=''):
         super().__init__(sel_policy=sel_policy)
         
         
@@ -291,7 +313,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.device = device
         self.feature_normalizor = feature_normalizor
         
-        self.n_primal = 4
+        self.n_primal = n_primal
         self.best_primal = np.inf #minimization
         self.primal_changes = 0
         
@@ -303,6 +325,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.scores = dict()
         
         
+        
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
         
@@ -310,15 +333,25 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fn_time = 0
         self.inference_time = 0
         self.inf_counter = 0
+        
+        
+    def nodeselect(self):
+        
+        self.sel_counter += 1
+        
+        if self.primal_changes >= self.n_primal:
+        #if False:
+            return {'selnode':self.model.getEstimateSelNode() }
+        
+        return {'selnode':self.model.getBestNode() }
+            
+        
     
     def nodecomp(self, node1,node2):
         
         self.comp_counter += 1        
         
         if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
-            self.comp_policy = 'estimate'
-            self.sel_policy = 'estimate'
-            
             
             return self.estimate_nodecomp(node1, node2)
         
@@ -331,6 +364,8 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             self.best_primal = curr_primal
             self.primal_changes += 1
             
+            
+        #begin inference process
         comp_scores = [-1,-1]
         
         for comp_idx, node in enumerate([node1, node2]):
