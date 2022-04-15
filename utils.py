@@ -73,7 +73,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                                                    device,
                                                    feature_normalizor,
                                                    use_trained_gnn=True,
-                                                   sel_policy=sel_policy
+                                                   sel_policy=sel_policy,
                                                    n_primal=n_primal)
 
                 comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
