@@ -53,18 +53,28 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
         comp = None
         
         if not re.match('default*', nodesel):
-            comp_policy, sel_policy = nodesel.split("_")
+            try:
+                comp_policy, sel_policy, other = nodesel.split("_")
+            except:
+                comp_policy, sel_policy = nodesel.split("_")
+                
 
 
             if comp_policy == 'gnn':
                 comp_featurizer = CompFeaturizer()
+                
                 feature_normalizor = normalize_graph if normalize else lambda x: x
+                
+                n_primal = int(other.split('=')[-1])
+                       
+                
                 comp = OracleNodeSelectorEstimator(problem,
                                                    comp_featurizer,
                                                    device,
                                                    feature_normalizor,
                                                    use_trained_gnn=True,
-                                                   sel_policy=sel_policy)
+                                                   sel_policy=sel_policy
+                                                   n_primal=n_primal)
 
                 comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
 
