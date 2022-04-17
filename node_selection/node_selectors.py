@@ -187,7 +187,8 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
         curr_primal = self.model.getSolObjVal(self.model.getBestSol())
         self.optsolval = self.model.getSolObjVal(self.optsol)
         
-        if curr_primal == self.optsolval:
+        #if curr_primal == self.optsolval:
+        if False:
             return {'selnode':self.model.getEstimateSelNode() }
         
         return {'selnode':self.model.getBestNode() }
@@ -259,7 +260,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.inf_counter = 0
         
-        self.n_primal = np.inf
+        self.n_primal = 4
         self.best_primal = np.inf
         self.primal_changes = 0
         
@@ -339,8 +340,8 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         
         self.sel_counter += 1
         
-        if self.primal_changes >= self.n_primal:
-        #if False:
+        #if self.primal_changes >= self.n_primal:
+        if False:
             return {'selnode':self.model.getEstimateSelNode() }
         
         return {'selnode':self.model.getBestNode() }
