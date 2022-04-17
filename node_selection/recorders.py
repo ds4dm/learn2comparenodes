@@ -286,9 +286,24 @@ class LPFeatureRecorder():
         
         self.device = device
         
-        # root_graph = self.get_root_graph(model)
-        # self.recorded[1] = root_graph
-        # self.recorded_light[1] = (root_graph.var_attributes, root_graph.cons_block_idxs)
+        
+        #INITIALISATION OF A,b,c into a graph
+        self.init_time = time.time()
+        root_graph = self.get_root_graph(model, device='cpu')
+        self.init_time = (time.time() - self.init_time)
+        print(self.init_time)
+        
+        
+        self.init_cpu_gpu_time = time.time()
+        root_graph.var_attributes = root_graph.var_attributes.to(device)
+        for idx, _ in  enumerate(root_graph.self.all_conss_blocks_features): #1 single loop
+            root_graph.self.all_conss_blocks[idx] = root_graph.self.all_conss_blocks[idx].to(device)
+            root_graph.self.all_conss_blocks_features[idx] = root_graph.self.all_conss_blocks_features[idx].to(device)
+        
+        self.init_cpu_gpu_time = (time.time() - self.init_cpu_gpu_time)
+       
+        self.recorded[1] = root_graph
+        self.recorded_light[1] = (root_graph.var_attributes, root_graph.cons_block_idxs)
 
    
     def get_graph(self, model, sub_milp):
@@ -319,12 +334,17 @@ class LPFeatureRecorder():
             self.recorded_light[sub_milp.getNumber()] = (graph.var_attributes, 
                                                          graph.cons_block_idxs)
     
-    def get_root_graph(self, model):
+    def get_root_graph(self, model, device=None):
         
-        graph = BipartiteGraphStatic0(self.n0, self.device)
+        if device == None:
+            dev = self.device
+        else:
+            dev = device
+        
+        graph = BipartiteGraphStatic0(self.n0, dev)
         
         self._add_vars_to_graph(graph, model)
-        self._add_conss_to_graph(graph, model, self.original_conss)
+        self._add_conss_to_graph(graph, model, dev)
     
         
         return graph
@@ -360,12 +380,17 @@ class LPFeatureRecorder():
             graph.var_attributes[idx] = self._get_feature_var(model, var)
 
     
-    def _add_conss_to_graph(self, graph, model, conss):
+    def _add_conss_to_graph(self, graph, model, conss, device=None):
+        
+        if device == None:
+            dev = self.device
+        else:
+            dev = device
         
         if len(conss) == 0:
             return
 
-        cons_attributes = torch.zeros(len(conss), graph.d1, device=self.device).float()
+        cons_attributes = torch.zeros(len(conss), graph.d1, device=dev).float()
         var_idxs = []
         cons_idxs = []
         weigths = []
@@ -379,7 +404,7 @@ class LPFeatureRecorder():
                 weigths.append(coeff)
 
 
-        adjacency_matrix =  torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, len(conss)), device=self.device) 
+        adjacency_matrix =  torch.sparse_coo_tensor([var_idxs, cons_idxs], weigths, (self.n0, len(conss)), device=dev) 
         
         #add idx to graph
         graph.cons_block_idxs.append(len(self.all_conss_blocks_features)) #carreful with parralelization
