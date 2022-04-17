@@ -15,6 +15,7 @@ import imp
 import torch
 import numpy as np
 import re
+import time
 
 def load_src(name, fpath):
      return imp.load_source(name, os.path.join(os.path.dirname(__file__), fpath))
@@ -110,6 +111,8 @@ class CompFeaturizer():
     
     def get_graph_for_inf(self,model, node):
         
+        gpu_gpu = time.time()
+        
         self.LP_feature_recorder.record_sub_milp_graph(model, node)
         graphidx2graphdata = self.LP_feature_recorder.recorded_light
         all_conss_blocks = self.LP_feature_recorder.all_conss_blocks
@@ -140,8 +143,10 @@ class CompFeaturizer():
               torch.tensor([[lb, -1*ub]], device=self.LP_feature_recorder.device).float(),
               torch.tensor([depth], device=self.LP_feature_recorder.device).float()
               )
+        
+        gpu_gpu = (time.time() - gpu_gpu)
             
-        return g
+        return gpu_gpu, g
         
         
         
