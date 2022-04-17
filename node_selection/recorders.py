@@ -340,14 +340,11 @@ class LPFeatureRecorder():
     
     def get_root_graph(self, model, device=None):
         
-        if device == None:
-            dev = self.device
-        else:
-            dev = device
+        dev = device if device != None else self.device
         
         graph = BipartiteGraphStatic0(self.n0, dev)
         
-        self._add_vars_to_graph(graph, model)
+        self._add_vars_to_graph(graph, model, dev)
         self._add_conss_to_graph(graph, model, self.original_conss, dev)
     
         
@@ -377,20 +374,19 @@ class LPFeatureRecorder():
   
     
                 
-    def _add_vars_to_graph(self, graph, model):
+    def _add_vars_to_graph(self, graph, model, device=None):
         #add vars
         
+        dev = device if device != None else self.device
+        
         for idx, var in enumerate(self.varrs):
-            graph.var_attributes[idx] = self._get_feature_var(model, var)
+            graph.var_attributes[idx] = self._get_feature_var(model, var, dev)
 
     
     def _add_conss_to_graph(self, graph, model, conss, device=None):
         
-        if device == None:
-            dev = self.device
-        else:
-            dev = device
-        
+        dev = device if device != None else self.device
+
         if len(conss) == 0:
             return
 
@@ -458,7 +454,9 @@ class LPFeatureRecorder():
         
         return torch.tensor([ rhs, leq, eq, geq ], device=dev).float()
 
-    def _get_feature_var(self, model, var):
+    def _get_feature_var(self, model, var, device=None):
+        
+        dev = device if device != None else self.device
         
         lb, ub = var.getLbOriginal(), var.getUbOriginal()
         
@@ -472,7 +470,7 @@ class LPFeatureRecorder():
         binary, integer, continuous = self._one_hot_type(var)
     
         
-        return torch.tensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=self.device).float()
+        return torch.tensor([ lb, ub, objective_coeff, binary, integer, continuous ], device=dev).float()
     
     
     def _one_hot_type(self, var):
