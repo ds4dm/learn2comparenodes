@@ -58,8 +58,6 @@ class CustomNodeSelector(Nodesel):
         self.comp_counter += 1
         policy = self.comp_policy
         
-        print(self.comp_policy)
-        
         if policy == 'estimate':
             res = self.estimate_nodecomp(node1, node2)
         elif policy == 'dfs':
