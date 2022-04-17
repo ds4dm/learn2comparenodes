@@ -75,8 +75,8 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                                                    use_trained_gnn=True,
                                                    sel_policy=sel_policy,
                                                    n_primal=n_primal)
-
-                comp.set_LP_feature_recorder(LPFeatureRecorder(model, device))
+                fr = LPFeatureRecorder(model, device)
+                comp.set_LP_feature_recorder(fr)
 
             elif comp_policy == 'svm':
                 comp_featurizer = CompFeaturizerSVM(model)
@@ -135,13 +135,15 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
     
     
     if re.match('gnn*', nodesel):
+        init1_time = nodesel_obj.init_solver_cpu
+        init2_time = nodesel_obj.init_cpu_gpu
         fe_time = nodesel_obj.fe_time
         fn_time = nodesel_obj.fn_time
         inference_time = nodesel_obj.inference_time
         inf_counter = nodesel_obj.inf_counter
         
     else:
-        fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1
+        init1_time, init2_time, fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1, -1, -1
     
     
     if re.match('svm*', nodesel):
@@ -151,7 +153,7 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         
     
     file = get_record_file(problem, nodesel, instance)
-    np.savetxt(file, np.array([nnode, time, comp_counter, sel_counter, fe_time, fn_time, inference_time, inf_counter]), delimiter=',')
+    np.savetxt(file, np.array([nnode, time, comp_counter, sel_counter, init1_time, init2_time, fe_time, fn_time, inference_time, inf_counter]), delimiter=',')
     
  
 
@@ -217,7 +219,7 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 def get_mean(problem, nodesel, instances, stat_type):
     res = 0
     n = 0
-    stat_idx = ['nnode', 'time', 'ncomp','nsel','fe', 'fn', 'inf','ninf'].index(stat_type)
+    stat_idx = ['nnode', 'time', 'ncomp','nsel', 'init1', 'init2', 'fe', 'fn', 'inf','ninf'].index(stat_type)
     for instance in instances:
         try:
             file = get_record_file(problem, nodesel, instance)
@@ -246,6 +248,12 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
         print(f"  {nodesel} ")
         print(f"      Mean over n={n} instances : ")
         print(f"        |- B&B Tree Size   :  {nnode_mean:.0f}")
+        if re.match('gnn*', nodesel):
+            in1_mean = get_mean(problem, nodesel, instances, 'init1')[0]
+            in2_mean = get_mean(problem, nodesel, instances, 'init2')[0]
+            print(f"        |- Presolving A,b,c Feature Extraction Time :  ")
+            print(f"           |---   Init. Solver to CPU:           {in1_mean:.2f}")
+            print(f"           |---   Init. CPU to GPU   :           {in2_mean:.2f}")
         print(f"        |- Solving Time    :  {time_mean:.2f}")
         
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
@@ -257,11 +265,9 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             fe_mean = get_mean(problem, nodesel, instances, 'fe')[0]
             fn_mean = get_mean(problem, nodesel, instances, 'fn')[0]
             inf_mean = get_mean(problem, nodesel, instances, 'inf')[0]
-            
-            
-            print(f"           |---   Feature Extraction Time:       {fe_mean:.2f}")
-            print(f"           |---   Feature Normalization Time:    {fn_mean:.2f}")
-            print(f"           |---   Inference Time:                {inf_mean:.2f}")
+            print(f"           |---   On-GPU Feature Updates:        {fe_mean:.2f}")
+            print(f"           |---   Feature Normalization:         {fn_mean:.2f}")
+            print(f"           |---   Inference     :                {inf_mean:.2f}")
             
         if not re.match('default*', nodesel):
             print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")

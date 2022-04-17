@@ -279,7 +279,6 @@ class LPFeatureRecorder():
         self.n0 = len(varrs)
         
         self.varrs = varrs
-        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), 't_' + str(var) ]  ])
         
         self.original_conss = original_conss
         
@@ -294,16 +293,16 @@ class LPFeatureRecorder():
         
         #INITIALISATION OF A,b,c into a graph
         self.init_time = time.time()
+        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), 't_' + str(var) ]  ])
         root_graph = self.get_root_graph(model, device='cpu')
         self.init_time = (time.time() - self.init_time)
-        print(self.init_time)
         
         
         self.init_cpu_gpu_time = time.time()
         root_graph.var_attributes = root_graph.var_attributes.to(device)
-        for idx, _ in  enumerate(root_graph.self.all_conss_blocks_features): #1 single loop
-            root_graph.self.all_conss_blocks[idx] = root_graph.self.all_conss_blocks[idx].to(device)
-            root_graph.self.all_conss_blocks_features[idx] = root_graph.self.all_conss_blocks_features[idx].to(device)
+        for idx, _ in  enumerate(self.all_conss_blocks_features): #1 single loop
+            self.all_conss_blocks[idx] = self.all_conss_blocks[idx].to(device)
+            self.all_conss_blocks_features[idx] = self.all_conss_blocks_features[idx].to(device)
         
         self.init_cpu_gpu_time = (time.time() - self.init_cpu_gpu_time)
        
@@ -349,7 +348,7 @@ class LPFeatureRecorder():
         graph = BipartiteGraphStatic0(self.n0, dev)
         
         self._add_vars_to_graph(graph, model)
-        self._add_conss_to_graph(graph, model, dev)
+        self._add_conss_to_graph(graph, model, self.original_conss, dev)
     
         
         return graph
@@ -401,7 +400,7 @@ class LPFeatureRecorder():
         weigths = []
         for cons_idx, cons in enumerate(conss):
 
-            cons_attributes[cons_idx] =  self._get_feature_cons(model, cons)
+            cons_attributes[cons_idx] =  self._get_feature_cons(model, cons, dev)
           
             for var, coeff in model.getValsLinear(cons).items():
                 var_idxs.append(self.var2idx[str(var)] )
@@ -428,7 +427,10 @@ class LPFeatureRecorder():
             
         
     
-    def _get_feature_cons(self, model, cons):
+    def _get_feature_cons(self, model, cons, device=None):
+        
+        dev = device if device != None else self.device
+        
         try:
             
             cons_n = str(cons)
@@ -454,7 +456,7 @@ class LPFeatureRecorder():
             geq = 0
         
         
-        return torch.tensor([ rhs, leq, eq, geq ], device=self.device).float()
+        return torch.tensor([ rhs, leq, eq, geq ], device=dev).float()
 
     def _get_feature_var(self, model, var):
         

@@ -330,6 +330,9 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_featurizer.set_LP_feature_recorder(LP_feature_recorder)
         
+        self.init_solver_cpu = LP_feature_recorder.init_time
+        self.init_cpu_gpu = LP_feature_recorder.init_cpu_gpu_time
+        
         self.fe_time = 0
         self.fn_time = 0
         self.inference_time = 0
@@ -375,9 +378,11 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             if n_idx in self.scores:
                 comp_scores[comp_idx] = self.scores[n_idx]
             else:
-                start = time.time()
-                g =  self.comp_featurizer.get_graph_for_inf(self.model, node)
-                self.fe_time += (time.time() - start)
+
+                _time, g =  self.comp_featurizer.get_graph_for_inf(self.model, node)
+                
+                self.fe_time += _time
+
                 
                 start = time.time()
                 g = self.feature_normalizor(*g)[:-1]
