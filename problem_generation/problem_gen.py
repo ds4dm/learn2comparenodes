@@ -49,26 +49,16 @@ if __name__ == "__main__":
     
     seed = 0
     
-    #GISP nodes
+    #Graph number of nodes
     
     min_n = 60
     max_n = 70
-    
-    #FCMCNF
-    min_n_nodes = 20
-    max_n_nodes = 20
-    
-    min_n_arcs = 80
-    max_n_arcs = 100
-    
-    min_n_commodities = 20
-    max_n_commodities = 30
 
-
-    #WPMS n 
-    min_n = 10
-    max_n = 15
     
+    #number of commodities for FCMCNF
+    min_n_commodities = 1
+    max_n_commodities = 1
+
     
 
     # seed = 0
@@ -103,11 +93,6 @@ if __name__ == "__main__":
     except FileExistsError:
         ""
         
-        
-    if problem == 'FCMCNF':
-        min_n, max_n = min_n_arcs, max_n_arcs
-    
-    
     
     print(f"Summary for {problem} generation")
     print(f"n_instance    :     {n_instance}")
@@ -146,10 +131,8 @@ if __name__ == "__main__":
         processes = [  md.Process(name=f"worker {p}", target=partial(fcmcnf.generate_instances,
                                                                       seed + p1, 
                                                                       seed + p2, 
-                                                                      min_n_nodes,
-                                                                      max_n_nodes,
-                                                                      min_n_arcs,
-                                                                      max_n_arcs,
+                                                                      min_n,
+                                                                      max_n,
                                                                       min_n_commodities,
                                                                       max_n_commodities,
                                                                       lp_dir, 

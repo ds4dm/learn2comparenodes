@@ -12,18 +12,17 @@ import multiprocessing as md
 from functools import partial
 import pyscipopt.scip as sp
 import networkx as nx
+import matplotlib.pyplot as plt
 
 
-
-def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio):
-    
+def get_random_uniform_graph(rng, n_nodes, n_arcs, c_range, d_range, ratio, k_max):
     adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
     edge_list = []
     incommings = dict([ (j, []) for j in range(n_nodes) ])
     outcommings = dict([(i, []) for i in range(n_nodes) ])
         
     added_arcs = 0
-    #gen network
+    #gen network, todo: use 
     while(True):
         i = rng.randint(0,n_nodes) 
         j = rng.randint(0,n_nodes)
@@ -37,8 +36,9 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
             added_arcs += 1
             edge_list.append((i,j))
             
-            incommings[j].append(i)
             outcommings[i].append(j)
+            incommings[j].append(i)
+
             
             
             
@@ -49,7 +49,41 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
     G.add_nodes_from([i for i in range(n_nodes)])
     G.add_edges_from(edge_list)
     
+    return G, adj_mat, edge_list, incommings, outcommings
+
+
+def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob=0.1):
+    
+    G = nx.erdos_renyi_graph(n=n_nodes, p=er_prob, seed=int(rng.get_state()[1][0]), directed=True)
+    adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
+    edge_list = []
+    incommings = dict([ (j, []) for j in range(n_nodes) ])
+    outcommings = dict([(i, []) for i in range(n_nodes) ])
+    
+    for i,j in G.edges:
+        c_ij = int(rng.uniform(*c_range))
+        f_ij = int(rng.uniform(c_range[0]*ratio, c_range[1]*ratio))
+        u_ij = int(rng.uniform(1,k_max+1)* rng.uniform(*d_range))
+        adj_mat[i][j] = (c_ij, f_ij, u_ij)
+        edge_list.append((i,j))
+        
+        outcommings[i].append(j)
+        incommings[j].append(i)
+    
+    return G, adj_mat, edge_list, incommings, outcommings
+        
+
+    
+
+
+
+def generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio):
+    
+    G, adj_mat, edge_list, incommings, outcommings = get_erdos_graph(rng, n_nodes, c_range, d_range, ratio, k_max)
+
+    #nx.draw(G)
     print(G)
+    #plt.savefig(filename+'.png')
      
     commodities = [ 0 for _ in range(n_commodities) ]
     for k in range(n_commodities):
@@ -60,7 +94,7 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
             if nx.has_path(G, o_k, d_k) and o_k != d_k:
                 break
         
-        demand_k = rng.uniform(*d_range)
+        demand_k = int(rng.uniform(*d_range))
         commodities[k] = (o_k, d_k, demand_k)
         
     with open(filename, 'w') as file:
@@ -74,9 +108,9 @@ def generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_ra
         for i in range(n_nodes):
             for k in range(n_commodities):
                 
-                delta_i = 1 if (commodities[k][0] == i ) else (-1 if commodities[k][1] == i else 0)
+                delta_i = 1 if (commodities[k][0] == i ) else (-1 if commodities[k][1] == i else 0) #1 if source, -1 if sink, 0 if else
                 
-                file.write(f"flow_{i+1}_{j+1}_{k+1}:" + 
+                file.write(f"flow_{i+1}_{k+1}:" + 
                            "".join([f" +x_{i+1}_{j+1}_{k+1}" for j in outcommings[i] ]) +
                            "".join([f" -x_{j+1}_{i+1}_{k+1}" for j in incommings[i] ]) + f" = {delta_i}\n"   )
                 
@@ -173,7 +207,7 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
     print(filename)
 
 
-def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arcs, max_n_arcs, min_n_commodities, max_n_commodities, lp_dir, solveInstance):
+def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_commodities, max_n_commodities, lp_dir, solveInstance):
     
     for seed in range(start_seed, end_seed):
         ratio = 5
@@ -182,25 +216,24 @@ def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arc
         
         
         n_nodes =  rng.randint(min_n_nodes, max_n_nodes+1)
-        n_arcs = rng.randint(min_n_arcs, max_n_arcs+1)
         n_commodities = rng.randint(min_n_commodities, max_n_commodities+1)
         
         
-        c_range = (1,10)
-        d_range = (1,10)
+        c_range = (11,50)
+        d_range = (10,100)
         
-        k_max = 2
-        ratio = 5
+        k_max = n_commodities #loose
+        ratio = 100
         
         
-        instance_name = f'n_nodes={n_nodes}_n_arcs={n_arcs}_n_commodities={n_commodities}_id_{instance_id:0.2f}'
+        instance_name = f'n_nodes={n_nodes}_n_commodities={n_commodities}_id_{instance_id:0.2f}'
         instance_path = lp_dir +  "/" + instance_name
         filename = instance_path+'.lp'
         
         
         
         
-        generate_fcmcnf(rng, filename, n_nodes, n_arcs, n_commodities, c_range, d_range, k_max, ratio)
+        generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio)
         
         model = sp.Model()
         model.hideOutput()
@@ -209,8 +242,9 @@ def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_arc
         if solveInstance:
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
+            print(model.getNNodes())
             
-            if model.getNNodes() <= 300:
+            if model.getNNodes() <= 1:
                 os.remove(instance_path+ ".lp" )
                 os.remove(instance_path+ ".sol")
             
