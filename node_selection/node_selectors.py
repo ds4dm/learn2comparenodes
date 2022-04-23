@@ -258,7 +258,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.inf_counter = 0
         
-        self.n_primal = 4
+        self.n_primal = np.inf
         self.best_primal = np.inf
         self.primal_changes = 0
         

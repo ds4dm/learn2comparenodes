@@ -57,7 +57,7 @@ if __name__ == "__main__":
     
     #number of commodities for FCMCNF
     min_n_commodities = max_n
-    max_n_commodities = 1.5*max_n
+    max_n_commodities = int(1.5*max_n)
 
     
 
