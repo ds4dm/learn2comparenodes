@@ -51,8 +51,8 @@ if __name__ == "__main__":
     
     #Graph number of nodes
     
-    min_n = 20
-    max_n = 15
+    min_n = 15
+    max_n = 20
 
     
     #number of commodities for FCMCNF
