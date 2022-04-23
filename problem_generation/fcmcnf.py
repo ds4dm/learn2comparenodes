@@ -52,7 +52,7 @@ def get_random_uniform_graph(rng, n_nodes, n_arcs, c_range, d_range, ratio, k_ma
     return G, adj_mat, edge_list, incommings, outcommings
 
 
-def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob=0.23):
+def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob=0.25):
     
     G = nx.erdos_renyi_graph(n=n_nodes, p=er_prob, seed=int(rng.get_state()[1][0]), directed=True)
     adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
