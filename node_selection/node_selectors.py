@@ -196,13 +196,8 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
     def nodecomp(self, node1, node2, return_type=False):
         
         self.comp_counter += 1
-        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
-        self.optsolval = self.model.getSolObjVal(self.optsol)
         
-        if curr_primal == self.optsolval:
-            return self.estimate_nodecomp(node1, node2)
-        
-        elif self.oracle_type == "optimal_plunger":            
+        if self.oracle_type == "optimal_plunger":            
         
             d1 = self.is_sol_in_domaine(self.optsol, node1)
             d2 = self.is_sol_in_domaine(self.optsol, node2)
