@@ -176,6 +176,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
         self.prune_policy = prune_policy 
         self.inv_proba = inv_proba
         self.sel_policy = sel_policy
+        self.inf_counter  = 0
     
     
     def nodeselect(self):
@@ -196,13 +197,8 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
     def nodecomp(self, node1, node2, return_type=False):
         
         self.comp_counter += 1
-        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
-        self.optsolval = self.model.getSolObjVal(self.optsol)
         
-        if curr_primal == self.optsolval:
-            return self.estimate_nodecomp(node1, node2)
-        
-        elif self.oracle_type == "optimal_plunger":            
+        if self.oracle_type == "optimal_plunger":            
         
             d1 = self.is_sol_in_domaine(self.optsol, node1)
             d2 = self.is_sol_in_domaine(self.optsol, node2)
@@ -212,9 +208,12 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
                 res, comp_type = self.dfs_nodecomp(node1, node2), 0
             elif d1:
                 res = comp_type = -1
+                self.inf_counter += 1
+                
             
             elif d2:
                 res = comp_type = 1
+                self.inf_counter += 1
             
             else:
                 res, comp_type = self.estimate_nodecomp(node1, node2), 10              
@@ -258,7 +257,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.inf_counter = 0
         
-        self.n_primal = 4
+        self.n_primal = np.inf
         self.best_primal = np.inf
         self.primal_changes = 0
         

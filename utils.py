@@ -146,7 +146,7 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         init1_time, init2_time, fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1, -1, -1
     
     
-    if re.match('svm*', nodesel):
+    if re.match('svm*', nodesel) or re.match('expert*', nodesel) :
         inf_counter = nodesel_obj.inf_counter
     
     
@@ -219,15 +219,17 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 def get_mean(problem, nodesel, instances, stat_type):
     res = 0
     n = 0
+    means = dict()
     stat_idx = ['nnode', 'time', 'ncomp','nsel', 'init1', 'init2', 'fe', 'fn', 'inf','ninf'].index(stat_type)
     for instance in instances:
         try:
             file = get_record_file(problem, nodesel, instance)
             res += np.genfromtxt(file)[stat_idx]
             n += 1
+            means[str(instance)] = np.genfromtxt(file)[stat_idx]
         except:
             ''
-    return res/(n + int(n==0)),n
+    return res/(n + int(n==0)),n, means
         
 
 def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
@@ -235,14 +237,17 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     print("======================================================")
     print(f'Statistics on {problem} for problem size in [{min_n}, {max_n}]') 
     print("======================================================")
-    
+    means_nodes = dict()
     for nodesel in (['default'] if default else []) + nodesels:
+        
             
-        nnode_mean, n = get_mean(problem, nodesel, instances, 'nnode')
+        nnode_mean, n, nnode_means = get_mean(problem, nodesel, instances, 'nnode')
         time_mean  =  get_mean(problem, nodesel, instances, 'time')[0]
         ncomp_mean = get_mean(problem, nodesel, instances, 'ncomp')[0]
         nsel_mean = get_mean(problem, nodesel, instances, 'nsel')[0]
         
+        
+        means_nodes[nodesel] = nnode_means
         
     
         print(f"  {nodesel} ")
@@ -271,13 +276,13 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             
         if not re.match('default*', nodesel):
             print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")
-            if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
+            if re.match('gnn*', nodesel) or re.match('svm*', nodesel) or re.match('expert*', nodesel):
                 inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
                 print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.0f}")
             print(f"        |- nodesel calls   :  {nsel_mean:.0f}")
         print("-------------------------------------------------")
-            
         
+    return means_nodes
      
      
     
