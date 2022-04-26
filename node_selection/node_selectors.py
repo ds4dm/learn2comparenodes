@@ -176,6 +176,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
         self.prune_policy = prune_policy 
         self.inv_proba = inv_proba
         self.sel_policy = sel_policy
+        self.inf_counter  = 0
     
     
     def nodeselect(self):
@@ -207,9 +208,12 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
                 res, comp_type = self.dfs_nodecomp(node1, node2), 0
             elif d1:
                 res = comp_type = -1
+                self.inf_counter += 1
+                
             
             elif d2:
                 res = comp_type = 1
+                self.inf_counter += 1
             
             else:
                 res, comp_type = self.estimate_nodecomp(node1, node2), 10              
