@@ -146,7 +146,7 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         init1_time, init2_time, fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1, -1, -1
     
     
-    if re.match('svm*', nodesel):
+    if re.match('svm*', nodesel) or re.match('expert*', nodesel) :
         inf_counter = nodesel_obj.inf_counter
     
     
@@ -276,7 +276,7 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             
         if not re.match('default*', nodesel):
             print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")
-            if re.match('gnn*', nodesel) or re.match('svm*', nodesel):
+            if re.match('gnn*', nodesel) or re.match('svm*', nodesel) or re.match('expert*', nodesel):
                 inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
                 print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.0f}")
             print(f"        |- nodesel calls   :  {nsel_mean:.0f}")
