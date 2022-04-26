@@ -9,6 +9,29 @@ Created on Wed Mar 30 14:12:41 2022
 import numpy as np
 import pyscipopt.scip as sp
 import os
+import networkx as nx
+
+
+
+def get_bipartite(n1,n2,p):
+    nx.bipartite_random_graph
+    
+    
+    
+
+
+def gen_maxcut_graph_clauses(rng,n,er_prob):
+    
+    G = nx.erdos_renyi_graph(n=n, p=er_prob, seed=int(rng.get_state()[1][0]), directed=True) 
+    
+    return [ ( f'v{i},v{j}', 1 )  for (i,j) in G.edges ] +  [ (f'-v{i},-v{j}', 1) for (i,j) in G.edges ]
+            
+    
+            
+        
+    
+    
+    
 
 
 #Ramon Bejar
@@ -88,7 +111,7 @@ def write_lp(clauses, filename):
     ''' 
         clauses (in conj normal form )  : list of clauses to be "and-ed" with their weiths
         
-        Clause  : string representing a conjunctive close, variable seperated by ',', 
+        Clause  : string representing a conjunctive (or's') clause, variable seperated by ',', 
         negation of variable  represented by -.
         
         
@@ -149,7 +172,7 @@ def write_lp(clauses, filename):
 
 
 
-def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance, H=7, W=7):
+def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance, er_prob):
     
     for seed in range(start_seed, end_seed):
         
@@ -157,13 +180,13 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         instance_id = rng.uniform(0,1)*100
         
         
-        n_piece = rng.randint(min_n, max_n+1)
-        n_obstacle = int(0.05*H*W) 
+        n = rng.randint(min_n, max_n+1)
+        clauses = gen_maxcut_graph_clauses(rng,n,er_prob)
+        m = len(clauses)//2
         
 
-        instance_name = f'n_piece={n_piece}_n_obstacle{n_obstacle}_HxW={H}x{W}_id_{instance_id:0.2f}'
+        instance_name = f'n={n}_m={m}_id_{instance_id:0.2f}'
         instance_path = lp_dir +  "/" + instance_name
-        clauses = get_clauses(rng, H, W, n_piece, n_obstacle)
         write_lp(clauses, instance_path + ".lp")
         print(instance_name)
         
@@ -174,6 +197,8 @@ def generate_instances(start_seed, end_seed, min_n, max_n, lp_dir, solveInstance
         if solveInstance:
             model.optimize()
             model.writeBestSol(instance_path + ".sol")  
+            print(model.getNNodes())
+            print(model.getSolvingTime())
             
             if model.getNNodes() <= 1:
                 os.remove(instance_path+ ".lp" )

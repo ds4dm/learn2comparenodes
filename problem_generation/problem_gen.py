@@ -152,7 +152,8 @@ if __name__ == "__main__":
                                                                       min_n,
                                                                       max_n,
                                                                       lp_dir, 
-                                                                      solveInstance))
+                                                                      solveInstance,
+                                                                      er_prob=er_prob))
                       
                       
                       for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]
