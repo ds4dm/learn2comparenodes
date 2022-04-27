@@ -293,7 +293,7 @@ class LPFeatureRecorder():
         
         #INITIALISATION OF A,b,c into a graph
         self.init_time = time.time()
-        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var), 't_' + str(var) ]  ])
+        self.var2idx = dict([ (str_var, idx) for idx, var in enumerate(self.varrs) for str_var in [str(var)]  ])
         root_graph = self.get_root_graph(model, device='cpu')
         self.init_time = (time.time() - self.init_time)
         
@@ -418,7 +418,10 @@ class LPFeatureRecorder():
         bvars, bbounds, btypes = sub_milp.getParentBranchings()
         
         for bvar, bbound, btype in zip(bvars, bbounds, btypes): 
-            var_idx = self.var2idx[str(bvar)]
+            try:
+               var_idx = self.var2idx[str(bvar)]
+            except:
+               var_idx = self.var2idx['t_' + str(bvar) ]
             graph.var_attributes[var_idx, int(btype) ] = bbound
             
         
