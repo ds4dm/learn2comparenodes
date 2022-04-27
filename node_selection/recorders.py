@@ -399,7 +399,11 @@ class LPFeatureRecorder():
             cons_attributes[cons_idx] =  self._get_feature_cons(model, cons, dev)
           
             for var, coeff in model.getValsLinear(cons).items():
-                var_idxs.append(self.var2idx[str(var)] )
+                try:
+                    var_idxs.append(self.var2idx[str(var)] )
+                except:
+                    var_idxs.append(self.var2idx[ 't_'+ str(var)] )
+                    
                 cons_idxs.append(cons_idx)
                 weigths.append(coeff)
 
