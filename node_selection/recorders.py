@@ -399,11 +399,15 @@ class LPFeatureRecorder():
             cons_attributes[cons_idx] =  self._get_feature_cons(model, cons, dev)
           
             for var, coeff in model.getValsLinear(cons).items():
-                try:
-                    var_idxs.append(self.var2idx[str(var)] )
-                except:
-                    var_idxs.append(self.var2idx[ 't_'+ str(var)] )
+
+                if str(var) in self.var2idx:
+                    var_idx = self.var2idx[str(var)]
+                elif 't_'+str(var) in self.var2idx:
+                    var_idx = self.var2idx['t_' + str(var)]
+                else:
+                    var_idx = self.var2idx[ '_'.join(str(var).split('_')[1:]) ] 
                     
+                var_idxs.append(var_idx)
                 cons_idxs.append(cons_idx)
                 weigths.append(coeff)
 
@@ -422,10 +426,14 @@ class LPFeatureRecorder():
         bvars, bbounds, btypes = sub_milp.getParentBranchings()
         
         for bvar, bbound, btype in zip(bvars, bbounds, btypes): 
-            try:
-               var_idx = self.var2idx[str(bvar)]
-            except:
-               var_idx = self.var2idx['t_' + str(bvar) ]
+            
+            if str(bvar) in self.var2idx:
+                var_idx = self.var2idx[str(bvar)]
+            elif 't_'+str(bvar) in self.var2idx:
+                var_idx = self.var2idx['t_' + str(bvar)]
+            else:
+                var_idx = self.var2idx[ '_'.join(str(bvar).split('_')[1:]) ] 
+            
             graph.var_attributes[var_idx, int(btype) ] = bbound
             
         
