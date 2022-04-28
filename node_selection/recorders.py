@@ -402,7 +402,11 @@ class LPFeatureRecorder():
                 try:
                     var_idxs.append(self.var2idx[str(var)] )
                 except:
-                    var_idxs.append(self.var2idx[ 't_'+ str(var)] )
+                    try:
+                        var_idxs.append(self.var2idx[ 't_'+ str(var)] )
+                    except:
+                        var_idxs.append(self.var2idx[ '_'.join(str(var).split('_')[1:]) ] )
+                        
                     
                 cons_idxs.append(cons_idx)
                 weigths.append(coeff)
@@ -425,7 +429,11 @@ class LPFeatureRecorder():
             try:
                var_idx = self.var2idx[str(bvar)]
             except:
-               var_idx = self.var2idx['t_' + str(bvar) ]
+                try:
+                    var_idxs.append(self.var2idx[ 't_'+ str(var)] )
+                except:
+                    var_idxs.append(self.var2idx[ '_'.join(str(var).split('_')[1:]) ] )
+
             graph.var_attributes[var_idx, int(btype) ] = bbound
             
         
