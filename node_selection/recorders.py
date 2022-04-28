@@ -402,7 +402,7 @@ class LPFeatureRecorder():
 
                 if str(var) in self.var2idx:
                     var_idx = self.var2idx[str(var)]
-                elif 't_'+str(var) in self.var2idx[str(var)]:
+                elif 't_'+str(var) in self.var2idx:
                     var_idx = self.var2idx['t_' + str(var)]
                 else:
                     var_idx = self.var2idx[ '_'.join(str(var).split('_')[1:]) ] 
@@ -429,7 +429,7 @@ class LPFeatureRecorder():
             
             if str(bvar) in self.var2idx:
                 var_idx = self.var2idx[str(bvar)]
-            elif 't_'+str(bvar) in self.var2idx[str(bvar)]:
+            elif 't_'+str(bvar) in self.var2idx:
                 var_idx = self.var2idx['t_' + str(bvar)]
             else:
                 var_idx = self.var2idx[ '_'.join(str(bvar).split('_')[1:]) ] 
