@@ -53,14 +53,7 @@ if __name__ == "__main__":
     
     min_n = 15
     max_n = 20
-
     
-    #number of commodities for FCMCNF
-    min_n_commodities = max_n
-    max_n_commodities = int(1.5*max_n)
-
-    
-
     # seed = 0
     for i in range(1, len(sys.argv), 2):
         if sys.argv[i] == '-instance':
@@ -85,6 +78,12 @@ if __name__ == "__main__":
     if instance is None:
         assert min_n is not None
         assert max_n is not None
+    
+    
+    #number of commodities for FCMCNF
+    min_n_commodities = max_n
+    max_n_commodities = int(1.5*max_n)
+
         
     exp_dir = exp_dir + data_partition
     lp_dir= os.path.join(os.path.dirname(__file__), exp_dir)
