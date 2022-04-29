@@ -40,7 +40,7 @@ if __name__ == "__main__":
     problem = 'WPMS'
     data_partition = 'test'
     n_nodes = 50
-    er_prob = 0.6
+    er_prob = 0.6 #0.33 for FCMCNF, this doesnt change
     whichSet = 'SET2'
     setParam = 100.0
     alphaE2 = 0.5
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     
     seed = 0
     
-    #Graph number of nodes
+    #Graph number of nodes, good sizes are 80-100 for GISP, 27-29 for FCMCNF, 70-80 for WPMSP
     
     min_n = 15
     max_n = 20
