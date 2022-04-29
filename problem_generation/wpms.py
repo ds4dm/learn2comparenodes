@@ -20,11 +20,29 @@ def get_bipartite(n1,n2,p):
     
 
 
-def gen_maxcut_graph_clauses(rng,n,er_prob):
+def gen_maxcut_graph_clauses(rng,n,er_prob,p=0.3):
     
     G = nx.erdos_renyi_graph(n=n, p=er_prob, seed=int(rng.get_state()[1][0]), directed=True) 
     
-    return [ ( f'v{i},v{j}', 1 )  for (i,j) in G.edges ] +  [ (f'-v{i},-v{j}', 1) for (i,j) in G.edges ]
+    divider = rng.randint(1,6)
+    G = nx.algorithms.bipartite.generators.random_graph(n//divider, n - n//divider, p=er_prob, seed=int(rng.get_state()[1][0]))
+    
+    n_edges = len(G.edges)
+    edges = list(G.edges)
+    
+    
+    added_edges = 0
+    while added_edges < n_edges*p:
+        i,j = rng.randint(0,n), rng.randint(0,n)
+        if (i,j) not in edges and (j,i) not in edges:
+            added_edges += 1 
+            edges.append((i,j))
+        
+    
+    
+    
+    
+    return [ ( f'v{i},v{j}', 1 )  for (i,j) in edges ] +  [ (f'-v{i},-v{j}', 1) for (i,j) in edges ]
             
     
             
