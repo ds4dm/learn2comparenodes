@@ -31,10 +31,11 @@ from torch.multiprocessing import Process, set_start_method
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
-    def __init__(self, oracle_type, comp_behaviour_saver=None):
+    def __init__(self, oracle_type, comp_behaviour_saver=None, comp_behaviour_saver_svm= None):
         super().__init__(oracle_type)
         self.counter = 0
         self.comp_behaviour_saver = comp_behaviour_saver
+        self.comp_behaviour_saver_svm = comp_behaviour_saver_svm
     
     def set_LP_feature_recorder(self, LP_feature_recorder):
         self.comp_behaviour_saver.set_LP_feature_recorder(LP_feature_recorder)
@@ -46,6 +47,12 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
         
         if comp_type in [-1,1]:
             self.comp_behaviour_saver.save_comp(self.model, 
+                                                node1, 
+                                                node2,
+                                                comp_res,
+                                                self.counter) 
+            
+            self.comp_behaviour_saver_svm.save_comp(self.model, 
                                                 node1, 
                                                 node2,
                                                 comp_res,
@@ -64,7 +71,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 
 
-def run_episode(oracle_type, instance,  save_dir, svm, device):
+def run_episode(oracle_type, instance,  save_dir, device):
     
     model = sp.Model()
     model.hideOutput()
@@ -83,21 +90,12 @@ def run_episode(oracle_type, instance,  save_dir, svm, device):
     
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
     
+    comp_behaviour_saver = CompFeaturizer(f"{save_dir}", instance_name=str(instance).split("/")[-1])
+    comp_behaviour_saver_svm = CompFeaturizerSVM(model, f"{save_dir}", instance_name=str(instance).split("/")[-1])
     
-    if svm:
-        
-        comp_behaviour_saver = CompFeaturizerSVM (model, f"{save_dir}", 
-                                                  instance_name=str(instance).split("/")[-1])
-    else:
-        comp_behaviour_saver = CompFeaturizer(f"{save_dir}", 
-                                                  instance_name=str(instance).split("/")[-1])
-        
-    
-    
-    oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver)
+    oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver, comp_behaviour_saver_svm)
     oracle_ns.setOptsol(optsol)
-    if isinstance(comp_behaviour_saver, CompFeaturizer): #gnn
-        oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, device))
+    oracle_ns.set_LP_feature_recorder(LPFeatureRecorder(model, device))
         
     
     model.includeNodesel(oracle_ns, "oracle_recorder", "testing",
@@ -151,7 +149,6 @@ if __name__ == "__main__":
     n_cpu = 10
     n_instance = -1
     device = 'cpu'
-    svm = False
     
     with open("nnodes.csv", "w") as f:
         f.write("")
@@ -171,8 +168,6 @@ if __name__ == "__main__":
             n_cpu = int(sys.argv[i + 1])
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
-        if sys.argv[i] == '-svm':
-            svm = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
    
@@ -204,7 +199,6 @@ if __name__ == "__main__":
                                                         oracle_type=oracle,
                                                         instances=instances[ p1 : p2], 
                                                         save_dir=save_dir,
-                                                        svm=svm,
                                                         device=device))
                         for p,(p1,p2) in enumerate(distribute(len(instances), n_cpu))]
         
