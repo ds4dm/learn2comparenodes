@@ -91,7 +91,7 @@ def run_episode(oracle_type, instance,  save_dir, save_dir_svm, device):
     optsol = model.readSolFile(instance.replace(".lp", ".sol"))
     
     comp_behaviour_saver = CompFeaturizer(f"{save_dir}", instance_name=str(instance).split("/")[-1])
-    comp_behaviour_saver_svm = CompFeaturizerSVM(model, f"{save_dir}", instance_name=str(instance).split("/")[-1])
+    comp_behaviour_saver_svm = CompFeaturizerSVM(model, f"{save_dir_svm}", instance_name=str(instance).split("/")[-1])
     
     oracle_ns = OracleNodeSelRecorder(oracle_type, comp_behaviour_saver, comp_behaviour_saver_svm)
     oracle_ns.setOptsol(optsol)
