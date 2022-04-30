@@ -181,6 +181,7 @@ if __name__ == "__main__":
         
         try:
             os.makedirs(save_dir)
+            os.makedirs(save_dir_svm)
         except FileExistsError:
             ""
         
