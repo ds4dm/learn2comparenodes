@@ -31,7 +31,7 @@ from torch.multiprocessing import Process, set_start_method
 
 class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
     
-    def __init__(self, oracle_type, comp_behaviour_saver=None, comp_behaviour_saver_svm= None):
+    def __init__(self, oracle_type, comp_behaviour_saver, comp_behaviour_saver_svm):
         super().__init__(oracle_type)
         self.counter = 0
         self.comp_behaviour_saver = comp_behaviour_saver
