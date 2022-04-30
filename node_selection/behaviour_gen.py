@@ -71,7 +71,7 @@ class OracleNodeSelRecorder(OracleNodeSelectorAbdel):
 
 
 
-def run_episode(oracle_type, instance,  save_dir, device):
+def run_episode(oracle_type, instance,  save_dir, save_dir_svm, device):
     
     model = sp.Model()
     model.hideOutput()
@@ -116,10 +116,10 @@ def run_episode(oracle_type, instance,  save_dir, device):
     return 1
 
 
-def run_episodes(oracle_type, instances, save_dir, svm, device):
+def run_episodes(oracle_type, instances, save_dir, save_dir_svm, device):
     
     for instance in instances:
-        run_episode(oracle_type, instance, save_dir, svm, device)
+        run_episode(oracle_type, instance, save_dir, save_dir_svm, device)
         
     print("finished running episodes for process")
         
@@ -176,9 +176,9 @@ if __name__ == "__main__":
     for data_partition in data_partitions:
         
 
-        save_dir = lp_dir= os.path.join(os.path.dirname(__file__), f'./data{"_svm" if svm else ""}/{problem}/{data_partition}')
-
-    
+        save_dir = os.path.join(os.path.dirname(__file__), f'./data/{problem}/{data_partition}')
+        save_dir_svm = os.path.join(os.path.dirname(__file__), f'./data_svm/{problem}/{data_partition}')
+        
         try:
             os.makedirs(save_dir)
         except FileExistsError:
@@ -199,6 +199,7 @@ if __name__ == "__main__":
                                                         oracle_type=oracle,
                                                         instances=instances[ p1 : p2], 
                                                         save_dir=save_dir,
+                                                        save_dir_svm=save_dir_svm,
                                                         device=device))
                         for p,(p1,p2) in enumerate(distribute(len(instances), n_cpu))]
         
