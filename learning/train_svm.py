@@ -71,7 +71,13 @@ if __name__ == '__main__':
     
     model.fit(X,y, np.exp(2.67/np.min(depths, axis=1)))
     
-    valid_acc = model.score(X_valid,y_valid, np.min(depths_valid, axis=1))
+    
+    try:
+    
+        valid_acc = model.score(X_valid,y_valid, np.min(depths_valid, axis=1))
+    except :
+        valid_acc = model.score(X_,y, np.min(depths, axis=1))
+        
     
     print(f"Accuracy on validation set : {valid_acc}")
     
