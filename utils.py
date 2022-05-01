@@ -81,7 +81,7 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
             elif comp_policy == 'svm':
                 comp_featurizer = CompFeaturizerSVM(model)
                 n_primal = int(other.split('=')[-1])
-                comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy, nprimal=nprimal)
+                comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy, n_primal=n_primal)
 
             elif comp_policy == 'expert':
                 comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=0)
