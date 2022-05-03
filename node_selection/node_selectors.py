@@ -73,7 +73,12 @@ class CustomNodeSelector(Nodesel):
             
         return res
     
-    
+    #BFS
+    def bfs_nodeselect(self):
+        return {'selnode':self.model.getBfsSelNode() }
+        
+        
+        
     #Estimate 
     def estimate_nodeselect(self):
         return {'selnode':self.model.getEstimateSelNode() }
