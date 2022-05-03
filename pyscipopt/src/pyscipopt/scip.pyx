@@ -1887,6 +1887,117 @@ cdef class Model:
         """gets the node with smallest lower bound from the tree (child, sibling, or leaf)."""
         return Node.create(SCIPgetBestboundNode(self._scip))
     
+    
+    def getBfsSelNode(self):
+
+        cdef SCIP_NODESELDATA* nodeseldata
+        cdef int minplungedepth
+        cdef int maxplungedepth
+        cdef int plungedepth
+
+        
+        cdef SCIP_Real maxplungequot
+        cdef SCIP_Real maxbound
+        cdef SCIP_Real lowerbound
+        cdef SCIP_Real cutoffbound
+        cdef SCIP_NODESEL* nodesel
+        cdef SCIP_NODE* selnode
+        
+        
+        cdef SCIP_NODE* node
+
+        nodesel = SCIPfindNodesel(self._scip,'estimate')
+     
+        assert(nodesel != NULL)
+            
+            
+
+     
+        selnode = NULL
+     
+        #/* get node selector user data */
+        nodeseldata = SCIPnodeselGetData(nodesel)
+        assert(nodeseldata != NULL)
+        
+     
+        #/* check if the breadth-first search should be applied */
+
+        #DEFAULT
+        minplungedepth = -1
+        maxplungedepth = -1
+        maxplungequot = 0.25
+        
+        if minplungedepth == -1 :
+            
+            minplungedepth = SCIPgetMaxDepth(self._scip)//10
+            if( SCIPgetNStrongbranchLPIterations(self._scip) > 2*SCIPgetNNodeLPIterations(self._scip) ) : 
+                minplungedepth += 10
+            if( maxplungedepth >= 0 ):
+                minplungedepth = min(minplungedepth, maxplungedepth);
+            
+        if( maxplungedepth == -1 ):
+            maxplungedepth = SCIPgetMaxDepth(self._scip)//2
+            
+        maxplungedepth = max(maxplungedepth, minplungedepth)
+        
+        plungedepth = SCIPgetPlungeDepth(self._scip)
+            
+        if( plungedepth >= maxplungedepth ):
+            
+            selnode = SCIPgetBestNode(self._scip)
+            
+        else:
+            
+            if( plungedepth < minplungedepth ):
+                maxbound = SCIPinfinity(self._scip)
+            
+            
+            else:
+                
+                lowerbound = SCIPgetLowerbound(self._scip)
+                cutoffbound = SCIPgetCutoffbound(self._scip)
+                
+                if( SCIPgetNSolsFound(self._scip) == 0 ):
+                    cutoffbound = lowerbound + 0.2 * (cutoffbound - lowerbound)
+                
+                maxbound = lowerbound + maxplungequot * (cutoffbound - lowerbound)
+
+
+
+
+            node = SCIPgetPrioChild(self._scip)
+            if( node != NULL and SCIPnodeGetLowerbound(node) < maxbound ):  
+                selnode = node
+            
+             
+            else:
+                 
+                node = SCIPgetBestChild(self._scip)
+                if( node != NULL and SCIPnodeGetLowerbound(node) < maxbound ):
+                    
+                    selnode = node
+                  
+                else:
+                    
+                     
+                    node = SCIPgetPrioSibling(self._scip)
+                    if( node != NULL and SCIPnodeGetLowerbound(node) < maxbound ):
+                    
+                        selnode = node
+                      
+                    else:
+                    
+                        
+                        
+                         
+                        node = SCIPgetBestSibling(self._scip)
+                        if( node != NULL and SCIPnodeGetLowerbound(node) < maxbound ):
+                            selnode = node
+                        else:
+                            selnode = SCIPgetBestNode(self._scip)
+         
+        return Node.create(selnode)
+             
     def getEstimateSelNode(self):
         
         cdef SCIP_NODESELDATA* nodeseldata
