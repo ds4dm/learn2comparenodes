@@ -97,8 +97,8 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
             y_pred = torch.round(y_proba)
             
             # Compute the usual cross-entropy classification loss
-            loss_fct.weight = torch.exp((1+torch.abs(batch.depth_s - batch.depth_t)) / 
-                                        (torch.min(torch.vstack((batch.depth_s,  batch.depth_t)), axis=0)[0]))
+            #loss_fct.weight = torch.exp((1+torch.abs(batch.depth_s - batch.depth_t)) / 
+                            #(torch.min(torch.vstack((batch.depth_s,  batch.depth_t)), axis=0)[0]))
 
             l = loss_fct(y_proba, y_true)
             loss_value = l.item()

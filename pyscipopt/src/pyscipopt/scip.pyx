@@ -5091,7 +5091,7 @@ cdef class Model:
         
         cdef SCIP_NODESEL* scip_nodesel = SCIPfindNodesel(self._scip, nodesel_name.encode("UTF-8") )
         
-        PY_SCIP_CALL(SCIPsetNodeselMemsavePriority(self._scip, scip_nodesel, priority))
+        #PY_SCIP_CALL(SCIPsetNodeselMemsavePriority(self._scip, scip_nodesel, priority))
         PY_SCIP_CALL(SCIPsetNodeselStdPriority(self._scip, scip_nodesel, priority))
         
         

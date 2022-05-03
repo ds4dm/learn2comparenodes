@@ -249,7 +249,7 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
 
 class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer, sel_policy=''):
+    def __init__(self, problem, comp_featurizer, sel_policy='', n_primal=4):
         super().__init__(sel_policy=sel_policy)
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
@@ -257,7 +257,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
         
         self.inf_counter = 0
         
-        self.n_primal = np.inf
+        self.n_primal = n_primal
         self.best_primal = np.inf
         self.primal_changes = 0
         
