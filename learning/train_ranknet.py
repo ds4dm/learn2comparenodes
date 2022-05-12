@@ -30,7 +30,7 @@ def get_data(files):
     
 if __name__ == "__main__":
     
-    problem = "GISP"
+    problem = "FCMCNF"
     lr = 0.005
     n_epoch = 2
     n_sample = -1
@@ -84,6 +84,7 @@ if __name__ == "__main__":
     
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
+    print(len(X_train))
     if problem == 'FCMCNF':
         X_train = X_train + X_valid[:3000]
         y_train =  y_train + y_valid[:3000]
