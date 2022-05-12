@@ -20,9 +20,9 @@ class RankNet(torch.nn.Module):
     def __init__(self):
         super(RankNet, self).__init__()
 
-        self.linear1 = torch.nn.Linear(20, 30)
+        self.linear1 = torch.nn.Linear(20, 50)
         self.activation = torch.nn.LeakyReLU()
-        self.linear2 = torch.nn.Linear(30, 1)
+        self.linear2 = torch.nn.Linear(50, 1)
         
     def forward_node(self, n):
         x = self.linear1(n)
