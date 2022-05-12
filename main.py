@@ -43,7 +43,7 @@ if __name__ == "__main__":
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == 'data_partition':
             data_partition = str(sys.argv[i + 1])
-         if sys.argv[i] == '-device':
+        if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
         if sys.argv[i] == '-verbose':
             verbose = bool(int(sys.argv[i + 1]))
