@@ -109,4 +109,10 @@ if __name__ == "__main__":
         ''
 
     a = list(map(lambda p: p.start(), processes)) #run processes
-    b = list(map(lambda p: p.join(), processes)) #join processesdef _get_feature_cons(self, model, cons):
+    b = list(map(lambda p: p.join(), processes)) #join processes
+    min_n = min([ int( str(instance).split('=')[1 if problem == "GISP" else 2 ].split('_')[0] )  for instance in instances ] )
+
+    max_n = max([ int( str(instance).split('=')[1 if problem == "GISP" else 2].split('_')[0] )  for instance in instances ] )
+
+    display_stats(problem, nodesels, instances, min_n, max_n, default=default)
+   
