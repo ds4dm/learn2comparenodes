@@ -13,7 +13,7 @@ from torch.multiprocessing import Process, set_start_method
 from functools import partial
 from utils import record_stats, display_stats, distribute
 from pathlib import Path 
-       
+
 if __name__ == "__main__":
     
     n_cpu = 4
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         if sys.argv[i] == 'data_partition':
             data_partition = str(sys.argv[i + 1])
          if sys.argv[i] == '-device':
-            device = str(sys.argv[i + 1])
+             device = str(sys.argv[i + 1])
         if sys.argv[i] == '-verbose':
             verbose = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-on_log':
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         try:
             import shutil
             shutil.rmtree(os.path.join(os.path.abspath(''), 
-                                           f'stats/{problem}'))
+                                       f'stats/{problem}'))
         except:
             ''
 
@@ -92,14 +92,14 @@ if __name__ == "__main__":
     #Run benchmarks
 
     processes = [  Process(name=f"worker {p}", 
-                                    target=partial(record_stats,
-                                                    nodesels=nodesels,
-                                                    instances=instances[p1:p2], 
-                                                    problem=problem,
-                                                    device=torch.device(device),
-                                                    normalize=normalize,
-                                                    verbose=verbose,
-                                                    default=default))
+                           target=partial(record_stats,
+                                          nodesels=nodesels,
+                                          instances=instances[p1:p2], 
+                                          problem=problem,
+                                          device=torch.device(device),
+                                          normalize=normalize,
+                                          verbose=verbose,
+                                          default=default))
                     for p,(p1,p2) in enumerate(distribute(n_instance, n_cpu)) ]  
 
 
@@ -109,5 +109,4 @@ if __name__ == "__main__":
         ''
 
     a = list(map(lambda p: p.start(), processes)) #run processes
-    b = list(map(lambda p: p.join(), processes)) #join processes
-
+    b = list(map(lambda p: p.join(), processes)) #join processesdef _get_feature_cons(self, model, cons):
