@@ -18,7 +18,7 @@ if __name__ == "__main__":
     
     n_cpu = 16
     n_instance = -1
-    nodesels = ['gnn_dummy_nprimal=2', 'ranknet_dummy_nprimal=2']
+    nodesels = ['ranknet_dummy_nprimal=2']
     
     problem = 'GISP'
     normalize = True
