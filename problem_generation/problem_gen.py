@@ -37,8 +37,8 @@ if __name__ == "__main__":
     n_cpu = 4
     n_instance = 4
     
-    problem = 'WPMS'
-    data_partition = 'test'
+    problem = 'GISP'
+    data_partition = 'train'
     n_nodes = 50
     er_prob = 0.6 #0.33 for FCMCNF, this doesnt change
     whichSet = 'SET2'
@@ -51,8 +51,8 @@ if __name__ == "__main__":
     
     #Graph number of nodes, good sizes are 80-100 for GISP, 27-29 for FCMCNF, 70-80 for WPMSP
     
-    min_n = 15
-    max_n = 20
+    min_n = 60
+    max_n = 70
     
     # seed = 0
     for i in range(1, len(sys.argv), 2):

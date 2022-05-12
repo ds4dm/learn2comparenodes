@@ -13,6 +13,51 @@ from torch.multiprocessing import Process, set_start_method
 from functools import partial
 from utils import record_stats, display_stats, distribute
 from pathlib import Path 
+       
+if __name__ == "__main__":
+    
+    n_cpu = 4
+    n_instance = 2
+    nodesels = ['ranknet_dummy_nprimal=2']
+    
+    problems = ['GISP']
+    normalize = True
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    verbose = False
+    on_log = False
+    default = True
+    delete = True
+    
+    for i in range(1, len(sys.argv), 2):
+        if sys.argv[i] == '-n_cpu':
+            n_cpu = int(sys.argv[i + 1])
+        if sys.argv[i] == '-nodesels':
+            nodesels = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-problems':
+            problems = str(sys.argv[i + 1]).split(',')
+        if sys.argv[i] == '-normalize':
+            normalize = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-n_instance':
+            n_instance = int(sys.argv[i + 1])
+        if sys.argv[i] == '-device':
+            device = str(sys.argv[i + 1])
+        if sys.argv[i] == '-verbose':
+            verbose = bool(int(sys.argv[i + 1]))
+        if sys.argv[i] == '-on_log':
+            on_log = bool(int(sys.argv[i + 1]))    
+        if sys.argv[i] == '-default':
+            default = bool(int(sys.argv[i + 1]))  
+        if sys.argv[i] == '-delete':
+            delete = bool(int(sys.argv[i + 1]))  
+    if delete:
+        try:
+            import shutil
+            shutil.rmtree(os.path.join(os.path.dirname(__file__), 
+                                           'stats'))
+        except:
+            ''
+            
 
 
 get_ipython().run_line_magic('load_ext', 'autoreload')
