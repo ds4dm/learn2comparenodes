@@ -25,7 +25,7 @@ def get_data(files):
         depths.append(np.array([f_array[18], f_array[-3]]))
     
     
-    return torch.tensor(np.array(X, dtype=np.float), dtype=torch.float), torch.tensor(np.array(y, dtype=np.long), dtype=torch.long).unsqueeze(1), torch.tensor(np.array(depths))
+    return np.array(X), np.array(y), np.array(depths)
 
 
     
