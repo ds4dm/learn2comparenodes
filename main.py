@@ -39,9 +39,9 @@ if __name__ == "__main__":
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
-        if sys.argv[i] == 'data_partition':
+        if sys.argv[i] == '-data_partition':
             data_partition = str(sys.argv[i + 1])
-        if sys.argv[i] == 'problem':
+        if sys.argv[i] == '-problem':
             problem = str(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
