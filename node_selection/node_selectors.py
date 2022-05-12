@@ -73,7 +73,12 @@ class CustomNodeSelector(Nodesel):
             
         return res
     
-    
+    #BFS
+    def bfs_nodeselect(self):
+        return {'selnode':self.model.getBfsSelNode() }
+        
+        
+        
     #Estimate 
     def estimate_nodeselect(self):
         return {'selnode':self.model.getEstimateSelNode() }
@@ -177,21 +182,6 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
         self.inv_proba = inv_proba
         self.sel_policy = sel_policy
         self.inf_counter  = 0
-    
-    
-    def nodeselect(self):
-        
-        self.sel_counter += 1
-        
-        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
-        self.optsolval = self.model.getSolObjVal(self.optsol)
-        
-        #if curr_primal == self.optsolval:
-        if False:
-            return {'selnode':self.model.getEstimateSelNode() }
-        
-        return {'selnode':self.model.getBestNode() }
-        
         
     
     def nodecomp(self, node1, node2, return_type=False):
@@ -385,18 +375,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
         self.fn_time = 0
         self.inference_time = 0
         self.inf_counter = 0
-        
-        
-    def nodeselect(self):
-        
-        self.sel_counter += 1
-        
-        #if self.primal_changes >= self.n_primal:
-        if False:
-            return {'selnode':self.model.getEstimateSelNode() }
-        
-        return {'selnode':self.model.getBestNode() }
-            
+
         
     
     def nodecomp(self, node1,node2):

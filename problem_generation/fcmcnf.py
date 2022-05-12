@@ -52,7 +52,7 @@ def get_random_uniform_graph(rng, n_nodes, n_arcs, c_range, d_range, ratio, k_ma
     return G, adj_mat, edge_list, incommings, outcommings
 
 
-def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob=0.33):
+def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob):
     
     G = nx.erdos_renyi_graph(n=n_nodes, p=er_prob, seed=int(rng.get_state()[1][0]), directed=True)
     adj_mat = [[0 for _ in range(n_nodes) ] for _ in range(n_nodes)]
@@ -77,9 +77,9 @@ def get_erdos_graph(rng,n_nodes, c_range, d_range, ratio, k_max, er_prob=0.33):
 
 
 
-def generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio):
+def generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio, er_prob):
     
-    G, adj_mat, edge_list, incommings, outcommings = get_erdos_graph(rng, n_nodes, c_range, d_range, ratio, k_max)
+    G, adj_mat, edge_list, incommings, outcommings = get_erdos_graph(rng, n_nodes, c_range, d_range, ratio, k_max, er_prob)
 
     #nx.draw(G)
     print(G)
@@ -207,7 +207,7 @@ def generate_capacited_facility_location(rng, filename, n_customers, n_facilitie
     print(filename)
 
 
-def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_commodities, max_n_commodities, lp_dir, solveInstance):
+def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_commodities, max_n_commodities, er_prob, lp_dir, solveInstance):
     
     for seed in range(start_seed, end_seed):
         ratio = 5
@@ -233,7 +233,7 @@ def generate_instances(start_seed, end_seed, min_n_nodes, max_n_nodes, min_n_com
         
         
         
-        generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio)
+        generate_fcmcnf(rng, filename, n_nodes, n_commodities, c_range, d_range, k_max, ratio, er_prob)
         
         model = sp.Model()
         model.hideOutput()
