@@ -250,6 +250,8 @@ class OracleNodeSelectorEstimator_RankNet(CustomNodeSelector):
         policy.to(device)
         
         self.policy = policy
+        self.device = device
+        
 
         self.comp_featurizer = comp_featurizer
         
