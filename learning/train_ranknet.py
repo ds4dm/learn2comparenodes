@@ -87,6 +87,11 @@ if __name__ == "__main__":
     
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
+    
+    X_train = torch.tensor(X_train)
+    y_train = torch.tensor(y_train)
+    X_train = torch.tensor(X_valid)
+    y_valid = torch.tensor(y_valid)
         
     
     X_train.to(device)
