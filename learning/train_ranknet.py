@@ -84,11 +84,11 @@ if __name__ == "__main__":
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
     if problem == 'FCMCNF':
-        X_train = X_train + X_valid[:3000]
-        y_train =  y_train + y_valid[:3000]
+        X_train = X_train + X_valid[3000:]
+        y_train =  y_train + y_valid[3000:]
         
-        X_valid  = X_valid[3000:] 
-        y_valid = y_valid[3000:]
+        X_valid  = X_valid[:3000] 
+        y_valid = y_valid[:3000]
     
     X_train = torch.tensor(np.array(X_train), dtype=torch.float, device=device)
     y_train = torch.tensor(np.array(y_train), dtype=torch.float, device=device).unsqueeze(1)
