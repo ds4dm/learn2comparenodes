@@ -24,13 +24,13 @@ def get_data(files):
         y.append(comp_res)
         depths.append(np.array([f_array[18], f_array[-3]]))
         
-    return X, y, depths
+    return torch.tensor(np.array(X), dtype=torch.float), torch.tensor(np.array(y), dtype=torch.float).unsqueeze(1), torch.tensor(np.array(depths))
 
 
     
 if __name__ == "__main__":
     
-    problem = "FCMCNF"
+    problem = "GISP"
     lr = 0.005
     n_epoch = 2
     n_sample = -1
@@ -80,21 +80,19 @@ if __name__ == "__main__":
     valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
                                                             f"../node_selection/data_svm/{problem}/valid")).glob("*.csv") ][:int(0.2*n_sample if n_sample != -1 else -1)]
     
+    if problem == 'FCMCNF':
+        train_files = train_files + valid_files[3000:]
+        valid_files = valid_files[:3000]
     
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
-    if problem == 'FCMCNF':
-        X_train = X_train + X_valid[3000:]
-        y_train =  y_train + y_valid[3000:]
         
-        X_valid  = X_valid[:3000] 
-        y_valid = y_valid[:3000]
     
-    X_train = torch.tensor(np.array(X_train), dtype=torch.float, device=device)
-    y_train = torch.tensor(np.array(y_train), dtype=torch.float, device=device).unsqueeze(1)
-    
-    X_valid = torch.tensor(np.array(X_valid), dtype=torch.float, device=device)
-    y_valid = torch.tensor(np.array(y_valid), dtype=torch.float, device=device).unsqueeze(1)
+    X_train.to(device)
+    y_train.to(device)
+    X_valid.to(device)
+    y_valid.to(device)    
+
     
     policy = RankNet().to(device)
     optimizer = optimizer_fn(policy.parameters(), lr=lr) #ADAM is the best
