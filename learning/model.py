@@ -14,6 +14,31 @@ from torch_geometric.nn import GraphConv
 from data_type import BipartiteGraphPairData
 
 
+
+class RankNet(torch.nn.Module):
+
+    def __init__(self):
+        super(RankNet, self).__init__()
+
+        self.linear1 = torch.nn.Linear(20, 30)
+        self.activation = torch.nn.LeakyReLU()
+        self.linear2 = torch.nn.Linear(30, 1)
+        
+    def forward_node(self, n):
+        x = self.linear1(n)
+        x = self.activation(x)
+        x = self.linear2(x)
+        return x
+        
+
+    def forward(self, n0,n1):
+        s0,s1 = self.forward_node(n0), self.forward_node(n1)
+   
+        return torch.sigmoid(-s0 + s1)
+    
+    
+    
+
 class GNNPolicy(torch.nn.Module):
     def __init__(self):
         super().__init__()

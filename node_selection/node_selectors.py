@@ -18,7 +18,7 @@ import time
 import numpy as np
 from pyscipopt import Nodesel
 from data_type import BipartiteGraphPairData
-from model import GNNPolicy
+from model import GNNPolicy, RankNet
 from line_profiler import LineProfiler
 from joblib import dump, load
 
@@ -247,9 +247,59 @@ class OracleNodeSelectorAbdel(CustomNodeSelector):
         self.optsol = optsol
         
 
+class OracleNodeSelectorEstimator_RankNet(CustomNodeSelector):
+    
+    def __init__(self, problem, comp_featurizer, device, sel_policy='', n_primal=2):
+        super().__init__(sel_policy=sel_policy)
+        
+        
+        policy = RankNet()
+
+        policy.load_state_dict(torch.load(f"./learning/policy_{problem}_ranknet.pkl", map_location=device)) #run from main
+
+        policy.to(device)
+        
+        self.policy = policy
+
+        self.comp_featurizer = comp_featurizer
+        
+        self.inf_counter = 0
+        
+        self.n_primal = n_primal
+        self.best_primal = np.inf
+        self.primal_changes = 0
+        
+    def nodecomp(self, node1, node2):
+        
+        self.comp_counter += 1
+        
+        if self.primal_changes >= self.n_primal: #infer until obtained nth best primal solution
+            return self.estimate_nodecomp(node1, node2)
+        
+        curr_primal = self.model.getSolObjVal(self.model.getBestSol())
+        
+        if self.model.getObjectiveSense() == 'maximize':
+            curr_primal *= -1
+            
+        if curr_primal < self.best_primal:
+            self.best_primal = curr_primal
+            self.primal_changes += 1
+         
+        f1, f2 = (self.comp_featurizer.get_features(node1),
+                  self.comp_featurizer.get_features(node2))
+        
+        decision =  self.policy(torch.tensor(f1, dtype=torch.float), torch.tensor(f2, dtype=torch.float))
+        
+        
+    
+        self.inf_counter += 1
+        
+        return -1 if decision < 0.5 else 1
+
+
 class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer, sel_policy='', n_primal=4):
+    def __init__(self, problem, comp_featurizer, sel_policy='', n_primal=2):
         super().__init__(sel_policy=sel_policy)
         
         self.policy = load(f'./learning/policy_{problem}_svm.pkl')
@@ -294,7 +344,7 @@ class OracleNodeSelectorEstimator_SVM(CustomNodeSelector):
     
 class OracleNodeSelectorEstimator(CustomNodeSelector):
     
-    def __init__(self, problem, comp_featurizer, device, feature_normalizor, n_primal=4, use_trained_gnn=True, sel_policy=''):
+    def __init__(self, problem, comp_featurizer, device, feature_normalizor, n_primal=2, use_trained_gnn=True, sel_policy=''):
         super().__init__(sel_policy=sel_policy)
         
         
@@ -304,6 +354,7 @@ class OracleNodeSelectorEstimator(CustomNodeSelector):
             policy.load_state_dict(torch.load(f"./learning/policy_{problem}.pkl", map_location=device)) #run from main
         else:
             print("Using randomly initialized gnn")
+            
         policy.to(device)
         
         self.policy = policy

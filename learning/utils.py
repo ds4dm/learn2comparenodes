@@ -118,3 +118,41 @@ def process(policy, data_loader, loss_fct, device, optimizer=None, normalize=Tru
     mean_acc /= (n_samples_processed  + ( n_samples_processed == 0))
     return mean_loss, mean_acc
 
+
+def process_ranknet(policy, X, y, loss_fct, device, optimizer=None):
+    """
+    This function will process a whole epoch of training or validation, depending on whether an optimizer is provided.
+    """
+    mean_loss = 0
+    mean_acc = 0
+    n_samples_processed = 0
+    X.to(device)
+    with torch.set_grad_enabled(optimizer is not None):
+        for idx,x in enumerate(X):
+            
+            y_true = 0.5*y[idx] + 0.5 #0,1 label from -1,1 label
+            y_proba = policy(x[:20], x[20:])
+            y_pred = torch.round(y_proba)
+            
+            # Compute the usual cross-entropy classification loss
+            #loss_fct.weight = torch.exp((1+torch.abs(batch.depth_s - batch.depth_t)) / 
+                            #(torch.min(torch.vstack((batch.depth_s,  batch.depth_t)), axis=0)[0]))
+
+            l = loss_fct(y_proba, y_true)
+            loss_value = l.item()
+            if optimizer is not None:
+                optimizer.zero_grad()
+                l.backward()
+                optimizer.step()
+            
+            accuracy = (y_pred == y_true).float().mean().item()
+
+            mean_loss += loss_value
+            mean_acc += accuracy 
+            n_samples_processed += 1
+            #print(y_proba.item(), y_true.item())
+
+    mean_loss /= (n_samples_processed + ( n_samples_processed == 0))
+    mean_acc /= (n_samples_processed  + ( n_samples_processed == 0))
+    return mean_loss, mean_acc
+

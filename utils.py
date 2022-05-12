@@ -13,6 +13,7 @@ from node_selection.recorders import CompFeaturizerSVM, CompFeaturizer, LPFeatur
 from node_selection.node_selectors import (CustomNodeSelector,
                                            OracleNodeSelectorAbdel, 
                                            OracleNodeSelectorEstimator_SVM,
+                                           OracleNodeSelectorEstimator_RankNet,
                                            OracleNodeSelectorEstimator)
 from learning.utils import normalize_graph
 
@@ -82,6 +83,12 @@ def get_nodesels2models(nodesels, instance, problem, normalize, device):
                 comp_featurizer = CompFeaturizerSVM(model)
                 n_primal = int(other.split('=')[-1])
                 comp = OracleNodeSelectorEstimator_SVM(problem, comp_featurizer, sel_policy=sel_policy, n_primal=n_primal)
+                
+            elif comp_policy == 'ranknet':
+                comp_featurizer = CompFeaturizerSVM(model)
+                n_primal = int(other.split('=')[-1])
+                comp = OracleNodeSelectorEstimator_RankNet(problem, comp_featurizer, device, sel_policy=sel_policy, n_primal=n_primal)
+        
 
             elif comp_policy == 'expert':
                 comp = OracleNodeSelectorAbdel('optimal_plunger', optsol=0,inv_proba=0)
@@ -147,7 +154,7 @@ def record_stats_instance(problem, nodesel, model, instance, nodesel_obj):
         init1_time, init2_time, fe_time, fn_time, inference_time, inf_counter = -1, -1, -1, -1, -1, -1
     
     
-    if re.match('svm*', nodesel) or re.match('expert*', nodesel) :
+    if re.match('svm*', nodesel) or re.match('expert*', nodesel) or re.match('ranknet*', nodesel):
         inf_counter = nodesel_obj.inf_counter
     
     
@@ -277,7 +284,7 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
             
         if not re.match('default*', nodesel):
             print(f"        |- nodecomp calls  :  {ncomp_mean:.0f}")
-            if re.match('gnn*', nodesel) or re.match('svm*', nodesel) or re.match('expert*', nodesel):
+            if re.match('gnn*', nodesel) or re.match('svm*', nodesel) or re.match('expert*', nodesel) or re.match('ranknet*', nodesel):
                 inf_counter_mean = get_mean(problem, nodesel, instances, 'ninf')[0]
                 print(f"           |---   inference nodecomp calls:      {inf_counter_mean:.0f}")
             print(f"        |- nodesel calls   :  {nsel_mean:.0f}")
