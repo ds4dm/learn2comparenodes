@@ -138,9 +138,9 @@ def process_ranknet(policy, X, y, loss_fct, device, optimizer=None):
             # Compute the usual cross-entropy classification loss
             #loss_fct.weight = torch.exp((1+torch.abs(batch.depth_s - batch.depth_t)) / 
                             #(torch.min(torch.vstack((batch.depth_s,  batch.depth_t)), axis=0)[0]))
-            print(y_proba)
+            #print(y_proba)
             l = loss_fct(y_proba, y_true)
-            print(l)
+            #print(l)
             loss_value = l.item()
             if optimizer is not None:
                 optimizer.zero_grad()
