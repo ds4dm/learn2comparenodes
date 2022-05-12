@@ -35,14 +35,14 @@ if __name__ == "__main__":
             n_cpu = int(sys.argv[i + 1])
         if sys.argv[i] == '-nodesels':
             nodesels = str(sys.argv[i + 1]).split(',')
-        if sys.argv[i] == '-problems':
-            problems = str(sys.argv[i + 1]).split(',')
         if sys.argv[i] == '-normalize':
             normalize = bool(int(sys.argv[i + 1]))
         if sys.argv[i] == '-n_instance':
             n_instance = int(sys.argv[i + 1])
         if sys.argv[i] == 'data_partition':
             data_partition = str(sys.argv[i + 1])
+        if sys.argv[i] == 'problem':
+            problem = str(sys.argv[i + 1])
         if sys.argv[i] == '-device':
             device = str(sys.argv[i + 1])
         if sys.argv[i] == '-verbose':
