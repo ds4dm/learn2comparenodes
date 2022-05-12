@@ -18,7 +18,7 @@ if __name__ == "__main__":
     
     n_cpu = 4
     n_instance = 2
-    nodesels = ['ranknet_dummy_nprimal=2']
+    nodesels = ['gnn_dummy_nprimal=2', 'ranknet_dummy_nprimal=2']
     
     problem = 'GISP'
     normalize = True
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     verbose = False
     on_log = False
-    default = True
+    default = False
     delete = False
     
     for i in range(1, len(sys.argv), 2):
