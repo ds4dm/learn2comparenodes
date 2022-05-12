@@ -88,10 +88,17 @@ if __name__ == "__main__":
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
     
-    X_train = torch.tensor(X_train)
-    y_train = torch.tensor(y_train)
-    X_train = torch.tensor(X_valid)
-    y_valid = torch.tensor(y_valid)
+    X_train = np.vstack(X_train).astype(np.float32)
+    y_train = np.vstack(y_train).astype(np.float32)
+    
+    X_valid = np.vstack(X_valid).astype(np.float32)
+    y_valid = np.vstack(y_valid).astype(np.float32)
+    
+    X_train = torch.from_numpy(X_train)
+    y_train = torch.from_numpy(y_train)
+    #print(X_train)
+    X_valid = torch.from_numpy(y_valid)
+    y_valid = torch.from_numpy(y_valid)
         
     
     X_train.to(device)
