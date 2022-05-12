@@ -17,12 +17,14 @@ def get_data(files):
     
     for file in files:
         
-        f_array = np.loadtxt(file).tolist()
+        f_array = np.loadtxt(file)
         features = f_array[:-1]
         comp_res = f_array[-1]
         X.append(features)
         y.append(comp_res)
         depths.append(np.array([f_array[18], f_array[-3]]))
+        
+        
     
     
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.float32), np.array(depths)
@@ -91,10 +93,10 @@ if __name__ == "__main__":
 
     
     X_train = torch.from_numpy(X_train)
-    y_train = torch.from_numpy(y_train)
+    y_train = torch.from_numpy(y_train).unsqueeze(1)
     #print(X_train)
     X_valid = torch.from_numpy(X_valid)
-    y_valid = torch.from_numpy(y_valid)
+    y_valid = torch.from_numpy(y_valid).unsqueeze(1)
         
     
     X_train.to(device)
