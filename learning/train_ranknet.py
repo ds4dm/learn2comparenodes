@@ -38,8 +38,8 @@ if __name__ == "__main__":
     early_stopping = 20
     normalize = True
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    batch_train = 16
-    batch_valid  = 256
+    batch_train = 1
+    batch_valid  = 1
     
     loss_fn = torch.nn.BCELoss()
     optimizer_fn = torch.optim.Adam
