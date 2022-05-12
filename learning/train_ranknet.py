@@ -17,20 +17,21 @@ def get_data(files):
     
     for file in files:
         
-        f_array = np.loadtxt(file)
+        f_array = np.loadtxt(file).tolist()
         features = f_array[:-1]
         comp_res = f_array[-1]
         X.append(features)
         y.append(comp_res)
         depths.append(np.array([f_array[18], f_array[-3]]))
-        
+    
+    
     return torch.tensor(np.array(X, dtype=np.float), dtype=torch.float), torch.tensor(np.array(y, dtype=np.long), dtype=torch.long).unsqueeze(1), torch.tensor(np.array(depths))
 
 
     
 if __name__ == "__main__":
     
-    problem = "GISP"
+    problem = "WPMS"
     lr = 0.005
     n_epoch = 2
     n_sample = -1
