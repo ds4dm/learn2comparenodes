@@ -83,7 +83,10 @@ if __name__ == "__main__":
     X_train, y_train, _ = get_data(train_files)
     X_valid, y_valid, _ = get_data(valid_files)
     
-    
+    X_train.to(device)
+    y_train.to(device)
+    X_valid.to(device)
+    y_valid.to(device)    
 
     
     policy = RankNet().to(device)

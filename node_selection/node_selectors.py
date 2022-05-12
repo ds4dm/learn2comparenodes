@@ -278,7 +278,7 @@ class OracleNodeSelectorEstimator_RankNet(CustomNodeSelector):
         f1, f2 = (self.comp_featurizer.get_features(node1),
                   self.comp_featurizer.get_features(node2))
         
-        decision =  self.policy(torch.tensor(f1, dtype=torch.float), torch.tensor(f2, dtype=torch.float))
+        decision =  self.policy(torch.tensor(f1, dtype=torch.float, device=self.device), torch.tensor(f2, dtype=torch.float, device=self.device))
         
         
     
