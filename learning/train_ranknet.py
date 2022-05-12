@@ -27,7 +27,7 @@ def get_data(files):
         
     
     
-    return np.array(X, dtype=np.float32), np.array(y, dtype=np.float32), np.array(depths)
+    return np.array(X, dtype=np.float32), np.array(y, dtype=np.long), np.array(depths)
 
 
     
