@@ -68,6 +68,13 @@ if __name__ == "__main__":
     valid_files = [ str(path) for path in Path(os.path.join(os.path.dirname(__file__), 
                                                             f"../node_selection/data/{problem}/valid")).glob("*.pt") ][:int(0.2*n_sample if n_sample != -1 else -1)]
     
+
+    if problem == 'FCMCNF':
+        train_files = train_files + valid_files[3000:]
+        valid_files = valid_files[:3000]
+
+        
+
     train_data = GraphDataset(train_files)
     valid_data = GraphDataset(valid_files)
     
