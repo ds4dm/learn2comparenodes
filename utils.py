@@ -8,6 +8,8 @@ Created on Fri Jan 28 12:36:43 2022
 import os
 import re
 import numpy as np
+from scipy.stats import gmean
+from scipy.stats import gstd
 import pyscipopt.scip as sp
 from node_selection.recorders import CompFeaturizerSVM, CompFeaturizer, LPFeatureRecorder
 from node_selection.node_selectors import (CustomNodeSelector,
@@ -225,19 +227,30 @@ def record_stats(nodesels, instances, problem, device, normalize, verbose=False,
 
 
 def get_mean(problem, nodesel, instances, stat_type):
-    res = 0
+    res = []
     n = 0
     means = dict()
     stat_idx = ['nnode', 'time', 'ncomp','nsel', 'init1', 'init2', 'fe', 'fn', 'inf','ninf'].index(stat_type)
     for instance in instances:
         try:
             file = get_record_file(problem, nodesel, instance)
-            res += np.genfromtxt(file)[stat_idx]
+            res.append(np.genfromtxt(file)[stat_idx])
             n += 1
             means[str(instance)] = np.genfromtxt(file)[stat_idx]
         except:
             ''
-    return res/(n + int(n==0)),n, means
+    
+    if stat_type in ['nnode', 'time'] :
+
+        mu = np.exp(np.mean(np.log(np.array(res) + 1 )))
+
+        std = np.exp(np.sqrt(np.mean(  ( np.log(np.array(res)+1) - np.log(mu) )**2 )))
+    else:
+        mu, std = np.mean(res), np.std(res)
+
+    return mu,n, means,  std 
+
+        
         
 
 def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
@@ -249,8 +262,8 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     for nodesel in (['default'] if default else []) + nodesels:
         
             
-        nnode_mean, n, nnode_means = get_mean(problem, nodesel, instances, 'nnode')
-        time_mean  =  get_mean(problem, nodesel, instances, 'time')[0]
+        nnode_mean, n, nnode_means, nnode_dev = get_mean(problem, nodesel, instances, 'nnode')
+        time_mean, _, _, time_dev  =  get_mean(problem, nodesel, instances, 'time')
         ncomp_mean = get_mean(problem, nodesel, instances, 'ncomp')[0]
         nsel_mean = get_mean(problem, nodesel, instances, 'nsel')[0]
         
@@ -260,14 +273,14 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
         print(f"  {nodesel} ")
         print(f"      Mean over n={n} instances : ")
-        print(f"        |- B&B Tree Size   :  {nnode_mean:.0f}")
+        print(f"        |- B&B Tree Size   :  {nnode_mean:.0f}  ± {nnode_dev:.0f}")
         if re.match('gnn*', nodesel):
             in1_mean = get_mean(problem, nodesel, instances, 'init1')[0]
             in2_mean = get_mean(problem, nodesel, instances, 'init2')[0]
             print(f"        |- Presolving A,b,c Feature Extraction Time :  ")
             print(f"           |---   Init. Solver to CPU:           {in1_mean:.2f}")
             print(f"           |---   Init. CPU to GPU   :           {in2_mean:.2f}")
-        print(f"        |- Solving Time    :  {time_mean:.2f}")
+        print(f"        |- Solving Time    :  {time_mean:.1f}  ± {time_dev:.1f}")
         
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
