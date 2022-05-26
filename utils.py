@@ -273,14 +273,14 @@ def display_stats(problem, nodesels, instances, min_n, max_n, default=False):
     
         print(f"  {nodesel} ")
         print(f"      Mean over n={n} instances : ")
-        print(f"        |- B&B Tree Size   :  {nnode_mean:.0f}  ± {nnode_dev:.0f}")
+        print(f"        |- B&B Tree Size   :  {nnode_mean:.2f}  ± {nnode_dev:.2f}")
         if re.match('gnn*', nodesel):
             in1_mean = get_mean(problem, nodesel, instances, 'init1')[0]
             in2_mean = get_mean(problem, nodesel, instances, 'init2')[0]
             print(f"        |- Presolving A,b,c Feature Extraction Time :  ")
             print(f"           |---   Init. Solver to CPU:           {in1_mean:.2f}")
             print(f"           |---   Init. CPU to GPU   :           {in2_mean:.2f}")
-        print(f"        |- Solving Time    :  {time_mean:.1f}  ± {time_dev:.1f}")
+        print(f"        |- Solving Time    :  {time_mean:.2f}  ± {time_dev:.2f}")
         
         #print(f"    Median number of node created : {np.median(nnodes):.2f}")
         #print(f"    Median solving time           : {np.median(times):.2f}""
