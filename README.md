@@ -2,7 +2,7 @@
 
 Abdel Ghani Labassi, Didier Chételat and Andrea Lodi
 
-This is the official implementation of our NeurIPS 2022 paper.
+This is the official implementation of our [NeurIPS 2022 paper](https://arxiv.org/abs/2210.16934).
 
 ## Citation
 Please cite our paper if you use this code in your work.
